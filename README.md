@@ -59,7 +59,7 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
 <br>
  
  - There is a `config.py` file persent in `phomber` folder.
- - You need to enter required parameters and values (of parameters) as mentioned in '[*Additional Settings*](https://github.com/s41r4j/phomber/blob/main/.more/additional_config.md)'
+ - Click on '[*Additional Settings*](https://github.com/s41r4j/phomber/blob/main/.more/additional_config.md)' to see more about it.
  
 </details>
 
