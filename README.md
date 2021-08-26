@@ -4,6 +4,12 @@
 A Infomation Grathering tool that reverse search phone numbers and get their details !
 ```
 
+<a href='LICENSE'><img src="https://img.shields.io/badge/License-GNU%20General%20Public%20License%20v3.0-red.svg"></a>
+<a href='https://www.python.org/'><img src="https://img.shields.io/badge/Language-Python 3-blue.svg"></a>
+<a href='https://www.python.org/'><img src="https://img.shields.io/badge/Language-Golang-brightgreen.svg"></a>
+<a href='https://www.python.org/'><img src="https://img.shields.io/badge/Etical Hacking-Infomation Grathering-yellow.svg"></a>
+
+         
 <br>
 
 
