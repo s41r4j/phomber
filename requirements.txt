@@ -1,0 +1,6 @@
+phonenumbers
+progressbar
+mechanize
+beautifulsoup4
+tqdm
+opencage
