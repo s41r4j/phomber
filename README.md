@@ -18,7 +18,7 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
 </details>
 
 <details>
-<summary>Search Types</summary>
+<summary>Search & Scans</summary>
 <br>
  
  - Basic search
@@ -56,6 +56,29 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
  - You need to enter / fill infomation the as mentioned in '[*Additional Settings*](additional_config.md)'
  
 </details>
- 
+
+<br>
+<br>
+
+## Usage
+
+
+<br>
+<br>
+
+## Prerequisites
+
+> Required
+
+- python3
+- git
+
+<br>
+
+> Optional
+
+- OpenCage Account ([create a account here](https://opencagedata.com/users/sign_up)) , for Basic search.
+- Truecaller Account ([create a account here](https://www.truecaller.com/auth/sign-in)) , for Truecaller scan.
+- Golang  ([Go Programing Language](https://golang.org/)) , for Phoneinfoga scan.
 
 
