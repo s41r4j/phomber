@@ -34,6 +34,14 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
  
 </details>
 
+<details>
+<summary>Download Zip</summary>
+<br>
+ 
+ - [Start downloading]()
+ 
+</details>
+
 <br>
 <br>
 
