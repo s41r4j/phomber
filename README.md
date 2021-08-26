@@ -113,8 +113,6 @@ s41r4j@github:~/Desktop/phomber$ python3 phomber.py +001234567890
          
 </details>
 
-<br>
-
 <details>
 <summary>Optional</summary>
 <br>
@@ -124,4 +122,26 @@ s41r4j@github:~/Desktop/phomber$ python3 phomber.py +001234567890
 - Golang  ([Go Programing Language](https://golang.org/)) , for Phoneinfoga scan.
      
 </details>
+
+<br>
+<br>
+<hr>
+<br>
+
+<a href=''><img src="https://img.shields.io/badge/Disclaimer-Please don't use this tool for unethical purposes-red.svg"></a>
+> The [Developer](https://github.com/s41r4j/) of [PH0MBER](https://github.com/s41r4j/phomber/) is not responsible for an loss or misuse of the tool, it is end user's responsiblity.
+
+<br>
+
+## Support
+
+<a href="https://www.buymeacoffee.com/S41R4J" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/arial-yellow.png" alt="Buy Me A Coffee" style="height: 50px !important;width: 50px !important;"></a>
+
+<br>
+<br>
+<hr>
+<br>
+
+![s41r4j's github stats](https://github-readme-stats.vercel.app/api?username=s41r4j&show_icons=true&title_color=fff&icon_color=79ff97&text_color=9f9f9f&bg_color=151515)
+
 
