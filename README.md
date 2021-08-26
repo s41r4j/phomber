@@ -35,10 +35,11 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
 </details>
 
 <details>
-<summary>Download Zip</summary>
+<summary>Direct Downloads</summary>
 <br>
  
- - [Start downloading]()
+ - [zip](https://github.com/s41r4j/phomber/archive/refs/tags/phomber.zip)
+ - [tar.gz](https://github.com/s41r4j/phomber/archive/refs/tags/phomber.tar.gz)
  
 </details>
 
