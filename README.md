@@ -68,7 +68,13 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
 
 ## Usage
 
-The `PH0MBER` takes [command line arguments](https://www.google.com/search?q=Command+Line+Arguments)
+> The `PH0MBER` takes [command line arguments](https://www.google.com/search?q=Command+Line+Arguments).
+
+```
+$ python3 phomber.py +(country code)xxxxxxxxxx
+```
+
+<br>
 
 Example (Linux based):
 ```
@@ -98,17 +104,24 @@ s41r4j@github:~/Desktop/phomber$ python3 phomber.py +001234567890
 
 ## Prerequisites
 
-> Required
-
+<details>
+<summary>Required</summary>
+<br>
+         
 - python3
 - git
+         
+</details>
 
 <br>
 
-> Optional
+<details>
+<summary>Optional</summary>
+<br>
 
 - OpenCage Account ([create a account here](https://opencagedata.com/users/sign_up)) , for Basic search.
 - Truecaller Account ([create a account here](https://www.truecaller.com/auth/sign-in)) , for Truecaller scan.
 - Golang  ([Go Programing Language](https://golang.org/)) , for Phoneinfoga scan.
-
+     
+</details>
 
