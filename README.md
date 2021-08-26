@@ -6,8 +6,8 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
 
 <a href='LICENSE'><img src="https://img.shields.io/badge/License-GNU%20General%20Public%20License%20v3.0-red.svg"></a>
 <a href='https://www.python.org/'><img src="https://img.shields.io/badge/Language-Python 3-blue.svg"></a>
-<a href='https://www.python.org/'><img src="https://img.shields.io/badge/Language-Golang-brightgreen.svg"></a>
-<a href='https://www.python.org/'><img src="https://img.shields.io/badge/Etical Hacking-Infomation Grathering-yellow.svg"></a>
+<a href='https://www.golang.org/'><img src="https://img.shields.io/badge/Language-Golang-brightgreen.svg"></a>
+<a href='https://www.w3schools.in/ethical-hacking/information-gathering-techniques/'><img src="https://img.shields.io/badge/Etical Hacking-Infomation Grathering Tool-yellow.svg"></a>
 
          
 <br>
@@ -58,8 +58,8 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
 <summary>Additional Configuration</summary>
 <br>
  
- - There is a `config.py` file persent in 'phomber' folder.
- - You need to enter / fill infomation the as mentioned in '[*Additional Settings*](additional_config.md)'
+ - There is a `config.py` file persent in `phomber` folder.
+ - You need to enter required parameters and values (of parameters) as mentioned in '[*Additional Settings*](additional_config.md)'
  
 </details>
 
@@ -67,6 +67,30 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
 <br>
 
 ## Usage
+
+The `PH0MBER` takes [command line arguments](https://www.google.com/search?q=Command+Line+Arguments)
+
+Example (Linux based):
+```
+s41r4j@github:~/Desktop/phomber$ python3 phomber.py +001234567890
+```
+
+<details>
+<summary>Explaination</summary>
+<br>
+         
+- `python3 phomber.py` -  Running phomber script with python3
+- `+001234567890` - Command line argument, the phone number you want to search.
+<details>
+<summary>Phone number breakdown / explained</summary>
+<br>
+ 
+ - `+00` is [country code](https://en.wikipedia.org/wiki/List_of_country_calling_codes), eg: +1 (Canada, US), +47 (Norway), +91 (India), +86 (China)
+ - `1234567890` is the phone number without spaces, dashes & brackets
+ 
+</details>
+</details>
+
 
 
 <br>
