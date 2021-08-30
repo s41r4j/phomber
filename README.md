@@ -73,7 +73,7 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
 <br>
  
  - There is a `config.py` file persent in `phomber` folder.
- - Click on '[*Additional Settings*](https://github.com/s41r4j/phomber/blob/main/.more/additional_config.md)' to see more about it.
+ - Click on '[*Additional Settings*](https://github.com/s41r4j/phomber/blob/main/.more/additional_config.md)' to see how to configure it.
  
 </details>
 
