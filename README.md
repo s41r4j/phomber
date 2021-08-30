@@ -1,4 +1,4 @@
-<img src='/.images/phomber_logo.png'><img src='/.images/Phomber_official_logo.png'>
+<img src='/.images/Phomber_official_logo.png'>
 
 
 ```
