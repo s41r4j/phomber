@@ -33,6 +33,7 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
  - Phoneinfoga scan (Comming soon)
  - Truecaller scan (Comming soon)
  
+<br>
 </details>
 
 <details>
@@ -42,6 +43,7 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
  - [zip](https://github.com/s41r4j/phomber/archive/refs/tags/phomber.zip)
  - [tar.gz](https://github.com/s41r4j/phomber/archive/refs/tags/phomber.tar.gz)
  
+<br>
 </details>
 
 <br>
@@ -104,6 +106,7 @@ s41r4j@github:~/Desktop/phomber$ python3 phomber.py +001234567890
  - `+00` is [country code](https://en.wikipedia.org/wiki/List_of_country_calling_codes), eg: +1 (Canada, US), +47 (Norway), +91 (India), +86 (China)
  - `1234567890` is the phone number without spaces, dashes & brackets
  
+<br>
 </details>
 </details>
 
@@ -120,7 +123,8 @@ s41r4j@github:~/Desktop/phomber$ python3 phomber.py +001234567890
          
 - python3
 - git
-         
+    
+<br>
 </details>
 
 <details>
@@ -130,7 +134,8 @@ s41r4j@github:~/Desktop/phomber$ python3 phomber.py +001234567890
 - OpenCage Account ([create a account here](https://opencagedata.com/users/sign_up)) , for Basic search.
 - Truecaller Account ([create a account here](https://www.truecaller.com/auth/sign-in)) , for Truecaller scan.
 - Golang  ([Go Programing Language](https://golang.org/)) , for Phoneinfoga scan.
-     
+    
+<br>
 </details>
 
 <br>
