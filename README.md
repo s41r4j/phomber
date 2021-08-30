@@ -39,6 +39,18 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
 </details>
 
 <details>
+<summary>Operating Systems Tested</summary>
+<br>
+ 
+ - [Unix / Linux](https://www.google.com/search?q=Unix+Linux)
+ - [Microsoft Windows](https://www.google.com/search?q=Windows)
+ - [Mac](https://www.google.com/search?q=Mac)
+
+ 
+<br>
+</details>
+
+<details>
 <summary>Direct Downloads</summary>
 <br>
  
