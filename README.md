@@ -1,4 +1,4 @@
-<img src='/.images/Phomber_official_logo.png'>
+<img src='/.images/phomber_logo.png'>
 
 
 ```
@@ -6,9 +6,11 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
 ```
 
 <a href='LICENSE'><img src="https://img.shields.io/badge/License-GNU%20General%20Public%20License%20v3.0-red.svg"></a>
-<a href='https://www.python.org/'><img src="https://img.shields.io/badge/Language-Python 3-blue.svg"></a>
-<a href='https://www.golang.org/'><img src="https://img.shields.io/badge/Language-Golang-brightgreen.svg"></a>
+<a href='https://www.python.org/'><img src="https://img.shields.io/badge/Main Code-Python 3-blue.svg"></a>
+<a href='https://www.golang.org/'><img src="https://img.shields.io/badge/Secondary Code-Golang-brightgreen.svg"></a>
 <a href='https://www.w3schools.in/ethical-hacking/information-gathering-techniques/'><img src="https://img.shields.io/badge/Etical Hacking-Infomation Grathering Tool-yellow.svg"></a>
+<a href='https://github.com/s41r4j/phomber/releases/'><img src="https://img.shields.io/badge/Version-v1.0-orange.svg"></a>
+
 
          
 <br>
