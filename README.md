@@ -7,7 +7,6 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
 
 <a href='LICENSE'><img src="https://img.shields.io/badge/License-GNU%20General%20Public%20License%20v3.0-red.svg"></a>
 <a href='https://www.python.org/'><img src="https://img.shields.io/badge/Main Code-Python 3-blue.svg"></a>
-<a href='https://www.golang.org/'><img src="https://img.shields.io/badge/Secondary Code-Golang-brightgreen.svg"></a>
 <a href='https://www.w3schools.in/ethical-hacking/information-gathering-techniques/'><img src="https://img.shields.io/badge/Etical Hacking-Infomation Grathering Tool-yellow.svg"></a>
 <a href='https://github.com/s41r4j/phomber/releases/'><img src="https://img.shields.io/badge/Version-v1.0-orange.svg"></a>
 
@@ -32,7 +31,6 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
  
  - Basic search
  - Advance search (Experimental)
- - Phoneinfoga scan (Comming soon)
  - Truecaller scan (Comming soon)
  
 <br>
@@ -147,7 +145,6 @@ s41r4j@github:~/Desktop/phomber$ python3 phomber.py +001234567890
 
 - OpenCage Account ([create a account here](https://opencagedata.com/users/sign_up)) , for Basic search.
 - Truecaller Account ([create a account here](https://www.truecaller.com/auth/sign-in)) , for Truecaller scan.
-- Golang  ([Go Programing Language](https://golang.org/)) , for Phoneinfoga scan.
     
 <br>
 </details>
