@@ -5,22 +5,21 @@
 A Infomation Grathering tool that reverse search phone numbers and get their details !
 ```
 
-<a href='LICENSE'><img src="https://img.shields.io/badge/License-GNU%20General%20Public%20License%20v3.0-red.svg"></a>
-<a href='https://www.python.org/'><img src="https://img.shields.io/badge/Main Code-Python 3-blue.svg"></a>
-<a href='https://www.w3schools.in/ethical-hacking/information-gathering-techniques/'><img src="https://img.shields.io/badge/Etical Hacking-Infomation Grathering Tool-yellow.svg"></a>
-<a href='https://github.com/s41r4j/phomber/releases/'><img src="https://img.shields.io/badge/Version-v1.0-orange.svg"></a>
-
+<a href='https://www.w3schools.in/ethical-hacking/information-gathering-techniques/'><img src="https://img.shields.io/badge/Etical Hacking-Infomation Grathering Tool-yellow.svg?logo=sharp"></a>
+<a href='https://github.com/s41r4j/phomber/releases/'><img src="https://img.shields.io/badge/Version-v1.0-orange.svg?logo=vectorworks"></a>
+<a href='https://www.python.org/'><img src="https://img.shields.io/badge/Python-3-blue.svg?style=flat&logo=python"></a>
+<a href='LICENSE'><img src="https://img.shields.io/badge/License-GPL%20v3.0-brightgreen.svg"></a>
 
          
 <br>
 
 
 <details>
-<summary>What phomber does?</summary>
+<summary>What is phomber?</summary>
 <br>
  
- - Phomber reverse searches given number online and retrieves all data available.
- - It is one of the best tools available for Infomation Grathering.
+ - Phomber is one of the best tools available for Infomation Grathering.
+ - It reverse searches given number online and retrieves all data available.
  
 <br>
 </details>
@@ -40,11 +39,11 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
 <summary>Operating Systems Tested</summary>
 <br>
  
- - [Unix / Linux](https://www.google.com/search?q=Unix+Linux)
- - [Microsoft Windows](https://www.google.com/search?q=Windows)
- - [Mac](https://www.google.com/search?q=Mac)
+ - [![Supported OS](https://img.shields.io/badge/OS%20X-brightgreen?style=flat&logo=macos)](https://www.google.com/search?q=OS%20X)
+ - [![Supported OS](https://img.shields.io/badge/Unix%20%2F%20Linux-blueviolet?style=flat&logo=linux)](https://www.google.com/search?q=Unix+Linux)
+ - [![Supported OS](https://img.shields.io/badge/Microsoft%20Windows-red?style=flat&logo=windows)](https://www.google.com/search?q=Windows)
 
- 
+
 <br>
 </details>
 
@@ -154,7 +153,7 @@ s41r4j@github:~/Desktop/phomber$ python3 phomber.py +001234567890
 <hr>
 <br>
 
-<a href=''><img src="https://img.shields.io/badge/Disclaimer-Please don't use this tool for unethical purposes-red.svg"></a>
+<a href=''><img src="https://img.shields.io/badge/Disclaimer-Please don't use this tool for unethical purposes-red.svg?logo=hackaday"></a>
 > The [Developer](https://github.com/s41r4j/) of [PH0MBER](https://github.com/s41r4j/phomber/) is not responsible for an loss or misuse of the tool, it is end user's responsiblity.
 
 <br>
