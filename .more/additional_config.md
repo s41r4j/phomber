@@ -1,6 +1,7 @@
 ## Additional Configuration
 
 - [API Keys](api_keys.md) (for Basic search)
+- [Phoneinfoga Setup](phoneinfoga.md) (for Phoneinfoga scan)
 - [Truecaller Account](truecaller.md) (for Truecaller scan)
 
 <br>
