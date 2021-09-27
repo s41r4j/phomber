@@ -30,6 +30,7 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
  
  - Basic search
  - Advance search (Experimental)
+ - Phoneinfoga scan (Comming soon)
  - Truecaller scan (Comming soon)
  
 <br>
@@ -142,6 +143,7 @@ s41r4j@github:~/Desktop/phomber$ python3 phomber.py +001234567890
 <summary>Optional</summary>
 <br>
 
+- GoLang ([Download Here](https://golang.org/dl/)) , for Phoneinfoga scan.
 - OpenCage Account ([create a account here](https://opencagedata.com/users/sign_up)) , for Basic search.
 - Truecaller Account ([create a account here](https://www.truecaller.com/auth/sign-in)) , for Truecaller scan.
     
