@@ -25,15 +25,15 @@ key = ''
 
 #=======================================================
 
-# Want phoneinfoga scan results
-# 'N' for NO / 'Y' For YES
-phoneinfoga_key = 'y'
+# Want phoneinfoga scan results ?
+# ['N' for NO / 'Y' For YES]
+phoneinfoga_key = 'N'
 
 
 # FAQ
 
-# Q] What if put other than 'N' and 'Y' in config for 'phoneinfoga_scan' ?
-#  > Anything other than 'Y' is considered no
+# Q] What if I put something other than 'N' and 'Y' in config for 'phoneinfoga_scan' ?
+#  > Anything other than 'Y' is considered as N (NO)
 
 # Q] Why to use this feature?
 #  > To improve search results
