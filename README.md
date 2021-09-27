@@ -53,8 +53,8 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
 <summary>Direct Downloads</summary>
 <br>
  
- - [zip](https://github.com/s41r4j/phomber/archive/refs/tags/phomber.zip)
- - [tar.gz](https://github.com/s41r4j/phomber/archive/refs/tags/phomber.tar.gz)
+ - [zip](https://github.com/s41r4j/phomber/archive/refs/tags/phomber-v2.0.zip)
+ - [tar.gz](https://github.com/s41r4j/phomber/archive/refs/tags/phomber-v2.0.tar.gz)
  
 <br>
 </details>
@@ -62,7 +62,7 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
 <br>
 <br>
 
- ## Installation
+ ## Installation (Manually)
 
  Clone the repo
   
@@ -87,6 +87,31 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
  - Click on '[*Additional Settings*](https://github.com/s41r4j/phomber/blob/main/.more/additional_config.md)' to see how to configure it.
  
 </details>
+
+<br>
+
+ ## Installation (Automated)
+ 
+ ### Linux / Unix / Mac
+ 
+ - Download `install.sh` from [__HERE__](https://github.com/s41r4j/phomber/releases/download/phomber-v2.0/install.sh) (OR get it from latest [releases](https://github.com/s41r4j/phomber/releases/tag/phomber-v2.0))
+ 
+ - Run the following command to install `phomber` & it's `dependencies`
+ ```
+ bash install.sh
+ ```
+ 
+ 
+ ### Windows
+ 
+ - Download `install.bat` from [__HERE__](https://github.com/s41r4j/phomber/releases/download/phomber-v2.0/install.bat) (OR get it from latest [releases](https://github.com/s41r4j/phomber/releases/tag/phomber-v2.0))
+
+ - Run the following command to install `phomber` & it's `dependencies`
+ ```
+ .\install.bat
+ ```
+
+> [*Additional Configuration*](https://github.com/s41r4j/phomber/blob/main/.more/additional_config.md) same as mentioned in `Manual Installation`
 
 <br>
 <br>
