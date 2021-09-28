@@ -62,7 +62,7 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
 <br>
 <br>
 
- ## Installation (Manually)
+ ## Manually Installation 👨‍🦯
 
  Clone the repo
   
@@ -90,9 +90,9 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
 
 <br>
 
- ## Installation (Automated)
+ ## Automated Installation 🤖
  
- ### Linux / Unix / Mac
+ ### Linux / Unix / Mac 🗃️
  
  - Download `install.sh` from [__HERE__](https://github.com/s41r4j/phomber/releases/download/phomber-v2.0/install.sh) (OR get it from latest [releases](https://github.com/s41r4j/phomber/releases/tag/phomber-v2.0))
  
@@ -102,7 +102,7 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
  ```
  
  
- ### Windows
+ ### Windows 📂
  
  - Download `install.bat` from [__HERE__](https://github.com/s41r4j/phomber/releases/download/phomber-v2.0/install.bat) (OR get it from latest [releases](https://github.com/s41r4j/phomber/releases/tag/phomber-v2.0))
 
@@ -111,12 +111,12 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
  .\install.bat
  ```
 
-> [*Additional Configuration*](https://github.com/s41r4j/phomber/blob/main/.more/additional_config.md) same as mentioned in `Manual Installation`
+> [*Additional Configuration*](https://github.com/s41r4j/phomber/blob/main/.more/additional_config.md) same as mentioned in `Manual Installation` 🪛
 
 <br>
 <br>
 
-## Usage
+## Usage 👨‍💻
 
 > The `PH0MBER` takes [command line arguments](https://www.google.com/search?q=Command+Line+Arguments).
 
@@ -153,7 +153,7 @@ s41r4j@github:~/Desktop/phomber$ python3 phomber.py +001234567890
 <br>
 <br>
 
-## Prerequisites
+## Prerequisites ⚛️
 
 <details>
 <summary>Required</summary>
