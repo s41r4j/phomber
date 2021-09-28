@@ -186,9 +186,9 @@ s41r4j@github:~/Desktop/phomber$ python3 phomber.py +001234567890
 
 <br>
 
-## Support
+## Want to Support?
 
-<a href="https://www.buymeacoffee.com/S41R4J" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/arial-yellow.png" alt="Buy Me A Coffee" style="height: 50px !important;width: 50px !important;"></a>
+<!-- <a href="https://www.buymeacoffee.com/S41R4J" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/arial-yellow.png" alt="Buy Me A Coffee" style="height: 50px !important;width: 50px !important;"></a> -->
 
 <br>
 <br>
