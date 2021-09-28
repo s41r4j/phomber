@@ -173,7 +173,6 @@ s41r4j@github:~/Desktop/phomber$ python3 phomber.py +001234567890
 - OpenCage Account ([create a account here](https://opencagedata.com/users/sign_up)) , for Basic search.
 - Truecaller Account ([create a account here](https://www.truecaller.com/auth/sign-in)) , for Truecaller scan.
     
-<br>
 </details>
 
 <br>
