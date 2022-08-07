@@ -15,6 +15,9 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
 <br>
 
 
+# VERSION 3 ON THE WAY, REACHING IN FEW HOURS, PLEASE WAIT FOR SOME TIME!
+
+
 <details>
 <summary>What is phomber?</summary>
 <br>
@@ -65,96 +68,20 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
 <br>
 <br>
 
- ## Manually Installation 👨‍🦯
 
- Clone the repo
-  
- ```
-  git clone https://github.com/s41r4j/phomber
- ```
- Change the directory
-  
- ```
-  cd phomber
- ```
- Install Requirements 
+
+ ## Installation 
  
- ```
- pip install -r requirements.txt
- ```
-<details>
-<summary>Additional Configuration</summary>
-<br>
+ #### For linux:
  
- - There is a `config.py` file persent in `phomber` folder.
- - Click on '[*Additional Settings*](https://github.com/s41r4j/phomber/blob/main/.more/additional_config.md)' to see how to configure it.
+ `pip install phomber`
  
-</details>
-
-<br>
-
- ## Automated Installation 🤖
+ Usage: 
  
- ### Linux / Unix / Mac 🗃️
- 
- - Download `install.sh` from [__HERE__](https://github.com/s41r4j/phomber/releases/download/phomber-v2.0/install.sh) (OR get it from latest [releases](https://github.com/s41r4j/phomber/releases/tag/phomber-v2.0))
- 
- - Run the following command to install `phomber` & it's `dependencies`
- ```
- bash install.sh
- ```
- 
- 
- ### Windows 📂
- 
- - Download `install.bat` from [__HERE__](https://github.com/s41r4j/phomber/releases/download/phomber-v2.0/install.bat) (OR get it from latest [releases](https://github.com/s41r4j/phomber/releases/tag/phomber-v2.0))
-
- - Run the following command to install `phomber` & it's `dependencies`
- ```
- .\install.bat
- ```
-
-> [*Additional Configuration*](https://github.com/s41r4j/phomber/blob/main/.more/additional_config.md) same as mentioned in `Manual Installation` 🪛
-
-<br>
-<br>
-
-## Usage 👨‍💻
-
-> The `PH0MBER` takes [command line arguments](https://www.google.com/search?q=Command+Line+Arguments).
-
-```
-$ python3 phomber.py +(country code)xxxxxxxxxx
-```
-
-<br>
-
-Example (Linux based):
-```
-s41r4j@github:~/Desktop/phomber$ python3 phomber.py +001234567890
-```
-
-<details>
-<summary>Explaination</summary>
-<br>
+ `phomber <number> -<options>`
          
-- `python3 phomber.py` -  Running phomber script with python3
-- `+001234567890` - Command line argument, the phone number you want to search.
-<details>
-<summary>Phone number breakdown / explained</summary>
-<br>
- 
- - `+00` is [country code](https://en.wikipedia.org/wiki/List_of_country_calling_codes), eg: +1 (Canada, US), +47 (Norway), +91 (India), +86 (China)
- - `1234567890` is the phone number without spaces, dashes & brackets
- 
-<br>
-</details>
-</details>
-
-
-
-<br>
-<br>
+  
+  
 
 ## Prerequisites ⚛️
 
