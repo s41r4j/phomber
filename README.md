@@ -26,13 +26,16 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
 </details>
 
 <details>
-<summary>Search & Scans</summary>
+<summary>Available Scans</summary>
 <br>
  
- - Basic search
- - Advance search (Experimental)
- - Phoneinfoga scan (Optional)
- - Truecaller scan (Comming soon)
+ - Basic Scan
+ - API Scans
+   - abstractapi.com
+   - apilayer.com
+   - findandtrace.com
+   - numlookupapi.com
+   - veriphone.io
  
 <br>
 </details>
@@ -184,10 +187,6 @@ s41r4j@github:~/Desktop/phomber$ python3 phomber.py +001234567890
 > The [Developer](https://github.com/s41r4j/) of [PH0MBER](https://github.com/s41r4j/phomber/) is not responsible for an loss or misuse of the tool, it is end user's responsiblity.
 
 <br>
-
-## Want to Support ❤️ 
-
-🎁 Please check out the [__Google Form__](https://forms.gle/Aqit6QhQTmoYoypD7) 🎁
 
 
 <!-- <a href="https://www.buymeacoffee.com/S41R4J" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/arial-yellow.png" alt="Buy Me A Coffee" style="height: 50px !important;width: 50px !important;"></a> -->
