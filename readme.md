@@ -65,23 +65,59 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
 <br>
 
 
+## Installation & Usage
 
-## Installation 
-
+<details>
+<summary><h3><i>For Unix / Linux</i></h3></summary>
 <br>
  
- ### For Unix/Linux (tested debian):
- 
- `pip install phomber`
- 
- Usage: 
- 
- `phomber <number> -<options>`
+- Now, install `PH0MBER` with ease
+      
+```
+pip install phomber
+```
          
-<br><br>
+- Usage:
+```
+usage: phomber [-h] [-c] [-l] [-a] [-abs] [-lyr] [-fnt] [-nlu]
+               [-vp]
+               [Phone Number]
 
-  ### For Windows:
-  
+PH0MBER — reverse phone number lookup
+
+positional arguments:
+  Phone Number          Phone number to which perform reverse
+                        lookup
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -c, --config_editor   Opens config editor for entering apis
+                        keys
+  -l, --logo            Display random `PH0MBER` logo
+  -a, --all_apis        Run all API scans
+  -abs, --abstractapi   Abstract Api [abstractapi.com]
+  -lyr, --apilayer      Apilayer [apilayer.com]
+  -fnt, --findandtrace  Find and Trace [findandtrace.com]
+  -nlu, --numlookupapi  Numlookup Api [numlookupapi.com]
+  -vp, --veriphone      Veriphone [veriphone.io]
+```
+
+ 
+<br>
+</details>
+
+
+<details>
+<summary><h3><i>For Windows</i></h3></summary>
+<br>
+ 
+Download the `.exe` file 
+ 
+<br>
+</details>
+
+
+
 <br><br>
 ## Prerequisites ⚛️
 
