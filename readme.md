@@ -67,6 +67,8 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
 
 
 ## Installation 
+
+<br>
  
  ### For Unix/Linux (tested debian):
  
@@ -76,10 +78,11 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
  
  `phomber <number> -<options>`
          
-  
+<br><br>
+
   ### For Windows:
   
-
+<br><br>
 ## Prerequisites ⚛️
 
 <details>
