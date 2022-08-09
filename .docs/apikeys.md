@@ -68,18 +68,20 @@ Access `PH0MBER`'s __console based config editor__ with tag `-c` (or `--config_e
   
 | Option | Description |
 :----:|:----:|
-0)> View Data | View the stored / assigned apikeys |
-1)> Edit Data | Takes you to ___[Data Config Editor]()___ |
-2)> Exit Editor | Exit the ___[Data Editor]()___ |
+0)> View Data | View the stored / assigned apikeys (___Config Data Viewer___)|
+1)> Edit Data | Takes you to ___Config Data Editor___, where you can edit the apikey values|
+2)> Exit Editor | Exits the ___Config Editor___ and terminates the program |
   
 </center>
 
 
 
-<br>
+<br><br>
 
-| Config Data Viewer | 
+| ⬇️ Config Data Viewer ⬇️ | 
 :-------------------------:|
+<img src='/.images/pce_vd.png'>|
+| ⬇️ Config Data Editor ⬇️ | 
 <img src='/.images/pce_ed.png'>|
 
 
@@ -87,8 +89,7 @@ Access `PH0MBER`'s __console based config editor__ with tag `-c` (or `--config_e
 
 
 
-
-<br><br>
+<br><br><br>
 ### Register account
 Register and create an account for the follow websites:
 
