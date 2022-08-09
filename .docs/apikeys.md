@@ -1,4 +1,4 @@
-# Setup APIS additional functionality
+# Setup APIs for additional functionality
 
 
 | PH0MBER USAGE MENU | 
@@ -11,8 +11,13 @@
 ### :scroll: Content
 
 - [Introducing API (used in `PH0MBER`)](#bookmark_tabs-introduction)
-- [Configuring API Gateway](#configure-api)
-  - [](#how-to-use-config-editor)
+- [Configuring API Gateway](#computer_mouse-configure-api)
+
+  - [How to use config editor?](#how-to-use-config-editor)
+  - [Register account](#register-account)
+  
+    - [Abstractapi](#abstractapi)
+    
 
 
 
@@ -31,29 +36,32 @@
 
 | Optional Arguments | Description |
 |:---:|:---:|
-| -a | Run all API scans (abstractapi, apilayer, findandtrace, numlookupapi, veriphone)|
+| -a | Run all API scans (mentioned below)|
 | -abs | Just run Abstractapi Scan |
-| -lyr | Just run Abstractapi Scan |
-| -fnt | Just run Abstractapi Scan |
-| -nlu | Just run Abstractapi Scan |
-| -vp | Just run Abstractapi Scan |
+| -lyr | Just run Apilayer Scan |
+| -fnt | Just run Find and Trace Scan |
+| -nlu | Just run Numlookupapi Scan |
+| -vp | Just run Veriphone Scan |
+
+- `PH0MBER` by default runs ___basic scan___ everytime (weather any other scan is active or not)
+
 
 
 
 
 
 <br><br>
-## Configure API 
+## :computer_mouse: Configure API 
 
 ### How to use config editor
 Access `PH0MBER`'s __console based config editor__ with tag `-c` (or `--config_editor`)
 
 |  | 
 :-------------------------:|
-<img src='/.images/usage.png'>|
+<img src='/.images/config_editor.png'>|
 
+<br><br>
+### Register account
+Register and create an account for the follow websites:
 
-
-Register and create an account at the follow websites:
-
-
+#### Abstractapi
