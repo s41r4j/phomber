@@ -66,50 +66,60 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
 
 
 
+
+
+
+
 # 📜 Contents
 <br>
 
 - [Installation](#screwdriver-installation)
 
-    - [For Linux](#for-linux-based-systems)
-    - [For Windows](#for-windows)
+    - [Linux](#card_file_box-linux-based-systems)
+    - [Windows](#open_file_folder-windows)
 
-- [Usage](#usage)
-         
-    - [For Linux](#for-linux-based-systems)
-    - [For Windows](#for-windows)
+- [Usage](#cloud-usage)
+- [Prerequisites](#atom_symbol-prerequisites)
 
 
 <br><br>
 
 
 
+
+
+
+
 # :screwdriver: Installation
 
-## For Linux based systems
 
-- Now, install `PH0MBER` with ease
+## :card_file_box: Linux based systems
+
+- Now, install `PH0MBER` with ease (in _Linux_ or _Unix_ based systems)
       
 ```
 pip install phomber
 ```
          
 
-
-
 <br><br>      
          
-## For Windows
+## :open_file_folder: Windows
  
-Download Windows executable from here [[download now](https://google.com)] 
- 
+- Download Windows executable from here [[download now](https://google.com)] 
+
+- Also check this guide [[redirect to guide]()] for proper `PH0MBER` setup in _Windows_
+
+
+
+
+
 
 
 
 <br><br>
-# Usage
+# :cloud: Usage
 
-- Usage:
 ```
 usage: phomber [-h] [-c] [-l] [-a] [-abs] [-lyr] [-fnt] [-nlu]
                [-vp]
@@ -138,8 +148,10 @@ optional arguments:
 
 
 
+
+
 <br><br>
-## Prerequisites ⚛️
+## :atom_symbol: Prerequisites 
 
 <details>
 <summary>Required</summary>
@@ -152,7 +164,7 @@ optional arguments:
 </details>
 
 <details>
-<summary>Optional</summary>
+<summary>Optional (accounts for apikey)</summary>
 <br>
 
 - [Abstractapi](abstractapi.com)
@@ -164,8 +176,9 @@ optional arguments:
 
 To setup API keys (for above), follow this guide [[redirect to guide]()]
 
-    
 </details>
+
+
 
 <br>
 <br>
