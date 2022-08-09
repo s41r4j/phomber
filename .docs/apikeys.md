@@ -2,6 +2,6 @@
 
 
 
-| USAGE | 
+| PH0MBER USAGE MENU | 
 :-------------------------:|
-<img src='/.images/usage.png'>|
+<img src='/.images/>|
