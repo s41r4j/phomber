@@ -10,13 +10,15 @@
 <br><br>
 ### :scroll: Content
 
-- [Introducing API (used in `PH0MBER`)](#introduction)
+- [Introducing API (used in `PH0MBER`)](#bookmark_tabs-introduction)
 - [Configuring API Gateway](#configure-api)
+  - [](#how-to-use-config-editor)
+
 
 
 
 <br><br>
-## Introduction
+## :bookmark_tabs: Introduction
 
 - __API__ stands for  _Application Programming Interface_
 
@@ -39,14 +41,19 @@
 
 
 
+
 <br><br>
 ## Configure API 
 
+### How to use config editor
+Access `PH0MBER`'s __console based config editor__ with tag `-c` (or `--config_editor`)
+
+|  | 
+:-------------------------:|
+<img src='/.images/usage.png'>|
 
 
 
 Register and create an account at the follow websites:
 
-|  | 
-:-------------------------:|
-<img src='/.images/usage.png'>|
+
