@@ -110,7 +110,7 @@ pip install phomber
 
 - Also check this guide [[redirect to guide]()] for proper `PH0MBER` setup in _Windows_
 
-
+- For ___Windows___ you don't need python or any other kind of installation
 
 
 
@@ -154,11 +154,11 @@ optional arguments:
 ## :atom_symbol: Prerequisites 
 
 <details>
-<summary>Required</summary>
+<summary>Required (for unix/linux sys)</summary>
 <br>
          
 - python3
-- pip (for unix/linux sys)
+- pip
     
 <br>
 </details>
@@ -173,10 +173,11 @@ optional arguments:
 - [Veriphone](veriphone.io)
          
 <br>
-
-To setup API keys (for above), follow this guide [[redirect to guide]()]
-
 </details>
+
+<br>
+
+To setup API gateway, follow this guide [[redirect to guide](/.docs/apikeys.md)]
 
 
 
