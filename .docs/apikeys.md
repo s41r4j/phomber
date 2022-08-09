@@ -19,7 +19,8 @@
 <br><br>
 ## Introduction
 
-To cross check results 
+- Cross verify received details with multiple APIs for accurate results
+- 
 
 
 
