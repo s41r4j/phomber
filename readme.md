@@ -65,18 +65,50 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
 <br>
 
 
-## Installation & Usage
 
-<details>
-<summary><h3><i>For Unix / Linux</i></h3></summary>
+# 📜 Contents
 <br>
- 
+
+- [Installation](#screwdriver-installation)
+
+    - [For Linux](#for-linux-based-systems)
+    - [For Windows](#for-windows)
+
+- [Usage](#usage)
+         
+    - [For Linux](#for-linux-based-systems)
+    - [For Windows](#for-windows)
+
+
+<br><br>
+
+
+
+# :screwdriver: Installation
+
+## For Linux based systems
+
 - Now, install `PH0MBER` with ease
       
 ```
 pip install phomber
 ```
          
+
+
+
+<br><br>      
+         
+## For Windows
+ 
+Download Windows executable from here [[download now](https://google.com)] 
+ 
+
+
+
+<br><br>
+# Usage
+
 - Usage:
 ```
 usage: phomber [-h] [-c] [-l] [-a] [-abs] [-lyr] [-fnt] [-nlu]
@@ -102,19 +134,7 @@ optional arguments:
   -vp, --veriphone      Veriphone [veriphone.io]
 ```
 
- 
-<br>
-</details>
 
-
-<details>
-<summary><h3><i>For Windows</i></h3></summary>
-<br>
- 
-Download the `.exe` file 
- 
-<br>
-</details>
 
 
 
@@ -126,7 +146,7 @@ Download the `.exe` file
 <br>
          
 - python3
-- git
+- pip (for unix/linux sys)
     
 <br>
 </details>
@@ -135,9 +155,15 @@ Download the `.exe` file
 <summary>Optional</summary>
 <br>
 
-- GoLang ([Download Here](https://golang.org/dl/)) , for Phoneinfoga scan.
-- OpenCage Account ([create a account here](https://opencagedata.com/users/sign_up)) , for Basic search.
-- Truecaller Account ([create a account here](https://www.truecaller.com/auth/sign-in)) , for Truecaller scan.
+- [Abstractapi](abstractapi.com)
+- [Apilayer](apilayer.com)
+- [Numlookupapi](numlookupapi.com)
+- [Veriphone](veriphone.io)
+         
+<br>
+
+To setup API keys (for above), follow this guide [[redirect to guide]()]
+
     
 </details>
 
