@@ -16,7 +16,7 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
 
 
 # VERSION 3 ON THE WAY, REACHING IN FEW HOURS, PLEASE WAIT FOR SOME TIME!
-# CURRENTY `pip` IS NOT WORKING
+# CURRENTY `pip` IS UNDER WORK
 
 
 <details>
