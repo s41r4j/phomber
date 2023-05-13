@@ -4,7 +4,7 @@
 
 
 ```
-A Infomation Grathering tool that reverse search phone numbers and get their details !
+An open source infomation grathering (osint) tool w/ multi-scanners!
 ```
 
 <p align=center>
