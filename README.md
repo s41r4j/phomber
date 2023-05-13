@@ -1,15 +1,19 @@
-<img src='/.images/phomber_logo.png'>
+<p align=center>
+         <img src='/.images/phomber_logo.png'>
+</p>
 
 
 ```
 A Infomation Grathering tool that reverse search phone numbers and get their details !
 ```
 
-<a href='https://www.w3schools.in/ethical-hacking/information-gathering-techniques/'><img src="https://img.shields.io/badge/Etical Hacking-Infomation Grathering Tool-yellow.svg?logo=sharp"></a>
-<a href='https://github.com/s41r4j/phomber/releases/'><img src="https://img.shields.io/badge/Version-v2.0-orange.svg?logo=vectorworks"></a>
-<a href='https://www.python.org/'><img src="https://img.shields.io/badge/Python-3-blue.svg?style=flat&logo=python"></a>
-<a href='hhttps://golang.org/'><img src="https://img.shields.io/badge/Golang-Phoneinfoga-9cf.svg?style=flat&logo=go"></a>
-<a href='LICENSE'><img src="https://img.shields.io/badge/License-GPL%20v3.0-brightgreen.svg"></a>
+<p align=center>
+         <a href='https://www.w3schools.in/ethical-hacking/information-gathering-techniques/'><img src="https://img.shields.io/badge/Etical Hacking-Infomation Grathering Tool-yellow.svg?logo=sharp"></a>
+         <a href='https://github.com/s41r4j/phomber/releases/'><img src="https://img.shields.io/badge/Version-v2.0-orange.svg?logo=vectorworks"></a>
+         <a href='https://www.python.org/'><img src="https://img.shields.io/badge/Python-3-blue.svg?style=flat&logo=python"></a>
+         <a href='hhttps://golang.org/'><img src="https://img.shields.io/badge/Golang-Phoneinfoga-9cf.svg?style=flat&logo=go"></a>
+         <a href='LICENSE'><img src="https://img.shields.io/badge/License-GPL%20v3.0-brightgreen.svg"></a>
+</p>
 
          
 <br>
