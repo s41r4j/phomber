@@ -1,5 +1,5 @@
 ## This is an _unreleased_ source code of _ph0mber v3_
-
+> Supports only reverse phone number lookup using various apis
 
 - you can build local version with `python install setup.py`
 - need apikeys in config 
