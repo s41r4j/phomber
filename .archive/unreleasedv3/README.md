@@ -1,4 +1,4 @@
-## This is an unrealsed version of ph0mber v3
+## This is an _unreleased_ source code of _ph0mber v3_
 
 
 - you can build local version with `python install setup.py`
