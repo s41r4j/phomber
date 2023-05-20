@@ -14,4 +14,4 @@
  cd ./phomber/.archive/unreleasedv3
  python3 setup.py install
  ```
-
+- if there is some setuptools error, try running this `sudo python3 setup.py install`
