@@ -2,5 +2,4 @@
 
 - you can build local version with `python install setup.py`
 - need apikeys in config file
-
-> most probally this is not working
+- for testing, clone `
