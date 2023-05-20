@@ -1,6 +1,0 @@
-phonenumbers==8.12.48 
-rich
-geopy==2.2.0
-mechanize==0.4.8 
-bs4==0.0.1 
-pytz==2022.1 
