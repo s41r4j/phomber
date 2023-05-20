@@ -1,0 +1,18 @@
+Metadata-Version: 2.1
+Name: phomber
+Version: 1.0.0
+Summary: nothing
+Home-page: https://github.com/Divinemonk/
+Author: Divinemonk
+Author-email: <v1b7rc8eb@relay.firefox.com>
+License: UNKNOWN
+Description: 
+        nothing
+        
+Keywords: phomber
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: Unix
+Classifier: Operating System :: MacOS :: MacOS X
+Classifier: License :: OSI Approved :: MIT License
+Description-Content-Type: text/markdown
