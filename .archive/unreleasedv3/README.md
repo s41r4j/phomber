@@ -39,3 +39,7 @@ optional arguments:
   -nlu, --numlookupapi  Numlookup Api [numlookupapi.com]
   -vp, --veriphone      Veriphone [veriphone.io]
 ```
+
+<br>
+
+> To uninstall, type `pip uninstall phomber` (use prefix `sudo`, if needed)
