@@ -1,3 +1,0 @@
-[console_scripts]
-phomber = phomber.__main__:run_phomber
-
