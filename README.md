@@ -58,7 +58,7 @@ python3 phomber.py
 ### NOTES:
 ```
 - `PH0MBER` is back with all new features and user interface
-- `v3` has osint tools with no _api_ requirement
+- `v3` has osint tools with no _api key_ requirement
 - Currently this `v3.0-beta` is for testing, try using & report bugs
 ```
 
