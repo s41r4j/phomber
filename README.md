@@ -4,7 +4,7 @@
 
 
 ```
-An open source infomation grathering tool (OSINT) w/ multi-scanners!
+An open source infomation grathering & reconnaissance framework!
 ```
 
 <p align=center>
