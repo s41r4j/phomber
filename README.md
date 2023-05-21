@@ -18,66 +18,49 @@ An open source infomation grathering tool (OSINT) w/ multi-scanners!
 <br>
 
 
+<h1 align=center>PH0MBER: osint framework [v3.0-beta]</h1>
 
 
-## VERSION 3 ON THE WAY! MAKING IT FULL OPEN SOURCE AND WITHOUT A NEED OF USING API KEYS
-## A PLAY & PLUG VERSION WITH ADDED FUNCTIONALITY AND EXTENTED FEATURES
-## THANKYOU FOR WAITING :)
-
-
-<!-- <details>
-<summary>What is phomber?</summary>
-<br>
- 
- - Phomber is one of the best tools available for Infomation Grathering.
- - It reverse searches given number online and retrieves all data available.
- 
-<br>
-</details>
-
-<details>
-<summary>Available Scans</summary>
-<br>
- 
- - Basic Scan
- - API Scans
-   - abstractapi.com
-   - apilayer.com
-   - findandtrace.com
-   - numlookupapi.com
-   - veriphone.io
- 
-<br>
-</details> -->
-
-<!-- <details>
-<summary>Operating Systems Tested</summary>
-<br>
- 
- - [![Supported OS](https://img.shields.io/badge/OS%20X-brightgreen?style=flat&logo=macos)](https://www.google.com/search?q=OS%20X)
- - [![Supported OS](https://img.shields.io/badge/Unix%20%2F%20Linux-blueviolet?style=flat&logo=linux)](https://www.google.com/search?q=Unix+Linux)
- - [![Supported OS](https://img.shields.io/badge/Microsoft%20Windows-red?style=flat&logo=windows)](https://www.google.com/search?q=Windows)
 
 <br>
-</details> -->
 
-<!-- <details>
-<summary>Direct Downloads</summary>
+## What is PH0MBER?
+
+- `PH0MBER` is a tool which is used to gather information about a target which is publicly available
+- Previously `PH0MBER` was a tool which was used to gather information about a phone number, but now it has been upgraded to a _framework_ with many _scanners_
+
+
+
 <br>
- 
- - [zip](https://github.com/s41r4j/phomber/archive/refs/tags/phomber-v2.0.zip)
- - [tar.gz](https://github.com/s41r4j/phomber/archive/refs/tags/phomber-v2.0.tar.gz)
- 
+
+## How to install & use?
+
+### Installation:
+- __git clone__
+```
+git clone https://github.com/s41r4j/phomber
+cd phomber
+pip3 install -r requirements.txt
+```
+
+### Usage:
+- __git clone__ (assuming you are in the `phomber` directory)
+```
+python3 phomber.py
+```
+
+- After ph0mber command line interface is loaded, type `help` to get a list of commands
+- Use `-s` or `--silent` to run the tool in silent mode
+
+
 <br>
-</details> -->
 
-<!-- <a href=''><img src="https://img.shields.io/badge/Disclaimer-Please don't use this tool for unethical purposes-red.svg?logo=hackaday"></a>
-
-> The [Developer](https://github.com/s41r4j/) of [PH0MBER](https://github.com/s41r4j/phomber/) is not responsible for an loss or misuse of the tool, it is end user's responsiblity. -->
-
-<!-- <br>
-<a href="https://www.buymeacoffee.com/S41R4J" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/arial-yellow.png" alt="Buy Me A Coffee" style="height: 50px !important;width: 50px !important;"></a> -->
-
+### NOTES:
+```
+- `PH0MBER` is back with all new features and user interface
+- `v3` has osint tools with no _api_ requirement
+- Currently this `v3.0-beta` is for testing, try using & report bugs
+```
 
 
 
