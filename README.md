@@ -58,8 +58,9 @@ python3 phomber.py
 phomber
 ```
 
-- After ph0mber command line interface is loaded, type `help` to get a list of commands
 - Use `-s` or `--silent` to run the tool in silent mode
+- After ph0mber command line interface is loaded, type `help` to get a list of commands
+![helpmenu](/.images/helpmenu.png)
 
 
 <br>
