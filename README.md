@@ -1,5 +1,5 @@
 <p align=center>
-         <img src='/.images/phomber_logo.png'>
+         <img src='.images/phomber_logo.png'>
 </p>
 
 
@@ -42,6 +42,10 @@ git clone https://github.com/s41r4j/phomber
 cd phomber
 pip3 install -r requirements.txt
 ```
+- __pip__
+```
+pip install phomber
+```
 
 ### Usage:
 - __git clone__ (assuming you are in the `phomber` directory)
@@ -49,11 +53,17 @@ pip3 install -r requirements.txt
 python3 phomber.py
 ```
 
+- __pip__
+```
+phomber
+```
+
 - After ph0mber command line interface is loaded, type `help` to get a list of commands
 - Use `-s` or `--silent` to run the tool in silent mode
 
 
 <br>
+
 
 ### NOTES:
 ```
