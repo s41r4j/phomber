@@ -17,7 +17,6 @@ An open source infomation grathering & reconnaissance framework!
       
 <br>
 
-
 <h1 align=center>PH0MBER: osint framework [v3.0-beta]</h1>
 
 
@@ -33,7 +32,7 @@ An open source infomation grathering & reconnaissance framework!
 
 <br>
 
-## How to install & use?
+## Install & Usage: A Quick Guide
 
 ### Installation:
 - __git clone__
@@ -57,14 +56,43 @@ python3 phomber.py
 ```
 phomber
 ```
-
 - Use `-s` or `--silent` to run the tool in silent mode
 - After ph0mber command line interface is loaded, type `help` to get a list of commands
-![helpmenu](/.images/helpmenu.png)
+
+```
+    ┌────────────────────────────────────────────────────┐
+    | COMMANDS      | DESCRIPTION                        |
+    |----------------------------------------------------|
+    |                <Basic Commands>                    |
+    |----------------------------------------------------|
+    | help          | Display this help menu             | 
+    | exit/quit     | Exit the framework                 |
+    | dork          | Show a random google dork query *  |  
+    | exp           | Show info about all available      |       
+    |               | expressions                        |
+    | check         | Check internet connection          |
+    | clear         | Clear screen                       |
+    | save          | Save output of previous scanner    |
+    |               | command in a file                  |
+    | shell <cmd>   | Execute native shell/cmd commands  |
+    | info          | Show info about framework & system |
+    | change        | Change user command input color    |
+    |----------------------------------------------------|
+    |                 <Scanner Commands>                 |
+    |----------------------------------------------------|
+    | number        | Reverse phone number lookup *      |
+    | ip            | Reverse ip address lookup *        |
+    | mac           | Reverse mac address lookup         |
+    | whois         | Reverse whois lookup *             |
+    | dns           | Reverse or normal DNS lookup       |
+    |----------------------------------------------------|
+    | MORE SCANNERS COMING SOON, THIS IS A BETA VER      |
+    └────────────────────────────────────────────────────┘
+```
+
 
 
 <br>
-
 
 ### NOTES:
 ```
@@ -72,8 +100,6 @@ phomber
 - `v3` has osint tools with no _api key_ requirement
 - Currently this `v3.0-beta` is for testing, try using & report bugs
 ```
-
-
 
 <br>
 <hr>
