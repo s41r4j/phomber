@@ -2,12 +2,13 @@
 
 #==============================================================================#
 #                                                                              #
-# [prog]   : Ph0mber                                                           #
-# [ver]    : 3.0 beta                                                          #
-# [desc]   : Multi-porpose osint framework for gathering information           #
+# [prog]   : PH0MBER                                                           #
+# [ver]    : 3.0.2 beta                                                        #
+# [desc]   : An open source infomation grathering & reconnaissance framework!  #
 # [dev]    : @s41r4j                                                           #
-# [github] : https://github.com/s41r4j/phomber                                 #
 # [license]: GNU GPLv3                                                         #
+# [github] : https://github.com/s41r4j/phomber                                 #
+# [pypi]   : https://pypi.org/project/phomber/                                 #
 #                                                                              #
 #==============================================================================#
 
@@ -35,23 +36,30 @@ import random        # Default
 import time          # Default
 import readline      # Default
 import re            # Default
+import uuid          # Default
+import socket        # Default
 import psutil        # pip install psutil
 import bs4           # pip install beautifulsoup4
 import phonenumbers  # pip install phonenumbers
+from mac_vendor_lookup import MacLookup # pip install mac-vendor-lookup
+import whois         # pip install python-whois
+import dns.resolver  # pip install dnspython
 
 
 # ------------------------ Global variables ------------------------ #
-avaliable_commands = ['help', 'exit', 'quit', 'dork', 'exp', 'check', 'clear', 'save', 'shell', 'info', 'change', 'number', 'ip']
+avaliable_commands = elements = ['change', 'check', 'clear', 'dork', 'dns', 'exit', 'exp', 'help', 'info', 'ip', 'mac', 'number', 'quit', 'save', 'shell', 'whois']
 prv_op = ''
+full_cmd = ''
 silent_mode = False
 
-
 # ------------------------ Scanner functions ------------------------ #
+
 # Check internet connection
-def check_connection(url):
+def check_connection():
     # Checking internet connection
+    urls = ['https://google.com', 'https://bing.com']
     try:
-        requests.get(url, timeout=10)
+        requests.get(random.choice(urls), timeout=10)
         return True
     except:
         return False
@@ -69,12 +77,11 @@ def number_lookup(phone_number):
 
     # Information gathering about the number
     printit(f'    [+] Grathering information about \33[1;49;96m{phone_number}\33[1;49;93m...', coledt=[1, 49, 93], space_down=True)
-    prv_op += f'\n    \33[1;49;93m[#] Reverse phone number lookup for \33[1;49;96m{phone_number}\33[1;49;93m:\033[0m'+'\n'
+    prv_op += f'\n    \33[1;49;93m[#] Reverse phone number lookup for \33[1;49;96m{phone_number}\33[1;49;93m:\033[0m'+'\n\n'
 
     # Check if the number is valid or not (regex)
     if not re.match(r'^\+[1-9]\d{1,14}$', phone_number):
         printit('    > Invalid phone number format! (Example: +44xxxxxxxxxx)', coledt=[1, 49, 91])
-        prv_op += '    > Invalid phone number format! (Example: +44xxxxxxxxxx)'+'\n'
         return False
     
     # Country code check
@@ -83,7 +90,6 @@ def number_lookup(phone_number):
         phone_number_details = phonenumbers.parse(phone_number)
     except phonenumbers.phonenumberutil.NumberParseException:
         printit('    > Missing Country Code! (Example: +91, +44, +1)', coledt=[1, 49, 91])
-        prv_op += '    > Missing Country Code! (Example: +91, +44, +1)'+'\n'
         return False
 
     # extract country_code & only_number from "Country Code: xx National Number: xxxxxxxxxx"
@@ -134,6 +140,8 @@ def number_lookup(phone_number):
         # Printing information
         final_output = f'''
     ┌──────────────────────────────────────────────────────┐
+    | Scanned Phone Number: \33[1;49;96m{phone_number}\033[0m |
+    |------------------------------------------------------|
     | INFORMATION         | DESCRIPTION                    |
     |------------------------------------------------------|
     | \33[1;49;97mPossible\033[0m            | {possible} |
@@ -172,15 +180,21 @@ def number_lookup(phone_number):
         print(google_dork_queries)
         prv_op += google_dork_queries+'\n'
 
+        # Scanning social media platforms
+        printit(f'    [+] Scanning social media platforms:', coledt=[1, 49, 93], space_down=True)
+
         return True
         
     else:
         # Reconfiguring variables
         possible = str(possible)+' '*int(30-len(str(possible)))
         valid = str(valid)+' '*int(30-len(str(valid)))
+        phone_number = str(phone_number)+' '*int(30-len(str(phone_number)))
 
         final_output = f'''
     ┌──────────────────────────────────────────────────────┐
+    | Scanned Phone Number: \33[1;49;96m{phone_number}\033[0m |
+    |------------------------------------------------------|
     | INFORMATION         | DESCRIPTION                    |
     |------------------------------------------------------|
     | \33[1;49;97mPossible\033[0m            | {possible} |
@@ -199,20 +213,18 @@ def ip_lookup(ip_address):
     
     # Checking internet connection
     printit(f'    [+] Verifying internet connection...', coledt=[1, 49, 93], space_down=True)
-    if not check_connection('https://www.google.com'):
+    if not check_connection():
         printit('    > Internet connection not available!', coledt=[1, 49, 91], space_down=True)
-        prv_op += '\n    \33[1;49;91m> Internet connection not available!\033[0m'+'\n'
         return False
 
     # Information gathering about the ip address
     printit(f'    [+] Grathering information about \33[1;49;96m{ip_address}\33[1;49;93m...', coledt=[1, 49, 93], space_down=True)
-    prv_op += f'    \33[1;49;93m[#] Reverse ip address lookup for \33[1;49;96m{ip_address}\33[1;49;93m:\033[0m'+'\n'
+    prv_op += f'    \33[1;49;93m[#] Reverse ip address lookup for \33[1;49;96m{ip_address}\33[1;49;93m:\033[0m'+'\n\n'
 
     # Check if the ip address is valid or not (regex) [add IPv6 support]
     if not re.match(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$', ip_address) :
         printit('    > Invalid ip address format! (Example: 8.8.8.8)', coledt=[1, 49, 91])
-        prv_op += '   \33[1;49;91m> Invalid ip address format! (Example: 8.8.8.8)\033[0m'+'\n'
-        return 
+        return False
 
     # IP address lookup APIs
     ip_addresses = [f'http://ip-api.com/json/{ip_address}', f'https://ipapi.co/{ip_address}/json/', f'http://ipwho.is/{ip_address}']
@@ -268,7 +280,6 @@ def ip_lookup(ip_address):
             final_output = f'''
     ┌──────────────────────────────────────────────────────┐
     | Scanned IP Address: \33[1;49;96m{ip_address}\033[0m   |
-    | Server code name  : \33[1;49;96mreverse-ip-lookup-server-1\033[0m       |
     |------------------------------------------------------|
     | INFORMATION         | DESCRIPTION                    |
     |------------------------------------------------------|
@@ -295,7 +306,6 @@ def ip_lookup(ip_address):
             final_output = f'''
     ┌──────────────────────────────────────────────────────┐
     | Scanned IP Address: \33[1;49;96m{ip_address}\033[0m   |
-    | Server code name  : \33[1;49;96mreverse-ip-lookup-server-1\033[0m       |
     |------------------------------------------------------|
     | \33[1;49;91mFailed to Fetch information from this server!\033[0m        |
     └──────────────────────────────────────────────────────┘
@@ -375,7 +385,6 @@ def ip_lookup(ip_address):
             final_output = f'''
     ┌──────────────────────────────────────────────────────┐
     | Scanned IP Address: \33[1;49;96m{ip_address}\033[0m   |
-    | Server code name  : \33[1;49;96mreverse-ip-lookup-server-2\033[0m       |
     |------------------------------------------------------|
     | INFORMATION         | DESCRIPTION                    |
     |------------------------------------------------------|
@@ -418,7 +427,6 @@ def ip_lookup(ip_address):
             final_output = f'''
     ┌──────────────────────────────────────────────────────┐
     | Scanned IP Address: \33[1;49;96m{ip_address}\033[0m   |
-    | Server code name  : \33[1;49;96mreverse-ip-lookup-server-2\033[0m       |
     |------------------------------------------------------|
     | \33[1;49;91mFailed to Fetch information from this server!\033[0m        |
     └──────────────────────────────────────────────────────┘
@@ -502,7 +510,6 @@ def ip_lookup(ip_address):
             final_output = f'''
     ┌──────────────────────────────────────────────────────┐
     | Scanned IP Address: \33[1;49;96m{ip_address}\033[0m   |
-    | Server code name  : \33[1;49;96mreverse-ip-lookup-server-3\033[0m       |
     |------------------------------------------------------|
     | INFORMATION         | DESCRIPTION                    |
     |------------------------------------------------------|
@@ -545,7 +552,6 @@ def ip_lookup(ip_address):
             final_output = f'''
     ┌──────────────────────────────────────────────────────┐
     | Scanned IP Address: \33[1;49;96m{ip_address}\033[0m   |
-    | Server code name  : \33[1;49;96mreverse-ip-lookup-server-3\033[0m       |
     |------------------------------------------------------|
     | \33[1;49;91mFailed to Fetch information from this server!\033[0m        |
     └──────────────────────────────────────────────────────┘
@@ -555,6 +561,179 @@ def ip_lookup(ip_address):
 
     return True
 
+# Reverse mac address lookup
+def mac_lookup(mac_address):
+    # https://api.macvendors.com/<mac_address>
+    
+    # Global variables
+    global prv_op
+    prv_op = '' # Resetting previous output
+
+    # Information gathering about the mac address
+    printit(f'    [+] Grathering information about \33[1;49;96m{mac_address}\33[1;49;93m...', coledt=[1, 49, 93], space_down=True)
+    prv_op += f'    \33[1;49;93m[#] Reverse mac address lookup for \33[1;49;96m{mac_address}\33[1;49;93m:\033[0m'+'\n\n'
+
+    # Check if the mac address is valid or not (regex)
+    if not re.match(r'^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$', mac_address) :
+        printit('    > Invalid mac address format! (Example: 00:00:00:00:00:00)', coledt=[1, 49, 91])
+        return False
+
+    # Getting mac address vendor
+    try:
+        vendor = MacLookup().lookup(mac_address)
+        bol_val = True
+    except KeyError:
+        vendor = '\33[1;49;91mNot Found\033[0m'
+        bol_val = False
+
+    # Reconfiguring variables
+    mac_address = str(mac_address)+' '*int(31-len(str(mac_address)))
+    vendor = str(vendor)+' '*int(36-len(str(vendor)))
+
+    # Printing information
+    final_output = f'''
+    ┌──────────────────────────────────────────────────────┐
+    | Scanned MAC Address: \33[1;49;96m{mac_address}\033[0m |
+    |------------------------------------------------------|
+    | INFORMATION   | DESCRIPTION                          |
+    |------------------------------------------------------|
+    | \33[1;49;97mVendor\033[0m        | {vendor} |
+    └──────────────────────────────────────────────────────┘
+    '''
+    print(final_output)
+    prv_op += final_output+'\n'
+
+    return bol_val
+
+# Reverse whois lookup
+def whois_lookup(domain):
+    # Global variables
+    global prv_op
+    prv_op = '' # Resetting previous output
+
+    # Checking internet connection
+    printit(f'    [+] Verifying internet connection...', coledt=[1, 49, 93], space_down=True)
+    if not check_connection():
+        printit('    > Internet connection not available!', coledt=[1, 49, 91], space_down=True)
+        return False
+
+    # Information gathering about the domain
+    printit(f'    [+] Grathering information about \33[1;49;96m{domain}\33[1;49;93m...', coledt=[1, 49, 93], space_down=True)
+    prv_op += f'    \33[1;49;93m[#] Reverse whois lookup for \33[1;49;96m{domain}\33[1;49;93m:\033[0m'+'\n\n'
+
+    # Domain validation (regex)
+    if not re.match(r'^([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*\.)+[a-zA-Z]{2,}$', domain) :
+        printit('    > Invalid domain format! (Example: example.com)', coledt=[1, 49, 91])
+        return False
+
+    # Getting whois information
+    try:
+        whois_info = whois.whois(domain)
+        bol_val = True
+    except:
+        bol_val = False
+
+    # Reconfiguring variables
+    domain = str(domain)+' '*int(36-len(str(domain)))
+
+    # Printing information
+    final_output = f'''
+    ┌──────────────────────────────────────────────────────┐
+    | Scanned Domain: \33[1;49;96m{domain}\033[0m |
+    |------------------------------------------------------|
+    | INFORMATION   | DESCRIPTION                          |
+    |------------------------------------------------------|'''
+
+    # If whois information is available
+    if bol_val:
+        # Loop through whois information & add it to the final output
+        for key, value in whois_info.items():
+            # Filtering out some keys
+            if key == 'status': continue
+            if key == 'expiration_date': key = 'expiry_date'
+            if key == 'registrant_postal_code': key = 'postal_code'
+
+            # Reconfiguring variables
+            key = key.replace('_', ' ').capitalize()
+
+            # Adding formatted information to the final output
+            if type(value) == list:
+                key = str(key)+' '*int(13-len(str(key)))
+                value_1 = str(value[0])+' '*int(36-len(str(value[0])))
+                final_output += f'''\n    | \33[1;49;97m{key}\033[0m | {value_1} |'''
+                if len(value) > 1:
+                    for i in range(1, len(value)):
+                        value_2 = str(value[i])+' '*int(36-len(str(value[i])))
+                        final_output += f'''\n    |               | {value_2} |'''
+            else:
+                key = str(key)+' '*int(13-len(str(key)))
+                value = str(value)+' '*int(36-len(str(value)))
+                final_output += f'''\n    | \33[1;49;97m{key}\033[0m | {value} |'''            
+    else:
+        final_output += f'''\n    | \33[1;49;97mInformation\033[0m   | \33[1;49;91mNot Found\033[0m{' '*int(36-len('Not Found'))} |'''
+
+    # Add the last part of the final output
+    final_output += f'''\n    └──────────────────────────────────────────────────────┘'''
+
+    print(final_output)
+    prv_op += final_output+'\n'
+
+    return bol_val
+
+# Reverse domain lookup
+def dns_lookup(ip_or_domain):
+    # Global variables
+    global prv_op
+    prv_op = '' # Resetting previous output
+
+    # Checking internet connection
+    printit(f'    [+] Verifying internet connection...', coledt=[1, 49, 93], space_down=True)
+    if not check_connection():
+        printit('    > Internet connection not available!', coledt=[1, 49, 91], space_down=True)
+        return False
+
+    # Information gathering about the domain    
+    printit(f'    [+] Grathering information about \33[1;49;96m{ip_or_domain}\33[1;49;93m...', coledt=[1, 49, 93], space_down=True)
+
+    # Validating ip address or domain name (regex)
+    if re.match(r'^([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*\.)+[a-zA-Z]{2,}$', ip_or_domain):
+        prv_op += f'    \33[1;49;93m[#] DNS lookup for \33[1;49;96m{ip_or_domain}\33[1;49;93m:\033[0m'+'\n\n'
+        domain = ip_or_domain + ' '*int(36-len(ip_or_domain))
+        final_output_scanned = f'    | Scanned Domain: \33[1;49;96m{domain}\033[0m |'
+        try:
+            ip = socket.gethostbyname(ip_or_domain)
+            ip = str(ip)+' '*int(36-len(str(ip)))
+        except:
+            ip = '\33[1;49;91mNot Found\033[0m' + ' '*int(36-len('Not Found'))
+    elif re.match(r'^([0-9]{1,3}\.){3}[0-9]{1,3}$', ip_or_domain):
+        prv_op += f'    \33[1;49;93m[#] Reverse DNS lookup for \33[1;49;96m{ip_or_domain}\33[1;49;93m:\033[0m'+'\n\n'
+        ip = ip_or_domain + ' '*int(36-len(ip_or_domain))
+        final_output_scanned = f'    | Scanned IP: \33[1;49;96m{ip}\033[0m     |'
+        try:
+            domain = socket.gethostbyaddr(ip_or_domain)[0]
+            domain = str(domain)+' '*int(36-len(str(domain)))
+        except:
+            domain = '\33[1;49;91mNot Found\033[0m' + ' '*int(36-len('Not Found'))
+    else:
+        printit('    > Invalid ip address or domain name!', coledt=[1, 49, 91], space_down=True)
+        return False
+
+    # Expcepts: socket.gaierror, socket.herror
+
+    # Printing information
+    final_output_remaining = f'''
+    |------------------------------------------------------|
+    | INFORMATION   | DESCRIPTION                          |
+    |------------------------------------------------------|
+    | \33[1;49;97mIP\033[0m            | {ip} |
+    | \33[1;49;97mDomain\033[0m        | {domain} |
+    └──────────────────────────────────────────────────────┘
+    '''
+
+    print('\n    ┌──────────────────────────────────────────────────────┐\n'+final_output_scanned+final_output_remaining)
+    prv_op += '\n    ┌──────────────────────────────────────────────────────┐'+'\n'+final_output_scanned+final_output_remaining
+
+    return True
 
 # --------------------------- Basic functions ------------------------ #
 
@@ -577,6 +756,11 @@ def printit(text, center='', line_up=False, line_down=False, space_up=False, spa
             else: print(str(text), end='')
             print('\033[0m', end='')
             print(center*new_width)
+        else:
+            print(f'\33[{coledt[0]};{coledt[1]};{coledt[2]}m', end='')
+            if input_mode: input_var = input(text)
+            else: print(str(text), end='')
+            print('\033[0m', end='')
 
         print(normaltxt_end, end='')
 
@@ -587,7 +771,7 @@ def printit(text, center='', line_up=False, line_down=False, space_up=False, spa
 
 def save_output(prv_cmd):
     try:
-        filename = prv_cmd+'_'+str(time.strftime("%d-%m-%Y_%H-%M-%S"))+'.txt'
+        filename = prv_cmd+'_ph0mber_'+str(time.strftime("%d-%m-%Y_%H-%M-%S"))+'.txt'
         pwd = os.getcwd()
         os_name = os.uname()
         path = pwd+'/'+filename
@@ -597,18 +781,30 @@ def save_output(prv_cmd):
     \33[1;49;93m[#] Output File Path: \33[1;49;97m{path}\033[0m
         '''
         print(file_save_info)
+    
+        header = f'''
+    \33[1;49;93m[@] Osint framework: \33[1;49;96mPH0MBER
+    \33[1;49;93m[@] Github: \33[1;49;96mhttps://github.com/s41r4j/phomber
+
+    \33[1;49;93m[#] Output File Name: \33[1;49;97m{filename}
+    \33[1;49;93m[#] Output File Path: \33[1;49;97m{path}
+    \33[1;49;93m[#] Date: \33[1;49;97m{str(time.strftime("%d-%m-%Y"))}
+    \33[1;49;93m[#] Time: \33[1;49;97m{str(time.strftime("%H:%M:%S"))}
+
+    \33[1;49;93m[#] Command Executed: \33[1;49;96m{full_cmd.strip()}\n'''
 
         with open(path, 'w') as f:
+            f.write(header)
             f.write(prv_op)
     
         printit(f'    [+] Excute following commands to view output:', coledt=[1, 49, 93], space_down=True, space_up=True)
         
         if os_name == 'nt':
-            exe_cmd = f'''    \33[1;49;92m> shell more {path}\033[0m
-    \33[1;49;92m> shell type {path}\033[0m'''
+            exe_cmd = f'''    \33[1;49;93m> \33[1;49;92mshell more {filename}\033[0m
+    \33[1;49;93m> \33[1;49;92mshell type {filename}\033[0m'''
         else:
-            exe_cmd = f'''    \33[1;49;92m> shell cat {path}\033[0m
-    \33[1;49;92m> shell less {path}\033[0m'''
+            exe_cmd = f'''    \33[1;49;93m> \33[1;49;92mshell cat {filename}\033[0m
+    \33[1;49;93m> \33[1;49;92mshell less {filename}\033[0m'''
         print(exe_cmd)
 
         return True
@@ -708,8 +904,10 @@ def control_center():
     ram = '\33[1;49;96m'+str(psutil.virtual_memory().percent)+"%"+'\033[0m'+' '*int(33-len(str(psutil.virtual_memory().percent)))
     cpu = '\33[1;49;96m'+str(psutil.cpu_percent())+"%"+'\033[0m'+' '*int(32-len(str(psutil.cpu_percent())))
     disk = '\33[1;49;96m'+str(psutil.disk_usage('/').percent)+"%"+'\033[0m'+' '*int(33-len(str(psutil.disk_usage('/').percent)))
+    sys_mac = '\33[1;49;96m'+str(':'.join(re.findall('..', '%012x' % uuid.getnode())))+'\033[0m'+' '*int(34-len(str(':'.join(re.findall('..', '%012x' % uuid.getnode())))))
+    arch = '\33[1;49;96m'+str(os.uname().machine)+'\033[0m'+' '*int(34-len(str(os.uname().machine)))
 
-    ver = '\33[1;49;96m3.0 beta\033[0m'+' '*int(34-len(str(3.0)))
+    ver = '\33[1;49;96m3.0.2 (beta)\033[0m'+' '*int(34-len(str('3.0.2 (beta)')))
 
     sysinfo = f'''
     ┌────────────────────────────────────────────────────┐
@@ -718,6 +916,9 @@ def control_center():
     | \33[1;49;97mUser\033[0m          | {user} |
     | \33[1;49;97mHostname\033[0m      | {hostname} |
     | \33[1;49;97mOS\033[0m            | {os_name} |
+    | \33[1;49;97mArchitecture\033[0m  | {arch} |
+    | \33[1;49;97mSystem MAC\033[0m    | {sys_mac} |
+    |----------------------------------------------------|
     | \33[1;49;97mRAM Usage\033[0m     | {ram} |
     | \33[1;49;97mCPU Usage\033[0m     | {cpu} |
     | \33[1;49;97mDisk Usage\033[0m    | {disk} |
@@ -728,8 +929,8 @@ def control_center():
     |----------------------------------------------------|
     | \33[1;49;97mName\033[0m          | \33[1;49;96mPH0MBER\033[0m                            |
     | \33[1;49;97mVersion\033[0m       | {ver} |
-    | \33[1;49;97mType\033[0m          | \33[1;49;96mOSINT\033[0m                              |
-    | \33[1;49;97mAuthor\033[0m        | \33[1;49;96ms41r4j\033[0m                             |
+    | \33[1;49;97mType\033[0m          | \33[1;49;96mOSINT Framework\033[0m                    |
+    | \33[1;49;97mDeveloper\033[0m     | \33[1;49;96ms41r4j\033[0m                             |
     | \33[1;49;97mGithub\033[0m        | \33[1;49;96mhttps://github.com/s41r4j/phomber\033[0m  |
     └────────────────────────────────────────────────────┘
     '''
@@ -742,7 +943,7 @@ def control_center():
     |----------------------------------------------------|
     | \33[1;49;97mhelp\033[0m          | Display this help menu             | 
     | \33[1;49;97mexit/quit\033[0m     | Exit the framework                 |
-    | \33[1;49;97mdork\033[0m          | Show a random google dork query    |  
+    | \33[1;49;97mdork\033[0m          | Show a random google dork query *  |  
     | \33[1;49;97mexp\033[0m           | Show info about all available      |       
     |               | expressions                        |
     | \33[1;49;97mcheck\033[0m         | Check internet connection          |
@@ -755,18 +956,27 @@ def control_center():
     |----------------------------------------------------|
     |                 <Scanner Commands>                 |
     |----------------------------------------------------|
-    | \33[1;49;97mnumber\033[0m        | Reverse phone number lookup        |
-    | \33[1;49;97mip\033[0m            | Reverse ip address lookup          |
+    | \33[1;49;97mnumber\033[0m        | Reverse phone number lookup *      |
+    | \33[1;49;97mip\033[0m            | Reverse ip address lookup *        |
+    | \33[1;49;97mmac\033[0m           | Reverse mac address lookup         |
+    | \33[1;49;97mwhois\033[0m         | Reverse whois lookup *             |
+    | \33[1;49;97mdns\033[0m           | Reverse or normal DNS lookup       |
+    |----------------------------------------------------|
     | \33[1;49;91mMORE SCANNERS COMING SOON, THIS IS A BETA VER\033[0m      |
     └────────────────────────────────────────────────────┘
+    '''
 
-    \33[1;49;93m> Type `help <command>` to see more info about a command\033[0m
-    \33[1;49;93m> Use `Tab` key to auto-complete commands\033[0m
-    \33[1;49;93m> Try silent mode by using `-s`/`--silent` flag\033[0m'''
+    tips = ['Type `\33[7;49;93mhelp <command>\033[0m\33[1;49;93m` to see more info about a command',
+            'Use `\33[7;49;93mTab\033[0m\33[1;49;93m` key to auto-complete commands',
+            'Try silent mode by using `\33[7;49;93m-s\033[0m\33[1;49;93m`/`\33[7;49;93m--silent\033[0m\33[1;49;93m` flag',
+            'You can also use `\33[7;49;93mCtrl+C\033[0m\33[1;49;93m` to exit',
+            'Descriptions ending with `\33[7;49;93m*\033[0m\33[1;49;93m` needs internet connection'
+            ]
 
     # Previous command
     prv_cmd = ''
-    global prv_op
+    global prv_op 
+    global full_cmd
 
     # Setting up auto-complete
     readline.parse_and_bind('tab: complete')
@@ -779,12 +989,14 @@ def control_center():
     # Control center loop
     while True:
         # [user@phomber]⸺[:D] $
-        cmd = (printit(f'\n[{user.strip()}@ph0mber]⸺ [{crt_exp}] $ {crt_color}', input_mode=True, space_up=True)).strip()
+        cmd = (printit(f'\n\033[0m[{user.strip()}@ph0mber]⸺ [{crt_exp}] $ {crt_color}', input_mode=True, space_up=True)).strip()
 
         if cmd == 'help':
             crt_exp = exp[1]
             prv_op = ''
             print(help)
+            tip = random.choice(tips)
+            print(f'\33[1;49;93m    > {tip}\033[0m')
         elif cmd[:4] == 'help':
             if (cmd+'#')[4] == ' ':
                 cmd = cmd[5:]
@@ -868,27 +1080,43 @@ def control_center():
                 elif cmd == 'number':
                     crt_exp = exp[1]
                     number_help = '''  \33[1;49;93m[+] Command Info: \33[1;49;93mnumber\n
-    \33[1;49;92m> DESCRIPTION: \33[1;49;97mWhen you type `number`, it will perform reverse phone number lookup
+    \33[1;49;92m> DESCRIPTION: \33[1;49;97mWhen you type `number`, it will reverse lookup phone number over internet and show public info associated with it
     \33[1;49;92m> SYNTAX: \33[1;49;97mnumber <phone_number>
     \33[1;49;92m> EXAMPLE: \33[1;49;97mnumber +1234567890
     \033[0m'''
                     print(number_help)
-                elif cmd == 'email':
+                elif cmd == 'whois':
                     crt_exp = exp[1]
-                    email_help = f'''  \33[1;49;93m[+] Command Info: \33[1;49;93memail\n
-    \33[1;49;92m> DESCRIPTION: \33[1;49;97mWhen you type `email`, it will perform reverse email lookup
-    \33[1;49;92m> SYNTAX: \33[1;49;97memail <email_address>
-    \33[1;49;92m> EXAMPLE: \33[1;49;97memail {user.strip()}\33[1;49;96m@gmail.com
+                    whois_help = '''  \33[1;49;93m[+] Command Info: \33[1;49;93mwhois\n
+    \33[1;49;92m> DESCRIPTION: \33[1;49;97mWhen you type `whois`, it will perform reverse whois lookup
+    \33[1;49;92m> SYNTAX: \33[1;49;97mwhois <domain_name>
+    \33[1;49;92m> EXAMPLE: \33[1;49;97mwhois example.com
     \033[0m'''
-                    print(email_help)
+                    print(whois_help)
+                elif cmd == 'dns':
+                    crt_exp = exp[1]
+                    dns_help = '''  \33[1;49;93m[+] Command Info: \33[1;49;93mdns\n
+    \33[1;49;92m> DESCRIPTION: \33[1;49;97mWhen you type `dns`, it will perform dns lookup for given domain name or reverse dns lookup for given ip address
+    \33[1;49;92m> SYNTAX: \33[1;49;97mdns <ip_address/domain_name>
+    \33[1;49;92m> EXAMPLE: \33[1;49;97mdns 192.168.1.1 \33[1;49;92mOR \33[1;49;97mdns example.com
+    \033[0m'''
+                    print(dns_help)
                 elif cmd == 'ip':
                     crt_exp = exp[1]
                     ip_help = '''  \33[1;49;93m[+] Command Info: \33[1;49;93mip\n
-    \33[1;49;92m> DESCRIPTION: \33[1;49;97mWhen you type `ip`, it will perform reverse ip address lookup
+    \33[1;49;92m> DESCRIPTION: \33[1;49;97mWhen you type `ip`, it will perform an ip address lookup over internet and show info about given ip address
     \33[1;49;92m> SYNTAX: \33[1;49;97mip <ip_address>
     \33[1;49;92m> EXAMPLE: \33[1;49;97mip 8.8.8.8
     \033[0m'''
                     print(ip_help)
+                elif cmd == 'mac':
+                    crt_exp = exp[1]
+                    mac_help = '''  \33[1;49;93m[+] Command Info: \33[1;49;93mmac\n
+    \33[1;49;92m> DESCRIPTION: \33[1;49;97mWhen you type `mac`, it will lookup probable vendor/manufacture of given mac address
+    \33[1;49;92m> SYNTAX: \33[1;49;97mmac <mac_address>
+    \33[1;49;92m> EXAMPLE: \33[1;49;97mmac ff:ff:ff:ff:ff:ff
+    \033[0m'''
+                    print(mac_help)
                 else:
                     crt_exp = exp[3]
                     printit('    [!] Invalid sub-command! Type `help` to see all available commands.', coledt=[1, 49, 91])
@@ -899,7 +1127,8 @@ def control_center():
 
         # Basic commands
         elif cmd == 'exit' or cmd == 'quit':
-            printit('    [@] Thank you for using `PH0MBER` osint framework :)', coledt=[1, 49, random.choice([92, 96, 97])])
+            if not silent_mode: printit('    [@] Thank you for using `PH0MBER` osint framework :)', coledt=[1, 49, random.choice([92, 96, 97])])
+            # printit('    [@] Support this project: https://www.buymeacoffee.com/s41r4j', coledt=[1, 49, random.choice([92, 97])])
             raise KeyboardInterrupt
         elif cmd == 'dork':
             crt_exp = exp[1]
@@ -963,7 +1192,7 @@ def control_center():
                     printit('> Command executed successfully!', coledt=[7, 49, 92], normaltxt_start='\n    ')
                     crt_exp = exp[0]
                 else:
-                    printit('\n    > Command execution failed!', coledt=[1, 49, 91])
+                    printit('> Command execution failed!', coledt=[7, 49, 91], normaltxt_start='\n    ')
                     crt_exp = exp[3]
             else:
                 crt_exp = exp[3]
@@ -1001,6 +1230,7 @@ def control_center():
             crt_exp = exp[2]
             printit('    > No phone number found! Type `help number` to see more info', coledt=[1, 49, 91])
         elif cmd[:6] == 'number':
+            full_cmd = cmd
             if (cmd+'#')[6]  == ' ':
                 cmd = cmd[7:]
                 printit('    [+] Performing reverse phone number lookup...', coledt=[1, 49, 93], space_down=True)
@@ -1008,6 +1238,7 @@ def control_center():
                     crt_exp = exp[4]
                 else:
                     crt_exp = exp[3]
+                    prv_op = ''
             else:
                 crt_exp = exp[3]
                 printit('    [!] Invalid command! Type `help` to see all available commands.', coledt=[1, 49, 91])
@@ -1015,6 +1246,7 @@ def control_center():
             crt_exp = exp[2]
             printit('    > No ip address found! Type `help ip` to see more info', coledt=[1, 49, 91])
         elif cmd[:2] == 'ip':
+            full_cmd = cmd
             if (cmd+'#')[2]  == ' ':
                 cmd = cmd[3:]
                 printit('    [+] Performing reverse ip address lookup...', coledt=[1, 49, 93], space_down=True)
@@ -1022,6 +1254,55 @@ def control_center():
                     crt_exp = exp[4]
                 else:
                     crt_exp = exp[3]
+                    prv_op = ''
+            else:
+                crt_exp = exp[3]
+                printit('    [!] Invalid command! Type `help` to see all available commands.', coledt=[1, 49, 91])
+        elif cmd == 'mac':
+            crt_exp = exp[2]
+            printit('    > No mac address found! Type `help mac` to see more info', coledt=[1, 49, 91])
+        elif cmd[:3] == 'mac':
+            full_cmd = cmd
+            if (cmd+'#')[3]  == ' ':
+                cmd = cmd[4:]
+                printit('    [+] Performing reverse mac address lookup...', coledt=[1, 49, 93], space_down=True)
+                if mac_lookup(cmd):
+                    crt_exp = exp[4]
+                else:
+                    crt_exp = exp[3]
+                    prv_op = ''
+            else:
+                crt_exp = exp[3]
+                printit('    [!] Invalid command! Type `help` to see all available commands.', coledt=[1, 49, 91])
+        elif cmd == 'whois':
+            crt_exp = exp[2]
+            printit('    > No domain found! Type `help whois` to see more info', coledt=[1, 49, 91])
+        elif cmd[:5] == 'whois':
+            full_cmd = cmd
+            if (cmd+'#')[5]  == ' ':
+                cmd = cmd[6:]
+                printit('    [+] Performing reverse domain lookup...', coledt=[1, 49, 93], space_down=True)
+                if whois_lookup(cmd):
+                    crt_exp = exp[4]
+                else:
+                    crt_exp = exp[3]
+                    prv_op = ''
+            else:
+                crt_exp = exp[3]
+                printit('    [!] Invalid command! Type `help` to see all available commands.', coledt=[1, 49, 91])
+        elif cmd == 'dns':
+            crt_exp = exp[2]
+            printit('    > No domain found! Type `help dns` to see more info', coledt=[1, 49, 91])
+        elif cmd[:3] == 'dns':
+            full_cmd = cmd
+            if (cmd+'#')[3]  == ' ':
+                cmd = cmd[4:]
+                printit('    [+] Performing dns lookup...', coledt=[1, 49, 93], space_down=True)
+                if dns_lookup(cmd):
+                    crt_exp = exp[4]
+                else:
+                    crt_exp = exp[3]
+                    prv_op = ''
             else:
                 crt_exp = exp[3]
                 printit('    [!] Invalid command! Type `help` to see all available commands.', coledt=[1, 49, 91])
@@ -1056,6 +1337,7 @@ def main():
         if not silent_mode:
             printit('[#] Terminating `PH0MBER` framework...', coledt=[1, 49, random.choice([91, 93])], space_down=True, line_down=True, line_up=True, space_up=True)
             exit()
+        else: print()
 
-# if __name__ == '__main__':
-#     main()
+if '__main__' == __name__:
+    main()
