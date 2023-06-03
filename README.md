@@ -31,6 +31,7 @@ An open source infomation grathering & reconnaissance framework!
 
 
 <br>
+<br>
 
 ## Install & Usage: A Quick Guide
 
@@ -46,6 +47,8 @@ pip3 install -r requirements.txt
 pip install phomber
 ```
 
+<br>
+
 ### Usage:
 - __git clone__ (assuming you are in the `phomber` directory)
 ```
@@ -56,9 +59,8 @@ python3 phomber.py
 ```
 phomber
 ```
-- Use `-s` or `--silent` to run the tool in silent mode
-- After ph0mber command line interface is loaded, type `help` to get a list of commands
 
+- Help menu
 ```
     ┌────────────────────────────────────────────────────┐
     | COMMANDS      | DESCRIPTION                        |
@@ -90,9 +92,18 @@ phomber
     └────────────────────────────────────────────────────┘
 ```
 
+#### Pro tips:
+- Type `help` to get a list of commands
+- Type `help <command>` to see more info about a command
+- Use `Tab` key to auto-complete commands
+- Try silent mode by using `-s`/`--silent` flag
+- You can also use `Ctrl+C` to exit
+- Descriptions ending with `*` needs internet connection
 
 
 <br>
+<br>
+
 
 ### NOTES:
 ```
@@ -100,8 +111,3 @@ phomber
 - `v3` has osint tools with no _api key_ requirement
 - Currently this `v3.0-beta` is for testing, try using & report bugs
 ```
-
-<br>
-<hr>
-<br>
-
