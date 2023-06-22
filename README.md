@@ -17,7 +17,7 @@ An open source infomation grathering & reconnaissance framework!
       
 <br>
 
-<h1 align=center>PH0MBER: osint framework [3.0.2 (beta)]</h1>
+<h1 align=center>PH0MBER: osint framework [3.0.8 (beta)]</h1>
 
 
 
