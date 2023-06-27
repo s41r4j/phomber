@@ -25,8 +25,8 @@ An open source infomation grathering & reconnaissance framework!
 
 ## What is PH0MBER?
 
-- `PH0MBER` is a tool which is used to gather information about a target which is publicly available
-- Previously `PH0MBER` was a tool which was used to gather information about a phone number, but now it has been upgraded to a _framework_ with many _scanners_
+- `PH0MBER` is a tool which is used to gather information about a target which is publicly available (osint)
+- Previously `PH0MBER` was a tool which was used to gather information about a phone number, but now it has been upgraded to a _framework_ with many _scanners_ avaliable this time
 
 
 
