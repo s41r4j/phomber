@@ -126,4 +126,5 @@ phomber
 - `PH0MBER` is back with all new features and user interface
 - `v3` has osint tools with no _api key_ requirement
 - ADD: custom-scanner feature; create, distribute and deploy your own scanner
+- Release windows (exe) & linux (lsb) direct executables, no python req.
 ```
