@@ -9,7 +9,7 @@ An open source infomation grathering & reconnaissance framework!
 
 <p align=center>
          <a href='https://www.w3schools.in/ethical-hacking/information-gathering-techniques/'><img src="https://img.shields.io/badge/Etical Hacking-OSINT-yellow.svg?logo=sharp"></a>
-         <a href='https://github.com/s41r4j/phomber/releases/'><img src="https://img.shields.io/badge/Version-v3.0-orange.svg?logo=vectorworks"></a>
+         <a href='https://github.com/s41r4j/phomber/releases/'><img src="https://img.shields.io/badge/Version-v3.1.0-orange.svg?logo=vectorworks"></a>
          <a href='https://www.python.org/'><img src="https://img.shields.io/badge/Python-3-blue.svg?style=flat&logo=python"></a>
          <a href='LICENSE'><img src="https://img.shields.io/badge/License-GPL%20v3.0-brightgreen.svg"></a>
          <a href=''><img src="https://img.shields.io/badge/Disclaimer-With great power comes great responsibility-red.svg?logo=hackaday"></a>
@@ -17,7 +17,7 @@ An open source infomation grathering & reconnaissance framework!
       
 <br>
 
-<h1 align=center>PH0MBER: osint framework [3.0.9 (beta)]</h1>
+<h1 align=center>PH0MBER: osint framework</h1>
 
 
 
@@ -25,15 +25,19 @@ An open source infomation grathering & reconnaissance framework!
 
 ## What is PH0MBER?
 
-- `PH0MBER` is a tool which is used to gather information about a target which is publicly available (osint)
-- Previously `PH0MBER` was a tool which was used to gather information about a phone number, but now it has been upgraded to a _framework_ with many _scanners_ avaliable this time
+- `PH0MBER` is a one-stop tool for your information gathering and reconnaissance needs
+- It can help you gather multiple types of information (such as phone numbers, ip addr, whois, etc.) from various publicly available sources about the target
+> Previously, `PH0MBER` was a tool used to gather information about a phone number, but now it has been upgraded to a ___framework___ with many _scanners_ available!
 
 
 
 <br>
 <br>
 
-## Install & Usage: A Quick Guide
+## Quick Guide
+> Install, Update, Usage
+
+<br>
 
 ### Installation:
 - __git clone__
@@ -46,6 +50,20 @@ pip3 install -r requirements.txt
 ```
 pip install phomber
 ```
+
+<br>
+
+### Update:
+- __git clone__ (assuming you are in the `phomber` directory)
+```
+git pull
+```
+
+- __pip__
+```
+pip install --upgrade phomber
+```
+
 
 <br>
 
@@ -65,7 +83,7 @@ phomber
     ┌────────────────────────────────────────────────────┐
     | COMMANDS      | DESCRIPTION                        |
     |----------------------------------------------------|
-    |                <Basic Commands>                    |
+    |                 <(Basic Commands)>                 |
     |----------------------------------------------------|
     | help          | Display this help menu             | 
     | exit/quit     | Exit the framework                 |
@@ -80,15 +98,13 @@ phomber
     | info          | Show info about framework & system |
     | change        | Change user command input color    |
     |----------------------------------------------------|
-    |                 <Scanner Commands>                 |
+    |                <(Scanner Commands)>                |
     |----------------------------------------------------|
     | number        | Reverse phone number lookup *      |
     | ip            | Reverse ip address lookup *        |
     | mac           | Reverse mac address lookup         |
     | whois         | Reverse whois lookup *             |
-    | dns           | Reverse or normal DNS lookup       |
-    |----------------------------------------------------|
-    | MORE SCANNERS COMING SOON, THIS IS A BETA VER      |
+    | dns           | Reverse or normal DNS lookup *     |
     └────────────────────────────────────────────────────┘
 ```
 
@@ -109,5 +125,5 @@ phomber
 ```
 - `PH0MBER` is back with all new features and user interface
 - `v3` has osint tools with no _api key_ requirement
-- Currently this `v3.0-beta` is for testing, try using & report bugs
+- ADD: custom-scanner feature; create, distribute and deploy your own scanner
 ```
