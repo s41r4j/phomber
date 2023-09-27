@@ -31,6 +31,7 @@
 # ------------------------ Importing modules ------------------------ #
 import requests      # Default
 import os            # Default
+import getpass       # Default
 import sys           # Default
 import random        # Default
 import time          # Default
@@ -893,7 +894,7 @@ def control_center():
     └────────────────────────────────────────────────────┘'''
 
     # Variables
-    user = '\33[1;49;96m'+str(os.getlogin())+'\033[0m'+ ' '*int(34-len(str(os.getlogin())))
+    user = '\33[1;49;96m'+str(getpass.getuser())+'\033[0m'+ ' '*int(34-len(str(getpass.getuser())))
     hostname = '\33[1;49;96m'+str(platform.node())+'\033[0m'+' '*int(34-len(str(platform.node())))
     os_name = '\33[1;49;96m'+str(platform.system())+'\033[0m'+' '*int(34-len(str(platform.system())))
     ram = '\33[1;49;96m'+str(psutil.virtual_memory().percent)+"%"+'\033[0m'+' '*int(33-len(str(psutil.virtual_memory().percent)))
