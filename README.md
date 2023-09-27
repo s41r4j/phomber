@@ -51,6 +51,17 @@ pip3 install -r requirements.txt
 pip install phomber
 ```
 
+### Using docker:
+- __pull & update docker image__
+```
+docker pull sinawic/phomber:latest
+```
+- __run phomber docker image__
+```
+docker run --rm -it sinawic/phomber:latest
+```
+
+
 <br>
 
 ### Update:
