@@ -104,7 +104,7 @@ phomber
 - Help menu
 
 ```
-    ┌────────────────────────────────────────────────────┐
+┌────────────────────────────────────────────────────┐
     | COMMANDS      | DESCRIPTION                        |
     |----------------------------------------------------|
     |                 <(Basic Commands)>                 |
@@ -112,10 +112,11 @@ phomber
     | help          | Display this help menu             | 
     | exit/quit     | Exit the framework                 |
     | dork          | Show a random google dork query *  |  
-    | exp           | Show info about all available      |   
+    | exp           | Show info about all available      |       
     |               | expressions                        |
     | check         | Check internet connection          |
     | clear         | Clear screen                       |
+    | flush         | Flush history                      |
     | save          | Save output of previous scanner    |
     |               | command in a file                  |
     | shell <cmd>   | Execute native shell/cmd commands  |
@@ -124,11 +125,13 @@ phomber
     |----------------------------------------------------|
     |                <(Scanner Commands)>                |
     |----------------------------------------------------|
-    | number        | Reverse phone number lookup *      |
+    | number        | Reverse phone number lookup        |
     | ip            | Reverse ip address lookup *        |
     | mac           | Reverse mac address lookup         |
     | whois         | Reverse whois lookup *             |
-    | dns           | Reverse or normal DNS lookup *     |
+    | dns           | Reverse / Normal DNS lookup *      |
+    | username      | Username lookup over multiple sites|
+    |               | and social media platforms *       |
     └────────────────────────────────────────────────────┘
 ```
 
