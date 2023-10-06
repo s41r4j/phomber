@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "phomber"
+version = "3.1.1"
+description = "`PH0MBER` a simple yet powerful osint framework for reconnaissance and information gathering"
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.7"
+authors = [
+  {name = "s41r4j"}
+]
+maintainers = [
+  {name = "s41r4j"}
+]
+keywords=['python', 'hacking', 'pentesting', 'phomber', 'reverse', 'lookup', 'osint', 'framework', 'tool', 's41r4j']
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: OS Independent",
+    "Environment :: Console",
+    "Development Status :: 5 - Production/Stable"
+]
+dependencies = ['requests', 'prompt_toolkit', 'uuid', 'psutil', 'beautifulsoup4', 'phonenumbers', 'mac-vendor-lookup', 'python-whois', 'dnspython']
+
+
+[project.urls]
+"Homepage" = "https://github.com/s41r4j/phomber"
+"Bug Tracker" = "https://github.com/s41r4j/phomber/issues"
+
+[project.scripts]
+phomber = "phomber.phomber:main"
+
+[project.entry-points."phomber"]
+phomber = "phomber.phomber:main"
