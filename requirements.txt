@@ -1,8 +1,0 @@
-psutil
-bs4
-phonenumbers
-requests
-mac_vendor_lookup
-python-whois
-dnspython
-prompt_toolkit
