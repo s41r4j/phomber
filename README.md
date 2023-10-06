@@ -17,17 +17,13 @@ An open source infomation grathering & reconnaissance framework!
       
 <br>
 
-<h1 align=center>PH0MBER: osint framework</h1>
-
-
 
 <br>
 
 ## What is PH0MBER?
 
-- `PH0MBER` is a one-stop tool for your information gathering and reconnaissance needs
-- It can help you gather multiple types of information (such as phone numbers, ip addr, whois, etc.) from various publicly available sources about the target
-> Previously, `PH0MBER` was a tool used to gather information about a phone number, but now it has been upgraded to a ___framework___ with many _scanners_ available!
+- `PH0MBER` is an __osint framework__, which is one-stop tool for your information gathering and reconnaissance needs
+- It can help you gather information (such as phone numbers, ip address, domain name info, etc.) from various publicly available sources about the target
 
 
 
@@ -51,13 +47,9 @@ pip3 install -r requirements.txt
 pip install phomber
 ```
 
-### Using docker:
-- __pull & update docker image__
+- __docker__
 ```
 docker pull sinawic/phomber:latest
-```
-- __run phomber docker image__
-```
 docker run --rm -it sinawic/phomber:latest
 ```
 
@@ -75,6 +67,10 @@ git pull
 pip install --upgrade phomber
 ```
 
+- __docker__
+```
+docker pull sinawic/phomber:latest
+```
 
 <br>
 
@@ -88,6 +84,13 @@ python3 phomber.py
 ```
 phomber
 ```
+
+- __docker__
+```
+phomber
+```
+
+<br>
 
 - Help menu
 ```
