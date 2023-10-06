@@ -1,3 +1,7 @@
+<p align=center>
+         <img src='.images/phomber_logo.png'>
+</p>
+
 ```
 An open source infomation grathering & reconnaissance framework!
 ```
@@ -35,7 +39,7 @@ An open source infomation grathering & reconnaissance framework!
 ```
 git clone https://github.com/s41r4j/phomber
 cd phomber
-pip3 install -r requirements.txt
+pip3 install -r pyproject.toml
 ```
 
 - __pip__
