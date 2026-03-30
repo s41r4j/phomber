@@ -24,7 +24,7 @@ classifiers = [
     "Environment :: Console",
     "Development Status :: 5 - Production/Stable"
 ]
-dependencies = ['requests', 'prompt_toolkit', 'uuid', 'psutil', 'beautifulsoup4', 'phonenumbers', 'mac-vendor-lookup', 'python-whois', 'dnspython']
+dependencies = ['requests', 'prompt_toolkit', 'psutil', 'beautifulsoup4', 'phonenumbers', 'mac-vendor-lookup', 'python-whois', 'dnspython']
 
 
 [project.urls]
@@ -32,7 +32,4 @@ dependencies = ['requests', 'prompt_toolkit', 'uuid', 'psutil', 'beautifulsoup4'
 "Bug Tracker" = "https://github.com/s41r4j/phomber/issues"
 
 [project.scripts]
-phomber = "phomber.phomber:main"
-
-[project.entry-points."phomber"]
-phomber = "phomber.phomber:main"
+phomber = "phomber:main"

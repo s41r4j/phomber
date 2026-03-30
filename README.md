@@ -39,7 +39,7 @@ An open source infomation grathering & reconnaissance framework!
 ```
 git clone https://github.com/s41r4j/phomber
 cd phomber
-pip3 install -r pyproject.toml
+pip3 install -r requirements.txt
 ```
 
 - __pip__
@@ -152,9 +152,19 @@ phomber
 
 ```
 - `PH0MBER` is back with all new features and user interface
-- `v3` has osint tools with no _api key_ requirement
+- `number` scan supports API-first mode if `PHOMBER_NUMLOOKUP_API_KEY` (or `NUMLOOKUP_API_KEY`) is set
+- if API is unavailable, `number` automatically falls back to the local basic scan
+- all scanners now display estimated and real-time research duration
+- `username` scan now performs deep profile research across direct platform profiles and best-effort public identity extraction
+- tune depth via `PHOMBER_USERNAME_IDENTITY_SOURCES` (default: `20`)
+- tune per-profile fetch timeout via `PHOMBER_PROFILE_FETCH_TIMEOUT` (default: `8` seconds)
 - Release windows (exe) & linux (lsb) direct executables, no python req.
 - `v4` will have web-interface + automated scans features + (custom-scanner feature; create, distribute and deploy your own scanner)
 ```
+
+### Credits
+
+- Core author: `@s41r4j`
+- Contributor: `@DkHrR`
 
 </p>

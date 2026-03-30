@@ -34,11 +34,15 @@ import os            # Default
 import sys           # Default
 import random        # Default
 import time          # Default
+import threading     # Default
+import json          # Default
 import re            # Default
 import uuid          # Default
 import socket        # Default
 import platform      # Default
 import getpass       # Default
+import ipaddress     # Default (for IP validation)
+from urllib.parse import quote_plus
 import psutil        # pip install psutil
 import bs4           # pip install beautifulsoup4
 import phonenumbers  # pip install phonenumbers
@@ -54,12 +58,178 @@ from prompt_toolkit.history import InMemoryHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 
 
+# ------------------------ Utility functions ------------------------ #
+def pad_string(value, width):
+    """Safely pad a string to a given width without crashing on overflow."""
+    value_str = str(value)
+    padding = max(0, width - len(value_str))
+    return value_str + ' ' * padding
+
+
+def is_valid_ipv4(ip_address):
+    """Validate IPv4 addresses properly (rejects 999.999.999.999, etc.)."""
+    try:
+        ipaddress.IPv4Address(ip_address)
+        return True
+    except (ipaddress.AddressValueError, ValueError):
+        return False
+
+
+def normalize_scan_target(raw_value):
+    """Normalize scanner target values and allow optional `check` keyword."""
+    value = raw_value.strip()
+    if value.lower().startswith('check '):
+        value = value[6:].strip()
+    elif value.lower() == 'check':
+        value = ''
+    return value
+
+
+def get_research_time_estimate(scanner_name):
+    """Return estimated duration range for each scanner."""
+    estimate_map = {
+        'number': '5-15 seconds',
+        'ip': '3-12 seconds',
+        'mac': '1-5 seconds',
+        'whois': '4-20 seconds',
+        'dns': '2-10 seconds',
+        'username': '20-300 seconds',
+    }
+    return estimate_map.get(scanner_name, '3-30 seconds')
+
+
+def get_research_time_estimate_seconds(scanner_name):
+    """Return average estimated duration (seconds) for live remaining-time updates."""
+    estimate_seconds_map = {
+        'number': 10,
+        'ip': 8,
+        'mac': 3,
+        'whois': 12,
+        'dns': 6,
+        'username': 160,
+    }
+    return float(estimate_seconds_map.get(scanner_name, 16))
+
+
+def _can_render_live_progress():
+    """Return True when stdout supports TTY-style live progress rendering."""
+    try:
+        return hasattr(sys.stdout, 'isatty') and sys.stdout.isatty()
+    except Exception:
+        return False
+
+
+def _clear_live_progress_line():
+    """Clear the current live progress line if one is rendered."""
+    if not _can_render_live_progress():
+        return
+    sys.stdout.write('\r' + (' ' * 140) + '\r')
+    sys.stdout.flush()
+
+
+def _start_live_scan_progress(scanner_name, started_at, estimate_seconds):
+    """Start a background ticker that updates elapsed and estimated remaining time."""
+    if not _can_render_live_progress():
+        return None
+
+    stop_event = threading.Event()
+
+    def _worker():
+        while not stop_event.wait(1.0):
+            elapsed_seconds = max(0.0, time.perf_counter() - started_at)
+            remaining_seconds = max(0.0, estimate_seconds - elapsed_seconds)
+            status_line = (
+                f'    [+] {scanner_name} scan running | '
+                f'elapsed: {elapsed_seconds:6.1f}s | '
+                f'est remaining: {remaining_seconds:6.1f}s'
+            )
+            sys.stdout.write('\r\33[1;49;93m' + status_line.ljust(140) + '\033[0m')
+            sys.stdout.flush()
+
+        _clear_live_progress_line()
+
+    timer_thread = threading.Thread(target=_worker, daemon=True)
+    timer_thread.start()
+
+    return {
+        'stop_event': stop_event,
+        'thread': timer_thread,
+        'estimate_seconds': estimate_seconds,
+    }
+
+
+def announce_scan_timing(scanner_name, started_at=None):
+    """Print estimate and start real-time remaining-time updates for this scanner."""
+    estimate_text = get_research_time_estimate(scanner_name)
+    estimate_seconds = get_research_time_estimate_seconds(scanner_name)
+    printit(f'    [+] Estimated research time: {estimate_text} (real-time)', coledt=[1, 49, 93], space_down=True)
+
+    previous_state = _active_scan_timers.pop(scanner_name, None)
+    if previous_state:
+        previous_state['stop_event'].set()
+        previous_state['thread'].join(timeout=0.3)
+        _clear_live_progress_line()
+
+    if started_at is None:
+        started_at = time.perf_counter()
+
+    live_timer_state = _start_live_scan_progress(scanner_name, started_at, estimate_seconds)
+    if live_timer_state:
+        _active_scan_timers[scanner_name] = live_timer_state
+
+    return estimate_text
+
+
+def complete_scan_timing(scanner_name, started_at, result):
+    """Stop live timer updates, print final timing summary, and return result."""
+    timer_state = _active_scan_timers.pop(scanner_name, None)
+    estimate_seconds = get_research_time_estimate_seconds(scanner_name)
+    if timer_state:
+        estimate_seconds = float(timer_state.get('estimate_seconds', estimate_seconds))
+        timer_state['stop_event'].set()
+        timer_state['thread'].join(timeout=0.3)
+        _clear_live_progress_line()
+
+    elapsed_seconds = max(0.0, time.perf_counter() - started_at)
+    variance_seconds = elapsed_seconds - estimate_seconds
+    printit(
+        f'    [+] Real-time research time ({scanner_name}): {elapsed_seconds:.2f}s | estimated remaining: 0.00s | variance: {variance_seconds:+.2f}s',
+        coledt=[1, 49, 96],
+        space_down=True,
+    )
+    return result
+
+
 # ------------------------ Global variables ------------------------ #
 try: session = PromptSession(history=FileHistory('./.ph0mber_history'))
 except: session = PromptSession(history=InMemoryHistory())
 available_commands = ['change', 'check', 'clear', 'dns', 'dork', 'email', 'exit', 'exp', 'hash','help', 'info', 'ip', 'mac', 'number', 'quit', 'save', 'shell', 'username', 'whois']
 prv_op = ''
 full_cmd = ''
+PHOMBER_NUMLOOKUP_API_KEY = (
+    os.environ.get('PHOMBER_NUMLOOKUP_API_KEY', '').strip()
+    or os.environ.get('NUMLOOKUP_API_KEY', '').strip()
+)
+PHOMBER_SHERLOCK_DATA_URL = (
+    os.environ.get('PHOMBER_SHERLOCK_DATA_URL', '').strip()
+    or 'https://raw.githubusercontent.com/sherlock-project/sherlock/master/sherlock_project/resources/data.json'
+)
+try:
+    PHOMBER_USERNAME_SITE_LIMIT = int(os.environ.get('PHOMBER_USERNAME_SITE_LIMIT', '80'))
+except (TypeError, ValueError):
+    PHOMBER_USERNAME_SITE_LIMIT = 80
+try:
+    PHOMBER_USERNAME_IDENTITY_SOURCES = int(os.environ.get('PHOMBER_USERNAME_IDENTITY_SOURCES', '20'))
+except (TypeError, ValueError):
+    PHOMBER_USERNAME_IDENTITY_SOURCES = 20
+if PHOMBER_USERNAME_IDENTITY_SOURCES < 1:
+    PHOMBER_USERNAME_IDENTITY_SOURCES = 1
+try:
+    PHOMBER_PROFILE_FETCH_TIMEOUT = float(os.environ.get('PHOMBER_PROFILE_FETCH_TIMEOUT', '8'))
+except (TypeError, ValueError):
+    PHOMBER_PROFILE_FETCH_TIMEOUT = 8.0
+_sherlock_site_cache = None
+_active_scan_timers = {}
 silent_mode = False
 
 
@@ -86,6 +256,12 @@ def number_lookup(phone_number):
     # Global variables
     global prv_op
     prv_op = '' # Resetting previous output
+    phone_number = normalize_scan_target(phone_number)
+    started_at = time.perf_counter()
+    announce_scan_timing('number', started_at)
+
+    def finalize_scan(result):
+        return complete_scan_timing('number', started_at, result)
 
     # Information gathering about the number
     printit(f'    [+] Grathering information about \33[1;49;96m{phone_number}\33[1;49;93m...', coledt=[1, 49, 93], space_down=True)
@@ -94,7 +270,62 @@ def number_lookup(phone_number):
     # Check if the number is valid or not (regex)
     if not re.match(r'^\+[1-9]\d{1,14}$', phone_number):
         printit('    > Invalid phone number format! (Example: +44xxxxxxxxxx)', coledt=[1, 49, 91])
-        return False
+        return finalize_scan(False)
+
+    # API-first lookup (Numlookup), fallback to local basic scanner.
+    if PHOMBER_NUMLOOKUP_API_KEY:
+        if check_connection():
+            headers = {
+                'apikey': PHOMBER_NUMLOOKUP_API_KEY,
+                'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0'
+            }
+            try:
+                response = requests.get(
+                    f'https://api.numlookupapi.com/v1/validate/{phone_number}',
+                    headers=headers,
+                    timeout=15,
+                )
+                if response.status_code == 200:
+                    response_json = response.json()
+
+                    valid = bool(response_json.get('valid', False))
+                    country_code = pad_string(str(response_json.get('country_code') or response_json.get('country_prefix') or 'N/A'), 30)
+                    country = pad_string(str(response_json.get('country_name') or response_json.get('country') or 'N/A'), 30)
+                    location = pad_string(str(response_json.get('location') or response_json.get('region') or 'N/A'), 30)
+                    provider = pad_string(str(response_json.get('carrier') or response_json.get('operator') or 'N/A'), 30)
+                    line_type = pad_string(str(response_json.get('line_type') or response_json.get('type') or 'N/A'), 30)
+                    scanned_phone = pad_string(str(phone_number), 30)
+                    international = pad_string(str(response_json.get('international_format') or phone_number), 30)
+                    national = pad_string(str(response_json.get('local_format') or response_json.get('national_format') or 'N/A'), 30)
+                    valid_text = pad_string(str(valid), 30)
+
+                    final_output = f'''
+    ┌──────────────────────────────────────────────────────┐
+    | Scanned Phone Number: \33[1;49;96m{scanned_phone}\033[0m |
+    |------------------------------------------------------|
+    | INFORMATION         | DESCRIPTION                    |
+    |------------------------------------------------------|
+    | \33[1;49;97mValid\033[0m               | {valid_text} |
+    |------------------------------------------------------|
+    | \33[1;49;97mCountry Code\033[0m        | {country_code} |
+    | \33[1;49;97mCountry\033[0m             | {country} |
+    | \33[1;49;97mLocation\033[0m            | {location} |
+    | \33[1;49;97mCarrier\033[0m             | {provider} |
+    | \33[1;49;97mLine Type\033[0m           | {line_type} |
+    |------------------------------------------------------|
+    | \33[1;49;97mInternational Format\033[0m| {international} |
+    | \33[1;49;97mNational Format\033[0m     | {national} |
+    |------------------------------------------------------|
+    | \33[1;49;97mSource\033[0m              | Numlookup API                  |
+    └──────────────────────────────────────────────────────┘
+                    '''
+                    print(final_output)
+                    prv_op += final_output+'\n'
+                    return finalize_scan(valid)
+            except (requests.RequestException, ValueError, TypeError):
+                pass
+
+        printit('    > API lookup unavailable, using basic local lookup...', coledt=[1, 49, 93], space_down=True)
     
     # Country code check
     try:
@@ -102,7 +333,7 @@ def number_lookup(phone_number):
         phone_number_details = phonenumbers.parse(phone_number)
     except phonenumbers.phonenumberutil.NumberParseException:
         printit('    > Missing Country Code! (Example: +91, +44, +1)', coledt=[1, 49, 91])
-        return False
+        return finalize_scan(False)
 
     # extract country_code & only_number from "Country Code: xx National Number: xxxxxxxxxx"
     country_code = str(phone_number_details).split('Country Code:', 1)[1].split('National Number:', 1)[0].strip()
@@ -218,7 +449,7 @@ def number_lookup(phone_number):
     \033[0m'''
         print(social_media_platforms)
         prv_op += social_media_platforms+'\n'
-        return True
+        return finalize_scan(True)
         
     else:
         # Reconfiguring variables
@@ -238,37 +469,101 @@ def number_lookup(phone_number):
         '''
         print(final_output)
         prv_op += final_output+'\n'
-        return False
+        return finalize_scan(False)
 
 # Reverse ip address lookup
 def ip_lookup(ip_address):
     # Global variables
     global prv_op
     prv_op = '' # Resetting previous output
+    ip_address = normalize_scan_target(ip_address)
+    started_at = time.perf_counter()
+    announce_scan_timing('ip', started_at)
+
+    def finalize_scan(result):
+        return complete_scan_timing('ip', started_at, result)
     
     # Checking internet connection
     printit(f'    [+] Verifying internet connection...', coledt=[1, 49, 93], space_down=True)
     if not check_connection():
         printit('    > Internet connection not available!', coledt=[1, 49, 91], space_down=True)
-        return False
+        return finalize_scan(False)
 
     # Information gathering about the ip address
     printit(f'    [+] Grathering information about \33[1;49;96m{ip_address}\33[1;49;93m...', coledt=[1, 49, 93], space_down=True)
     prv_op += f'    \33[1;49;93m[#] Reverse ip address lookup for \33[1;49;96m{ip_address}\33[1;49;93m:\033[0m'+'\n\n'
 
     # Check if the ip address is valid or not (regex) [add IPv6 support]
-    if not re.match(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$', ip_address) :
+    if not is_valid_ipv4(ip_address):
         printit('    > Invalid ip address format! (Example: 8.8.8.8)', coledt=[1, 49, 91])
-        return False
+        return finalize_scan(False)
 
     # IP address lookup APIs
-    ip_addresses = [f'http://ip-api.com/json/{ip_address}', f'https://ipapi.co/{ip_address}/json/', f'http://ipwho.is/{ip_address}']
+    ip_addresses = [f'https://ip-api.com/json/{ip_address}', f'https://ipapi.co/{ip_address}/json/', f'https://ipwho.is/{ip_address}']
     ip_address = str(ip_address)+' '*int(30-len(str(ip_address)))
 
     # Headers
     headers = {
         'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0'
     }
+
+    # Optional token-based source (if PHOMBER_IPINFO_TOKEN/IPINFO_TOKEN is configured).
+    ipinfo_token = os.environ.get('PHOMBER_IPINFO_TOKEN', '').strip() or os.environ.get('IPINFO_TOKEN', '').strip()
+    if ipinfo_token:
+        try:
+            response = requests.get(
+                f'https://ipinfo.io/{normalize_scan_target(ip_address)}/json',
+                params={'token': ipinfo_token},
+                timeout=10,
+                headers=headers,
+            )
+            response_json = response.json()
+
+            if response.status_code == 200 and 'error' not in response_json and 'bogon' not in response_json:
+                ip = str(response_json.get('ip', 'N/A'))
+                city = str(response_json.get('city', 'N/A'))
+                region = str(response_json.get('region', 'N/A'))
+                country = str(response_json.get('country', 'N/A'))
+                timezone = str(response_json.get('timezone', 'N/A'))
+                postal = str(response_json.get('postal', 'N/A'))
+                org = str(response_json.get('org', 'N/A'))
+                hostname = str(response_json.get('hostname', 'N/A'))
+                loc = str(response_json.get('loc', 'N/A'))
+
+                ip = str(ip)+' '*int(30-len(str(ip)))
+                city = str(city)+' '*int(30-len(str(city)))
+                region = str(region)+' '*int(30-len(str(region)))
+                country = str(country)+' '*int(30-len(str(country)))
+                timezone = str(timezone)+' '*int(30-len(str(timezone)))
+                postal = str(postal)+' '*int(30-len(str(postal)))
+                org = str(org)+' '*int(30-len(str(org)))
+                hostname = str(hostname)+' '*int(30-len(str(hostname)))
+                loc = str(loc)+' '*int(30-len(str(loc)))
+
+                final_output = f'''
+    ┌──────────────────────────────────────────────────────┐
+    | Scanned IP Address: \33[1;49;96m{ip_address}\033[0m   |
+    |------------------------------------------------------|
+    | INFORMATION         | DESCRIPTION                    |
+    |------------------------------------------------------|
+    | \33[1;49;97mIP\033[0m                  | {ip} |
+    | \33[1;49;97mCountry\033[0m             | {country} |
+    | \33[1;49;97mRegion\033[0m              | {region} |
+    | \33[1;49;97mCity\033[0m                | {city} |
+    |------------------------------------------------------|
+    | \33[1;49;97mPostal Code\033[0m         | {postal} |
+    | \33[1;49;97mTimezone\033[0m            | {timezone} |
+    | \33[1;49;97mCoordinates\033[0m         | {loc} |
+    |------------------------------------------------------|
+    | \33[1;49;97mOrg\033[0m                 | {org} |
+    | \33[1;49;97mHostname\033[0m            | {hostname} |
+    └──────────────────────────────────────────────────────┘
+    '''
+                print(final_output)
+                prv_op += final_output+'\n'
+                return finalize_scan(True)
+        except (requests.RequestException, ValueError, KeyError, AttributeError, IndexError, TypeError):
+            pass
     
     # Randomizing ip address lookup APIs
     random_api = random.choice([0, 1, 2])
@@ -458,7 +753,7 @@ def ip_lookup(ip_address):
             print(final_output)
             prv_op += final_output+'\n'
 
-        except:
+        except (requests.RequestException, ValueError, KeyError, AttributeError, IndexError, TypeError) as e:
             final_output = f'''
     ┌──────────────────────────────────────────────────────┐
     | Scanned IP Address: \33[1;49;96m{ip_address}\033[0m   |
@@ -583,7 +878,7 @@ def ip_lookup(ip_address):
             print(final_output)
             prv_op += final_output+'\n'
 
-        except:
+        except (requests.RequestException, ValueError, KeyError, AttributeError, IndexError, TypeError) as e:
             final_output = f'''
     ┌──────────────────────────────────────────────────────┐
     | Scanned IP Address: \33[1;49;96m{ip_address}\033[0m   |
@@ -594,7 +889,7 @@ def ip_lookup(ip_address):
             print(final_output)
             prv_op += final_output+'\n'
 
-    return True
+    return finalize_scan(True)
 
 # Reverse mac address lookup
 def mac_lookup(mac_address):
@@ -603,6 +898,11 @@ def mac_lookup(mac_address):
     # Global variables
     global prv_op
     prv_op = '' # Resetting previous output
+    started_at = time.perf_counter()
+    announce_scan_timing('mac', started_at)
+
+    def finalize_scan(result):
+        return complete_scan_timing('mac', started_at, result)
 
     # Information gathering about the mac address
     printit(f'    [+] Grathering information about \33[1;49;96m{mac_address}\33[1;49;93m...', coledt=[1, 49, 93], space_down=True)
@@ -611,7 +911,7 @@ def mac_lookup(mac_address):
     # Check if the mac address is valid or not (regex)
     if not re.match(r'^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$', mac_address) :
         printit('    > Invalid mac address format! (Example: 00:00:00:00:00:00)', coledt=[1, 49, 91])
-        return False
+        return finalize_scan(False)
 
     # Getting mac address vendor
     try:
@@ -638,19 +938,24 @@ def mac_lookup(mac_address):
     print(final_output)
     prv_op += final_output+'\n'
 
-    return bol_val
+    return finalize_scan(bol_val)
 
 # Reverse whois lookup
 def whois_lookup(domain):
     # Global variables
     global prv_op
     prv_op = '' # Resetting previous output
+    started_at = time.perf_counter()
+    announce_scan_timing('whois', started_at)
+
+    def finalize_scan(result):
+        return complete_scan_timing('whois', started_at, result)
 
     # Checking internet connection
     printit(f'    [+] Verifying internet connection...', coledt=[1, 49, 93], space_down=True)
     if not check_connection():
         printit('    > Internet connection not available!', coledt=[1, 49, 91], space_down=True)
-        return False
+        return finalize_scan(False)
 
     # Information gathering about the domain
     printit(f'    [+] Grathering information about \33[1;49;96m{domain}\33[1;49;93m...', coledt=[1, 49, 93], space_down=True)
@@ -659,7 +964,7 @@ def whois_lookup(domain):
     # Domain validation (regex)
     if not re.match(r'^([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*\.)+[a-zA-Z]{2,}$', domain) :
         printit('    > Invalid domain format! (Example: example.com)', coledt=[1, 49, 91])
-        return False
+        return finalize_scan(False)
 
     # Getting whois information
     try:
@@ -713,19 +1018,24 @@ def whois_lookup(domain):
     print(final_output)
     prv_op += final_output+'\n'
 
-    return bol_val
+    return finalize_scan(bol_val)
 
 # Reverse domain lookup
 def dns_lookup(ip_or_domain):
     # Global variables
     global prv_op
     prv_op = '' # Resetting previous output
+    started_at = time.perf_counter()
+    announce_scan_timing('dns', started_at)
+
+    def finalize_scan(result):
+        return complete_scan_timing('dns', started_at, result)
 
     # Checking internet connection
     printit(f'    [+] Verifying internet connection...', coledt=[1, 49, 93], space_down=True)
     if not check_connection():
         printit('    > Internet connection not available!', coledt=[1, 49, 91], space_down=True)
-        return False
+        return finalize_scan(False)
 
     # Information gathering about the domain    
     printit(f'    [+] Grathering information about \33[1;49;96m{ip_or_domain}\33[1;49;93m...', coledt=[1, 49, 93], space_down=True)
@@ -751,7 +1061,7 @@ def dns_lookup(ip_or_domain):
             domain = '\33[1;49;91mNot Found\033[0m' + ' '*int(36-len('Not Found'))
     else:
         printit('    > Invalid ip address or domain name!', coledt=[1, 49, 91], space_down=True)
-        return False
+        return finalize_scan(False)
 
     # Excepts: socket.gaierror, socket.herror
 
@@ -768,116 +1078,556 @@ def dns_lookup(ip_or_domain):
     print('\n    ┌──────────────────────────────────────────────────────┐\n'+final_output_scanned+final_output_remaining)
     prv_op += '\n    ┌──────────────────────────────────────────────────────┐'+'\n'+final_output_scanned+final_output_remaining
 
-    return True
+    return finalize_scan(True)
+
+
+def truncate_for_table(value, width):
+    """Trim text for fixed-width table cells while preserving readability."""
+    value_text = str(value)
+    if len(value_text) <= width:
+        return value_text
+    if width <= 3:
+        return value_text[:width]
+    return value_text[:width - 3] + '...'
+
+
+def load_sherlock_site_data():
+    """Load Sherlock site manifest from a remote JSON source."""
+    global _sherlock_site_cache
+    if _sherlock_site_cache is not None:
+        return _sherlock_site_cache
+
+    headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64)'}
+    try:
+        response = requests.get(PHOMBER_SHERLOCK_DATA_URL, timeout=20, headers=headers)
+        response.raise_for_status()
+        response_json = response.json()
+        _sherlock_site_cache = response_json if isinstance(response_json, dict) else {}
+    except (requests.RequestException, ValueError, TypeError):
+        _sherlock_site_cache = {}
+
+    return _sherlock_site_cache
+
+
+def sherlock_profile_check(site_data, username, headers):
+    """Check a single Sherlock site entry and return existence + profile URL."""
+    if not isinstance(site_data, dict):
+        return False, None
+    if site_data.get('disabled', False):
+        return False, None
+
+    url_template = str(site_data.get('url', '')).strip()
+    probe_template = str(site_data.get('urlProbe', '')).strip()
+    if not url_template:
+        return False, None
+
+    try:
+        profile_url = url_template.format(username)
+    except (IndexError, KeyError, ValueError):
+        return False, None
+
+    probe_url = profile_url
+    if probe_template:
+        try:
+            probe_url = probe_template.format(username)
+        except (IndexError, KeyError, ValueError):
+            probe_url = profile_url
+
+    method = str(site_data.get('request_method', 'GET')).upper()
+    error_type = str(site_data.get('errorType', 'status_code')).lower()
+
+    try:
+        response = requests.request(method, probe_url, timeout=10, headers=headers, allow_redirects=True)
+    except requests.RequestException:
+        return False, profile_url
+
+    response_text = response.text or ''
+    exists = False
+
+    if error_type in ['status_code', 'response_url']:
+        exists = response.status_code not in [404, 410]
+        if error_type == 'response_url':
+            exists = exists and username.lower() in str(response.url).lower()
+    elif error_type == 'message':
+        error_msg = site_data.get('errorMsg')
+        if isinstance(error_msg, list):
+            exists = not any(str(message) in response_text for message in error_msg if message)
+        elif error_msg:
+            exists = str(error_msg) not in response_text
+        else:
+            exists = response.status_code < 400
+    elif error_type == 'regex':
+        regex_check = site_data.get('regexCheck')
+        if regex_check:
+            exists = re.search(str(regex_check), response_text, flags=re.IGNORECASE) is not None
+        else:
+            exists = response.status_code < 400
+    else:
+        exists = response.status_code < 400
+
+    if response.status_code in [429, 500, 502, 503, 504]:
+        exists = False
+
+    return exists, profile_url
+
+
+def compact_text(value, max_len=120):
+    """Normalize text blocks and keep output compact."""
+    if value is None:
+        return None
+    text = re.sub(r'\s+', ' ', str(value)).strip()
+    if not text:
+        return None
+    if len(text) > max_len:
+        text = text[:max_len - 3] + '...'
+    return text
+
+
+def first_non_empty(*values):
+    """Return first non-empty cleaned value."""
+    for value in values:
+        cleaned = compact_text(value)
+        if cleaned:
+            return cleaned
+    return None
+
+
+def parse_age_from_text(text):
+    """Extract age if explicitly written in a profile text."""
+    if not text:
+        return None
+
+    patterns = [
+        r'\b(?:age|aged)\s*[:\-]?\s*(\d{1,2})\b',
+        r'\b(\d{1,2})\s*(?:years old|yrs old|yo)\b',
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, text, flags=re.IGNORECASE)
+        if match:
+            try:
+                age = int(match.group(1))
+            except (TypeError, ValueError):
+                continue
+            if 10 <= age <= 100:
+                return str(age)
+    return None
+
+
+def infer_gender_from_text(text):
+    """Infer gender only when explicit pronouns/keywords are present."""
+    if not text:
+        return None
+    lowered = text.lower()
+
+    if any(token in lowered for token in ['she/her', 'she / her', 'female', 'woman', 'girl']):
+        return 'Female (public hint)'
+    if any(token in lowered for token in ['he/him', 'he / him', 'male', 'man', 'boy']):
+        return 'Male (public hint)'
+    if any(token in lowered for token in ['they/them', 'they / them', 'non-binary', 'nonbinary']):
+        return 'Non-binary (public hint)'
+
+    return None
+
+
+def walk_json_nodes(payload):
+    """Yield every JSON object recursively from JSON-LD payloads."""
+    if isinstance(payload, dict):
+        yield payload
+        for value in payload.values():
+            yield from walk_json_nodes(value)
+    elif isinstance(payload, list):
+        for item in payload:
+            yield from walk_json_nodes(item)
+
+
+def extract_public_profile_identity(profile_url, headers):
+    """Extract public identity hints from a single profile page."""
+    try:
+        response = requests.get(profile_url, timeout=PHOMBER_PROFILE_FETCH_TIMEOUT, headers=headers, allow_redirects=True)
+        if response.status_code >= 400:
+            return {}
+        soup = bs4.BeautifulSoup(response.text, 'html.parser')
+    except (requests.RequestException, ValueError, TypeError):
+        return {}
+
+    identity = {
+        'name': None,
+        'age': None,
+        'gender': None,
+        'location': None,
+        'bio': None,
+        'email': None,
+        'occupation': None,
+        'website': None,
+    }
+
+    og_title = soup.find('meta', attrs={'property': 'og:title'})
+    twitter_title = soup.find('meta', attrs={'name': 'twitter:title'})
+    html_title = soup.find('title')
+    og_description = soup.find('meta', attrs={'property': 'og:description'})
+    plain_description = soup.find('meta', attrs={'name': 'description'})
+    twitter_description = soup.find('meta', attrs={'name': 'twitter:description'})
+    canonical_link = soup.find('link', attrs={'rel': 'canonical'})
+
+    title_text = first_non_empty(
+        og_title.get('content') if og_title else None,
+        twitter_title.get('content') if twitter_title else None,
+        html_title.text if html_title else None,
+    )
+    description_text = first_non_empty(
+        og_description.get('content') if og_description else None,
+        plain_description.get('content') if plain_description else None,
+        twitter_description.get('content') if twitter_description else None,
+    )
+
+    if description_text:
+        identity['bio'] = description_text
+    if canonical_link and canonical_link.get('href'):
+        identity['website'] = compact_text(canonical_link.get('href'))
+
+    json_ld_scripts = soup.find_all('script', attrs={'type': re.compile(r'ld\+json', flags=re.IGNORECASE)})
+    for script_tag in json_ld_scripts:
+        raw_text = script_tag.string or script_tag.get_text(strip=True)
+        if not raw_text:
+            continue
+        try:
+            payload = json.loads(raw_text)
+        except (ValueError, TypeError, json.JSONDecodeError):
+            continue
+
+        for node in walk_json_nodes(payload):
+            if not isinstance(node, dict):
+                continue
+
+            node_type = node.get('@type', '')
+            if isinstance(node_type, list):
+                node_type = ' '.join(str(item) for item in node_type)
+            node_type = str(node_type)
+
+            if 'Person' in node_type or 'ProfilePage' in node_type:
+                identity['name'] = identity['name'] or compact_text(node.get('name'))
+                identity['gender'] = identity['gender'] or compact_text(node.get('gender'))
+                identity['bio'] = identity['bio'] or compact_text(node.get('description'))
+                identity['email'] = identity['email'] or compact_text(node.get('email'))
+                identity['website'] = identity['website'] or compact_text(node.get('url'))
+
+                occupation = compact_text(node.get('jobTitle'))
+                works_for = node.get('worksFor')
+                works_for_name = None
+                if isinstance(works_for, dict):
+                    works_for_name = compact_text(works_for.get('name'))
+                elif isinstance(works_for, str):
+                    works_for_name = compact_text(works_for)
+                identity['occupation'] = identity['occupation'] or first_non_empty(occupation, works_for_name)
+
+                address = node.get('address')
+                if isinstance(address, dict):
+                    locality = compact_text(address.get('addressLocality'))
+                    region = compact_text(address.get('addressRegion'))
+                    country = compact_text(address.get('addressCountry'))
+                    identity['location'] = identity['location'] or first_non_empty(
+                        ', '.join(filter(None, [locality, region, country]))
+                    )
+                elif isinstance(address, str):
+                    identity['location'] = identity['location'] or compact_text(address)
+
+                birth_date = compact_text(node.get('birthDate'))
+                if birth_date and not identity['age']:
+                    year_match = re.search(r'(19|20)\d{2}', birth_date)
+                    if year_match:
+                        birth_year = int(year_match.group(0))
+                        age = time.localtime().tm_year - birth_year
+                        if 10 <= age <= 100:
+                            identity['age'] = str(age)
+
+    body_text = compact_text(soup.get_text(' ', strip=True), max_len=6000)
+    profile_text = first_non_empty(description_text, title_text, body_text) or ''
+
+    if not identity['name']:
+        # Try to recover display names from titles like "Full Name (@handle)".
+        if title_text:
+            identity['name'] = compact_text(re.split(r'\||-|•|\(', title_text)[0], max_len=80)
+
+    if not identity['age']:
+        identity['age'] = parse_age_from_text(profile_text)
+    if not identity['gender']:
+        identity['gender'] = infer_gender_from_text(profile_text)
+    if not identity['occupation']:
+        occupation_hint = re.search(
+            r'\b(founder|developer|engineer|designer|student|artist|researcher|manager|consultant|writer|creator)\b',
+            profile_text,
+            flags=re.IGNORECASE,
+        )
+        if occupation_hint:
+            identity['occupation'] = compact_text(occupation_hint.group(1).title(), max_len=80)
+
+    location_tokens = re.search(
+        r'\b(?:based in|from|location|located in)\s*[:\-]?\s*([A-Za-z0-9 .,_-]{3,60})',
+        profile_text,
+        flags=re.IGNORECASE,
+    )
+    if location_tokens and not identity['location']:
+        identity['location'] = compact_text(location_tokens.group(1), max_len=80)
+
+    if not identity['email']:
+        mailto_link = soup.find('a', href=re.compile(r'^mailto:', flags=re.IGNORECASE))
+        if mailto_link and mailto_link.get('href'):
+            identity['email'] = compact_text(mailto_link.get('href').replace('mailto:', '').strip(), max_len=120)
+
+    return {key: compact_text(value, max_len=120) for key, value in identity.items() if compact_text(value, max_len=120)}
+
+
+def enrich_username_identity(username, found_profiles, headers):
+    """Aggregate best-effort public identity details from matched + deep profile sources."""
+    default_identity = {
+        'handle': username,
+        'name': None,
+        'age': None,
+        'gender': None,
+        'location': None,
+        'bio': None,
+        'email': None,
+        'occupation': None,
+        'website': None,
+    }
+
+    site_priority = {
+        'LinkedIn': 1,
+        'GitHub': 2,
+        'X/Twitter': 3,
+        'Instagram': 4,
+        'Facebook': 5,
+        'Reddit': 6,
+    }
+
+    deep_profile_sources = {
+        'LinkedIn': f'https://www.linkedin.com/in/{username}',
+        'GitHub': f'https://github.com/{username}',
+        'X/Twitter': f'https://x.com/{username}',
+        'Instagram': f'https://www.instagram.com/{username}',
+        'Facebook': f'https://www.facebook.com/{username}',
+        'Reddit': f'https://www.reddit.com/user/{username}',
+        'TikTok': f'https://www.tiktok.com/@{username}',
+        'YouTube': f'https://www.youtube.com/@{username}',
+        'Pinterest': f'https://www.pinterest.com/{username}',
+        'Twitch': f'https://www.twitch.tv/{username}',
+    }
+
+    ranked_profiles = sorted(found_profiles, key=lambda item: site_priority.get(str(item[0]), 99))
+    candidate_profiles = list(ranked_profiles)
+    for source_name, source_url in deep_profile_sources.items():
+        candidate_profiles.append((source_name, source_url))
+
+    unique_profiles = []
+    seen_urls = set()
+    for site_name, profile_url in candidate_profiles:
+        profile_key = str(profile_url).strip().lower()
+        if not profile_key or profile_key in seen_urls:
+            continue
+        seen_urls.add(profile_key)
+        unique_profiles.append((str(site_name), str(profile_url)))
+
+    unique_profiles = unique_profiles[:PHOMBER_USERNAME_IDENTITY_SOURCES]
+
+    merged_identity = dict(default_identity)
+    enriched_sources = []
+
+    for site_name, profile_url in unique_profiles:
+        profile_identity = extract_public_profile_identity(profile_url, headers)
+        if not profile_identity:
+            continue
+
+        enriched_sources.append(str(site_name))
+        for key in ['name', 'age', 'gender', 'location', 'bio', 'email', 'occupation', 'website']:
+            if not merged_identity.get(key) and profile_identity.get(key):
+                merged_identity[key] = profile_identity.get(key)
+
+    return merged_identity, enriched_sources, len(unique_profiles)
+
+
+def format_username_identity(identity_data, enriched_sources, attempted_count):
+    """Format public identity section for username scan output."""
+    handle = identity_data.get('handle') or 'N/A'
+    name = identity_data.get('name') or 'Not public'
+    age = identity_data.get('age') or 'Not public'
+    gender = identity_data.get('gender') or 'Not public'
+    location = identity_data.get('location') or 'Not public'
+    bio = identity_data.get('bio') or 'Not public'
+    email = identity_data.get('email') or 'Not public'
+    occupation = identity_data.get('occupation') or 'Not public'
+    website = identity_data.get('website') or 'Not public'
+
+    final_output = '\n    \33[1;49;93m[+] Public identity details (best effort):\033[0m\n\n'
+    final_output += f'    \33[1;49;92m> Handle: {handle}\033[0m\n'
+    final_output += f'    \33[1;49;92m> Name: {name}\033[0m\n'
+    final_output += f'    \33[1;49;92m> Age: {age}\033[0m\n'
+    final_output += f'    \33[1;49;92m> Gender: {gender}\033[0m\n'
+    final_output += f'    \33[1;49;92m> Occupation: {occupation}\033[0m\n'
+    final_output += f'    \33[1;49;92m> Location: {location}\033[0m\n'
+    final_output += f'    \33[1;49;92m> Bio: {bio}\033[0m\n'
+    final_output += f'    \33[1;49;92m> Email: {email}\033[0m\n'
+    final_output += f'    \33[1;49;92m> Website: {website}\033[0m\n'
+    final_output += f'    \33[1;49;93m[+] Deep profile checks attempted: \33[1;49;96m{attempted_count}\033[0m\n'
+
+    if enriched_sources:
+        final_output += f'\n    \33[1;49;93m[+] Enriched from: \33[1;49;96m{", ".join(enriched_sources)}\033[0m\n'
+    else:
+        final_output += '\n    \33[1;49;93m[+] Enriched from: \33[1;49;96mNo public identity fields found\033[0m\n'
+
+    final_output += '    \33[1;49;93m[!] Age/Gender are shown only if explicitly public and may be unavailable.\033[0m\n'
+    return final_output
+
+
+def username_search_links(username):
+    """Build direct profile and cross-engine search links for a username."""
+    direct_profiles = {
+        'X/Twitter': f'https://x.com/{username}',
+        'Instagram': f'https://www.instagram.com/{username}',
+        'Facebook': f'https://www.facebook.com/{username}',
+        'LinkedIn': f'https://www.linkedin.com/in/{username}',
+        'GitHub': f'https://github.com/{username}',
+        'Reddit': f'https://www.reddit.com/user/{username}',
+        'TikTok': f'https://www.tiktok.com/@{username}',
+        'YouTube': f'https://www.youtube.com/@{username}',
+        'Pinterest': f'https://www.pinterest.com/{username}',
+        'Twitch': f'https://www.twitch.tv/{username}',
+    }
+
+    search_engines = {
+        'Google': 'https://www.google.com/search?q={query}',
+        'Bing': 'https://www.bing.com/search?q={query}',
+        'DuckDuckGo': 'https://duckduckgo.com/?q={query}',
+        'Yandex': 'https://yandex.com/search/?text={query}',
+        'Brave': 'https://search.brave.com/search?q={query}',
+    }
+
+    platform_domains = {
+        'X/Twitter': 'x.com',
+        'Instagram': 'instagram.com',
+        'Facebook': 'facebook.com',
+        'LinkedIn': 'linkedin.com',
+        'GitHub': 'github.com',
+        'Reddit': 'reddit.com',
+        'TikTok': 'tiktok.com',
+        'YouTube': 'youtube.com',
+        'Pinterest': 'pinterest.com',
+        'Twitch': 'twitch.tv',
+    }
+
+    final_output = '\n    \33[1;49;93m[+] Direct profile URLs:\033[0m\n\n'
+    for platform_name, profile_url in direct_profiles.items():
+        final_output += f'    \33[1;49;92m> {platform_name}: {profile_url}\033[0m\n'
+
+    final_output += '\n    \33[1;49;93m[+] Search engine dorks (all major engines):\033[0m\n\n'
+    for platform_name, domain in platform_domains.items():
+        final_output += f'    \33[1;49;97m[{platform_name}]\033[0m\n'
+        query = quote_plus(f'"{username}" site:{domain}')
+        for engine_name, engine_url in search_engines.items():
+            final_output += f'    \33[1;49;92m> {engine_name}: {engine_url.format(query=query)}\033[0m\n'
+
+    return final_output
 
 # Reverse username lookup
 def username_lookup(username):
     # Global variables
     global prv_op
     prv_op = '' # Resetting previous output
+    username = normalize_scan_target(username)
+    started_at = time.perf_counter()
+    announce_scan_timing('username', started_at)
+
+    def finalize_scan(result):
+        return complete_scan_timing('username', started_at, result)
 
     # Checking internet connection
     printit(f'    [+] Verifying internet connection...', coledt=[1, 49, 93], space_down=True)
     if not check_connection():
         printit('    > Internet connection not available!', coledt=[1, 49, 91], space_down=True)
-        return False
+        return finalize_scan(False)
 
     # Information gathering about the username
     printit(f'    [+] Grathering information about \33[1;49;96m{username}\33[1;49;93m...', coledt=[1, 49, 93], space_down=True)
     prv_op += f'    \33[1;49;93m[#] Reverse username lookup for \33[1;49;96m{username}\33[1;49;93m:\033[0m'+'\n\n'
 
-    # Validating username (no spaces)
-    if ' ' in username:
+    # Validating username
+    if not re.match(r'^[A-Za-z0-9._-]{1,40}$', username):
         printit('    > Invalid username!', coledt=[1, 49, 91], space_down=True)
-        return False
+        return finalize_scan(False)
 
     # Headers
     headers = {
         'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0'
     }
     
-    # https://www.idcrawl.com/u/<username>
-    try:
-        # requesting the url
-        response = requests.get('https://www.idcrawl.com/u/'+username, timeout=10, headers=headers)
-        soup = bs4.BeautifulSoup(response.text, 'html.parser')
+    site_data = load_sherlock_site_data()
+    if not site_data:
+        printit('    > Username source manifest unavailable, continuing deep profile research with direct platforms...', coledt=[1, 49, 93], space_down=True)
+        site_data = {}
 
-        # Extracting data
-        # save information in a dictionary
-        info_dict = {}
+    found_profiles = []
+    checked = 0
 
-        # Main infomation to extract
-        #   gl-page-content col-md-8 col-sm-12 col-xs-12 (main class div)
-        #   gl-accordion-item > h2 tag (key of info_dict)
-        #   panel-collapse > gl-job-position-company > h3 (link -a and text) & p (value of info_dict)
-        # extract h2 and h3 tags in dictionary (h2 as key and h3 as value)
-        
-        # class = "gl-page-content col-md-8 col-sm-12 col-xs-12"
-        soup = soup.find('div', {'class': 'gl-page-content col-md-8 col-sm-12 col-xs-12'})
+    for site_name, site_info in site_data.items():
+        if checked >= PHOMBER_USERNAME_SITE_LIMIT:
+            break
 
-        # save h2 and h3 tags in dictionary (h2 as key and h3 as value)
-        for h2 in soup.find_all('h2'):
-            try:
-                # if there is `Not Taken` text inside the same div as h2 then skip it !!NEED_TO_FIX_IT!!
-                if 'Not Taken' in h2.findNext('p').text:
-                    continue
-                # if in `panel-heading-info` there is `Email Addresses` or `Secret Profiles` text then skip it
-                if 'Email Addresses' in h2 or 'Secret Profiles' in h2: 
-                    continue
-                # saving h2 and h3 tags in dictionary
-                info_dict[str(h2).split('</i>')[1].split('</h2>')[0]] = h2.findNext('h3').text
-            except:
-                pass
+        exists, profile_url = sherlock_profile_check(site_info, username, headers)
+        checked += 1
+        if exists and profile_url:
+            found_profiles.append((str(site_name), str(profile_url)))
 
+    printit(f'    [+] Performing deep profile research (up to {PHOMBER_USERNAME_IDENTITY_SOURCES} profiles)...', coledt=[1, 49, 93], space_down=True)
+    identity_data, enriched_sources, attempted_count = enrich_username_identity(username, found_profiles, headers)
 
-        if info_dict:
-            final_output = f'''
+    if found_profiles:
+        final_output = f'''
     ┌──────────────────────────────────────────────────────┐
-    | Scanned Username: \33[1;49;96m{username+' '*int(34-len(str(username)))}\033[0m |
+    | Scanned Username: \33[1;49;96m{pad_string(username, 34)}\033[0m |
     |------------------------------------------------------|
     | INFORMATION         | DESCRIPTION                    |
     |------------------------------------------------------|'''
 
-            for site, username in info_dict.items():
-                site = str(site)+' '*int(19-len(str(site)))
-                username = str(username)+' '*int(30-len(str(username)))
-                final_output += f'''\n    | \33[1;49;97m{site}\033[0m | {username} |'''
+        for site_name, profile_url in found_profiles:
+            site_label = pad_string(truncate_for_table(site_name, 19), 19)
+            profile_label = pad_string(truncate_for_table(profile_url, 30), 30)
+            final_output += f'''\n    | \33[1;49;97m{site_label}\033[0m | {profile_label} |'''
 
-            final_output += f'''\n    └──────────────────────────────────────────────────────┘'''
+        final_output += f'''\n    └──────────────────────────────────────────────────────┘\n
+    \33[1;49;93m[+] Checked sources: \33[1;49;96m{checked}\033[0m
+    \33[1;49;93m[+] Matches found: \33[1;49;96m{len(found_profiles)}\033[0m'''
+        final_output += format_username_identity(identity_data, enriched_sources, attempted_count)
+        final_output += username_search_links(username)
 
-            print(final_output)
-            prv_op += final_output+'\n'
-            return True
+        print(final_output)
+        prv_op += final_output+'\n'
+        return finalize_scan(True)
 
-        else:
-            final_output = f'''
+    final_output = f'''
     ┌──────────────────────────────────────────────────────┐
-    | Scanned Username: \33[1;49;96m{username+' '*int(34-len(str(username)))}\033[0m |
+    | Scanned Username: \33[1;49;96m{pad_string(username, 34)}\033[0m |
     |------------------------------------------------------|
     | INFORMATION         | DESCRIPTION                    |
     |------------------------------------------------------|
-    | \33[1;49;91mFailed to Fetch information from server!\033[0m             |
+    | \33[1;49;93mNo public profile found in checked sources\033[0m          |
     └──────────────────────────────────────────────────────┘
-        '''
-            print(final_output)
-            prv_op += final_output+'\n'
-            return False
-                
 
-
-
-
-
-    except Exception as e:
-        print(e)
-        
+    \33[1;49;93m[+] Checked sources: \33[1;49;96m{checked}\033[0m
+    '''
+    final_output += format_username_identity(identity_data, enriched_sources, attempted_count)
+    final_output += username_search_links(username)
+    print(final_output)
+    prv_op += final_output+'\n'
+    return finalize_scan(False)
 
 # --------------------------- Basic functions ------------------------ #
 
 def printit(text, center='', line_up=False, line_down=False, space_up=False, space_down=False, coledt=[0, 0, 0], normaltxt_start='', normaltxt_end='', hide=False, verbose_mode=False, input_mode=False):
     if not hide or verbose_mode:
-        # get terminal width
-        width = os.get_terminal_size().columns
+        # get terminal width with fallback for non-interactive shells
+        try:
+            width = os.get_terminal_size().columns
+        except (AttributeError, OSError, ValueError):
+            width = 80
 
         # printing text
         if space_up: print()
@@ -905,8 +1655,7 @@ def save_output(prv_cmd):
     try:
         filename = prv_cmd+'_ph0mber_'+str(time.strftime("%d-%m-%Y_%H-%M-%S"))+'.txt'
         pwd = os.getcwd()
-        os_name = os.uname()
-        path = pwd+'/'+filename
+        path = os.path.join(pwd, filename)
 
         file_save_info = f'''
     \33[1;49;93m[#] Output File Name: \33[1;49;97m{filename}\033[0m
@@ -931,7 +1680,7 @@ def save_output(prv_cmd):
     
         printit(f'    [+] Excute following commands to view output:', coledt=[1, 49, 93], space_down=True, space_up=True)
         
-        if os_name == 'nt':
+        if os.name == 'nt':
             exe_cmd = f'''    \33[1;49;93m> \33[1;49;92mshell more {filename}\033[0m
     \33[1;49;93m> \33[1;49;92mshell type {filename}\033[0m'''
         else:
@@ -940,15 +1689,15 @@ def save_output(prv_cmd):
         print(exe_cmd)
 
         return True
-    except:
-        printit(f'    [!] Output could not be saved!', coledt=[1, 49, 91], space_down=True)
+    except Exception as e:
+        printit(f'    [!] Output could not be saved! Error: {e}', coledt=[1, 49, 91], space_down=True)
         return False
 
 def dork_query():
     # Dork query from exploit-db
     try:
         headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0'}
-        dork_query = requests.get('https://www.exploit-db.com/ghdb/'+str(random.randint(1000, 8000)), headers=headers)
+        dork_query = requests.get('https://www.exploit-db.com/ghdb/'+str(random.randint(1000, 8000)), headers=headers, timeout=12)
         
         # If exploit-db is available
         if dork_query.status_code == 200:
@@ -959,7 +1708,7 @@ def dork_query():
             query = parsed_html.find('h1', attrs={'class': 'card-title'}).text.strip()
 
             return query
-    except:
+    except (requests.RequestException, AttributeError, ValueError, KeyError):
         pass
         
     # If dork query is not available, use local dork query
@@ -980,7 +1729,8 @@ def logo():
     printit('─ ▒█▀▀█ ▒█░▒█ █▀▀█ ▒█▀▄▀█ ▒█▀▀█ ▒█▀▀▀ ▒█▀▀█ ─', center=' ', coledt=[1, 49, random.choice([91, 92, 93, 94, 95, 96, 97])], space_up=True)
     printit('─ ▒█▄▄█ ▒█▀▀█ █▄▀█ ▒█▒█▒█ ▒█▀▀▄ ▒█▀▀▀ ▒█▄▄▀ ─', center=' ', coledt=[1, 49, random.choice([91, 92, 93, 94, 95, 96, 97])])
     printit('─ ▒█░░░ ▒█░▒█ █▄▄█ ▒█░░▒█ ▒█▄▄█ ▒█▄▄▄ ▒█░▒█ ─', center=' ', coledt=[1, 49, random.choice([91, 92, 93, 94, 95, 96, 97])], space_down=True)
-    printit('OSINT-FRAMEWORK                   @s41r4j', center=' ', coledt=[1, 49, random.choice([91, 92, 93, 94, 95, 96, 97])], space_down=True)
+    printit('OSINT-FRAMEWORK                   @s41r4j', center=' ', coledt=[1, 49, random.choice([91, 92, 93, 94, 95, 96, 97])])
+    printit('                                  @DkHrR', center=' ', coledt=[1, 49, random.choice([91, 92, 93, 94, 95, 96, 97])], space_down=True)
 
 # ------------------------- Main functions -------------------------- #
 
@@ -1055,7 +1805,7 @@ def control_center():
     | \33[1;49;97mName\033[0m          | \33[1;49;96mPH0MBER\033[0m                            |
     | \33[1;49;97mVersion\033[0m       | {ver} |
     | \33[1;49;97mType\033[0m          | \33[1;49;96mOSINT Framework\033[0m                    |
-    | \33[1;49;97mDeveloper\033[0m     | \33[1;49;96ms41r4j\033[0m                             |
+    | \33[1;49;97mDeveloper\033[0m     | \33[1;49;96ms41r4j, DkHrR\033[0m                      |
     | \33[1;49;97mGithub\033[0m        | \33[1;49;96mhttps://github.com/s41r4j/phomber\033[0m  |
     └────────────────────────────────────────────────────┘
     '''
@@ -1282,16 +2032,16 @@ def control_center():
         elif cmd == 'check':
             printit('    [+] Checking internet connection...', coledt=[1, 49, 93], space_down=True)
             try:
-                requests.get('https://www.google.com/')
+                requests.get('https://www.google.com/', timeout=10)
                 printit('    > Internet connection is available!', coledt=[1, 49, 92])
                 try:
-                    public_ip = requests.get('https://httpbin.org/ip').json()['origin']
+                    public_ip = requests.get('https://httpbin.org/ip', timeout=10).json()['origin']
                 except:
                     try:
-                        public_ip = requests.get('https://ident.me').text
+                        public_ip = requests.get('https://ident.me', timeout=10).text
                     except:
                         try:
-                            public_ip = requests.get('https://api.ipify.org').text
+                            public_ip = requests.get('https://api.ipify.org', timeout=10).text
                         except:
                             public_ip = False
                 if public_ip:
@@ -1487,7 +2237,7 @@ def main():
 
     # Checking for silent mode
     try:
-        if (sys.argv[1] == '-s' or sys.argv[1] == '--silent') or (sys.argv[2] == '-s' or sys.argv[2] == '--silent'):
+        if '-s' in sys.argv or '--silent' in sys.argv:
             silent_mode = True
     except IndexError:
         pass
@@ -1510,7 +2260,7 @@ def main():
             printit(f'[!] An error occured: {e}', coledt=[1, 49, 91], space_up=True)
             # Checking for verbose errors
             try:
-                if (sys.argv[1] == '-e' or sys.argv[1] == '--verbose-errors') or (sys.argv[2] == '-e' or sys.argv[2] == '--verbose-errors'):
+                if '-e' in sys.argv or '--verbose-errors' in sys.argv:
                     printit(f'[+] Detailed error: {sys.exc_info()}', coledt=[1, 49, 91], space_down=True)
                 else:
                     raise IndexError
