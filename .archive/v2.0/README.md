@@ -6,13 +6,14 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
 ```
 
 <a href='https://www.w3schools.in/ethical-hacking/information-gathering-techniques/'><img src="https://img.shields.io/badge/Etical Hacking-Infomation Grathering Tool-yellow.svg?logo=sharp"></a>
-<a href='https://github.com/s41r4j/phomber/releases/'><img src="https://img.shields.io/badge/Version-v2.0-orange.svg?logo=vectorworks"></a>
+<a href='https://github.com/s41r4j/phomber/releases/'><img src="https://img.shields.io/badge/Version-v3.0-orange.svg?logo=vectorworks"></a>
 <a href='https://www.python.org/'><img src="https://img.shields.io/badge/Python-3-blue.svg?style=flat&logo=python"></a>
-<a href='hhttps://golang.org/'><img src="https://img.shields.io/badge/Golang-Phoneinfoga-9cf.svg?style=flat&logo=go"></a>
 <a href='LICENSE'><img src="https://img.shields.io/badge/License-GPL%20v3.0-brightgreen.svg"></a>
 
          
 <br>
+
+
 
 
 <details>
@@ -26,13 +27,15 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
 </details>
 
 <details>
-<summary>Search & Scans</summary>
+<summary>Available Scans</summary>
 <br>
  
- - Basic search
- - Advance search (Experimental)
- - Phoneinfoga scan (Optional)
- - Truecaller scan (Comming soon)
+ - Basic Scan
+ - Abstractapi Scan
+ - Apilayer Scan
+ - Find and Trace Scan
+ - Numlookupapi Scan
+ - Veriphone Scan
  
 <br>
 </details>
@@ -41,9 +44,9 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
 <summary>Operating Systems Tested</summary>
 <br>
  
- - [![Supported OS](https://img.shields.io/badge/OS%20X-brightgreen?style=flat&logo=macos)](https://www.google.com/search?q=OS%20X)
- - [![Supported OS](https://img.shields.io/badge/Unix%20%2F%20Linux-blueviolet?style=flat&logo=linux)](https://www.google.com/search?q=Unix+Linux)
- - [![Supported OS](https://img.shields.io/badge/Microsoft%20Windows-red?style=flat&logo=windows)](https://www.google.com/search?q=Windows)
+ - [![Supported OS](https://img.shields.io/badge/OS%20X-brightgreen?style=flat&logo=macos)](https://www.google.com/search?q=OS%20X)  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(pip)
+ - [![Supported OS](https://img.shields.io/badge/Unix%20%2F%20Linux-blueviolet?style=flat&logo=linux)](https://www.google.com/search?q=Unix+Linux) &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(pip)
+ - [![Supported OS](https://img.shields.io/badge/Microsoft%20Windows-red?style=flat&logo=windows)](https://www.google.com/search?q=Windows) &nbsp;&nbsp;&nbsp;(exe)
 
 
 <br>
@@ -53,8 +56,7 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
 <summary>Direct Downloads</summary>
 <br>
  
- - [zip](https://github.com/s41r4j/phomber/archive/refs/tags/phomber-v2.0.zip)
- - [tar.gz](https://github.com/s41r4j/phomber/archive/refs/tags/phomber-v2.0.tar.gz)
+ - [Windows (EXE)](https://github.com/s41r4j/phomber/archive/refs/tags/phomber-v2.0.zip)
  
 <br>
 </details>
@@ -62,118 +64,122 @@ A Infomation Grathering tool that reverse search phone numbers and get their det
 <br>
 <br>
 
- ## Manually Installation 👨‍🦯
 
- Clone the repo
-  
- ```
-  git clone https://github.com/s41r4j/phomber
- ```
- Change the directory
-  
- ```
-  cd phomber
- ```
- Install Requirements 
- 
- ```
- pip install -r requirements.txt
- ```
-<details>
-<summary>Additional Configuration</summary>
-<br>
- 
- - There is a `config.py` file persent in `phomber` folder.
- - Click on '[*Additional Settings*](https://github.com/s41r4j/phomber/blob/main/.more/additional_config.md)' to see how to configure it.
- 
-</details>
 
+
+
+
+
+# 📜 Contents
 <br>
 
- ## Automated Installation 🤖
- 
- ### Linux / Unix / Mac 🗃️
- 
- - Download `install.sh` from [__HERE__](https://github.com/s41r4j/phomber/releases/download/phomber-v2.0/install.sh) (OR get it from latest [releases](https://github.com/s41r4j/phomber/releases/tag/phomber-v2.0))
- 
- - Run the following command to install `phomber` & it's `dependencies`
- ```
- bash install.sh
- ```
- 
- 
- ### Windows 📂
- 
- - Download `install.bat` from [__HERE__](https://github.com/s41r4j/phomber/releases/download/phomber-v2.0/install.bat) (OR get it from latest [releases](https://github.com/s41r4j/phomber/releases/tag/phomber-v2.0))
+- [Installation](#screwdriver-installation)
 
- - Run the following command to install `phomber` & it's `dependencies`
- ```
- .\install.bat
- ```
+    - [Linux](#card_file_box-linux-based-systems)
+    - [Windows](#open_file_folder-windows)
 
-> [*Additional Configuration*](https://github.com/s41r4j/phomber/blob/main/.more/additional_config.md) same as mentioned in `Manual Installation` 🪛
+- [Usage](#cloud-usage)
+- [Prerequisites](#atom_symbol-prerequisites)
 
-<br>
-<br>
 
-## Usage 👨‍💻
+<br><br>
 
-> The `PH0MBER` takes [command line arguments](https://www.google.com/search?q=Command+Line+Arguments).
 
+
+
+
+
+
+# :screwdriver: Installation
+
+
+## :card_file_box: Linux based systems
+
+- Now, install `PH0MBER` with ease (in _Linux_ or _Unix_ based systems)
+      
 ```
-$ python3 phomber.py +(country code)xxxxxxxxxx
+pip install phomber
 ```
-
-<br>
-
-Example (Linux based):
-```
-s41r4j@github:~/Desktop/phomber$ python3 phomber.py +001234567890
-```
-
-<details>
-<summary>Explaination</summary>
-<br>
          
-- `python3 phomber.py` -  Running phomber script with python3
-- `+001234567890` - Command line argument, the phone number you want to search.
-<details>
-<summary>Phone number breakdown / explained</summary>
-<br>
+
+<br><br>      
+         
+## :open_file_folder: Windows
  
- - `+00` is [country code](https://en.wikipedia.org/wiki/List_of_country_calling_codes), eg: +1 (Canada, US), +47 (Norway), +91 (India), +86 (China)
- - `1234567890` is the phone number without spaces, dashes & brackets
- 
-<br>
-</details>
-</details>
+- Download Windows executable from here [[download now](https://google.com)] 
+
+- Also check this guide [[redirect to guide]()] for proper `PH0MBER` setup in _Windows_
+
+- For ___Windows___ you don't need python or any other kind of installation
 
 
 
-<br>
-<br>
 
-## Prerequisites ⚛️
+
+
+<br><br>
+# :cloud: Usage
+
+```
+usage: phomber [-h] [-c] [-l] [-a] [-abs] [-lyr] [-fnt] [-nlu]
+               [-vp]
+               [Phone Number]
+
+PH0MBER — reverse phone number lookup
+
+positional arguments:
+  Phone Number          Phone number to which perform reverse
+                        lookup
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -c, --config_editor   Opens config editor for entering apis
+                        keys
+  -l, --logo            Display random `PH0MBER` logo
+  -a, --all_apis        Run all API scans
+  -abs, --abstractapi   Abstract Api [abstractapi.com]
+  -lyr, --apilayer      Apilayer [apilayer.com]
+  -fnt, --findandtrace  Find and Trace [findandtrace.com]
+  -nlu, --numlookupapi  Numlookup Api [numlookupapi.com]
+  -vp, --veriphone      Veriphone [veriphone.io]
+```
+
+
+
+
+
+
+
+<br><br>
+## :atom_symbol: Prerequisites 
 
 <details>
-<summary>Required</summary>
+<summary>Required (for unix/linux sys)</summary>
 <br>
          
 - python3
-- git
+- pip
     
 <br>
 </details>
 
 <details>
-<summary>Optional</summary>
+<summary>Optional (accounts for apikey)</summary>
 <br>
 
-- GoLang ([Download Here](https://golang.org/dl/)) , for Phoneinfoga scan.
-- OpenCage Account ([create a account here](https://opencagedata.com/users/sign_up)) , for Basic search.
-- Truecaller Account ([create a account here](https://www.truecaller.com/auth/sign-in)) , for Truecaller scan.
-    
+- [Abstractapi](abstractapi.com)
+- [Apilayer](apilayer.com)
+- [Numlookupapi](numlookupapi.com)
+- [Veriphone](veriphone.io)
+         
+<br>
 </details>
+
+<br>
+
+To setup API gateway, follow this guide [[redirect to guide](/.docs/apikeys.md)]
+
+
 
 <br>
 <br>
@@ -184,10 +190,6 @@ s41r4j@github:~/Desktop/phomber$ python3 phomber.py +001234567890
 > The [Developer](https://github.com/s41r4j/) of [PH0MBER](https://github.com/s41r4j/phomber/) is not responsible for an loss or misuse of the tool, it is end user's responsiblity.
 
 <br>
-
-## Want to Support ❤️ 
-
-🎁 Please check out the [__Google Form__](https://forms.gle/Aqit6QhQTmoYoypD7) 🎁
 
 
 <!-- <a href="https://www.buymeacoffee.com/S41R4J" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/arial-yellow.png" alt="Buy Me A Coffee" style="height: 50px !important;width: 50px !important;"></a> -->
