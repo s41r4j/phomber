@@ -39,7 +39,7 @@ An open source infomation grathering & reconnaissance framework!
 ```
 git clone https://github.com/s41r4j/phomber
 cd phomber
-pip3 install -r pyproject.toml
+pip3 install -r requirements.txt
 ```
 
 - __pip__
@@ -126,6 +126,7 @@ phomber
     |                <(Scanner Commands)>                |
     |----------------------------------------------------|
     | number        | Reverse phone number lookup        |
+    | email         | Reverse email lookup *             |
     | ip            | Reverse ip address lookup *        |
     | mac           | Reverse mac address lookup         |
     | whois         | Reverse whois lookup *             |
@@ -152,9 +153,38 @@ phomber
 
 ```
 - `PH0MBER` is back with all new features and user interface
-- `v3` has osint tools with no _api key_ requirement
+- `number` scan supports API-first mode if `PHOMBER_NUMLOOKUP_API_KEY` (or `NUMLOOKUP_API_KEY`) is set
+- if API is unavailable, `number` automatically falls back to the local basic scan
+- all scanners now display estimated and real-time research duration
+- `email` scanner is available for reverse email exposure lookup
+- `username` scan now performs deep profile research across direct platform profiles and best-effort public identity extraction
+- optional Hudson Rock exposure intelligence is integrated for `username`, `email`, `number`, and `whois` scans
+- tune depth via `PHOMBER_USERNAME_IDENTITY_SOURCES` (default: `20`)
+- tune per-profile fetch timeout via `PHOMBER_PROFILE_FETCH_TIMEOUT` (default: `8` seconds)
+- disable Hudson Rock checks with `PHOMBER_ENABLE_HUDSON_ROCK=0`
+- tune Hudson Rock request timeout with `PHOMBER_HUDSON_ROCK_TIMEOUT` (default: `10` seconds)
+- compatibility mode auto-enables on restricted runtimes (Termux/iSH/Android-like); override with `PHOMBER_COMPATIBILITY_MODE=1`
 - Release windows (exe) & linux (lsb) direct executables, no python req.
 - `v4` will have web-interface + automated scans features + (custom-scanner feature; create, distribute and deploy your own scanner)
 ```
+
+### Troubleshooting
+
+- Startup error: `Permission denied: '/proc/stat'`
+- Use compatibility mode: `PHOMBER_COMPATIBILITY_MODE=1`
+- Run with verbose diagnostics: `python3 phomber.py -e`
+
+- Startup error: `No such file or directory`
+- Run from project root (`phomber` directory)
+- Reinstall dependencies: `pip3 install -r requirements.txt`
+
+- Mobile shell runtimes (Termux/iSH) can be partially restricted
+- Use Linux/Windows/macOS for full feature parity
+- If you use mobile shells, include full `-e` output when reporting issues
+
+### Credits
+
+- Core author: `@s41r4j`
+- Contributor: `@DkHrR`
 
 </p>

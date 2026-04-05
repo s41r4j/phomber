@@ -1,0 +1,96 @@
+name: Bug Report
+description: Report a reproducible bug in PH0MBER
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug.
+        Please provide full reproduction details so we can fix it quickly.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Bug Summary
+      description: What happened?
+      placeholder: Short description of the bug
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps To Reproduce
+      description: Exact commands and steps
+      placeholder: |
+        1. Run command: python3 phomber.py -e
+        2. Enter: info
+        3. Crash happens
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior / Error Output
+      description: Paste complete traceback or terminal output (use -e flag)
+      placeholder: |
+        [!] An error occured: ...
+        [+] Detailed error: ...
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating System
+      description: Include distro/version if Linux (or Android shell details)
+      placeholder: Windows 11 / Ubuntu 22.04 / Termux Android 14 / iSH
+    validations:
+      required: true
+
+  - type: input
+    id: python
+    attributes:
+      label: Python Version
+      placeholder: 3.11.9
+    validations:
+      required: true
+
+  - type: input
+    id: install_method
+    attributes:
+      label: Install Method
+      description: git clone / pip / docker
+      placeholder: git clone
+    validations:
+      required: true
+
+  - type: dropdown
+    id: runtime
+    attributes:
+      label: Runtime Environment
+      options:
+        - Standard Linux/Windows/macOS shell
+        - Termux (Android)
+        - iSH (iOS)
+        - WSL
+        - Docker
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Additional Context
+      description: Screenshots, logs, or related issue links
