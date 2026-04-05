@@ -36,6 +36,7 @@ import random        # Default
 import time          # Default
 import threading     # Default
 import json          # Default
+import importlib.util # Default
 import re            # Default
 import uuid          # Default
 import socket        # Default
@@ -85,10 +86,184 @@ def normalize_scan_target(raw_value):
     return value
 
 
+def env_flag(name, default=False):
+    """Parse common boolean env values safely."""
+    raw_value = os.environ.get(name)
+    if raw_value is None:
+        return default
+    return str(raw_value).strip().lower() in ['1', 'true', 'yes', 'on', 'enable', 'enabled']
+
+
+def safe_float_env(name, default_value):
+    """Read a float env var with a sane fallback."""
+    try:
+        return float(os.environ.get(name, str(default_value)))
+    except (TypeError, ValueError):
+        return float(default_value)
+
+
+def safe_int_env(name, default_value):
+    """Read an int env var with a sane fallback."""
+    try:
+        return int(os.environ.get(name, str(default_value)))
+    except (TypeError, ValueError):
+        return int(default_value)
+
+
+def detect_runtime_profile():
+    """Detect restricted/mobile environments where startup metrics often fail."""
+    system_name = str(platform.system()).strip().lower()
+    node_name = str(platform.node()).strip().lower()
+    release_name = str(platform.release()).strip().lower()
+    version_name = str(platform.version()).strip().lower()
+
+    termux_detected = bool(
+        os.environ.get('TERMUX_VERSION')
+        or str(os.environ.get('PREFIX', '')).strip().startswith('/data/data/com.termux')
+    )
+    android_detected = bool(termux_detected or os.environ.get('ANDROID_ROOT') or os.environ.get('ANDROID_DATA') or 'android' in f'{system_name} {release_name} {version_name}')
+    ish_detected = bool('ish' in f'{node_name} {release_name} {version_name}')
+
+    proc_stat_readable = None
+    if os.path.exists('/proc/stat'):
+        try:
+            with open('/proc/stat', 'r', encoding='utf-8', errors='ignore') as proc_stat_file:
+                proc_stat_file.readline()
+            proc_stat_readable = True
+        except (PermissionError, OSError):
+            proc_stat_readable = False
+
+    restricted_runtime = bool(termux_detected or android_detected or ish_detected or proc_stat_readable is False)
+    profile_label = 'standard'
+    if termux_detected:
+        profile_label = 'termux'
+    elif ish_detected:
+        profile_label = 'ish'
+    elif android_detected:
+        profile_label = 'android'
+
+    return {
+        'profile': profile_label,
+        'is_termux': termux_detected,
+        'is_android': android_detected,
+        'is_ish': ish_detected,
+        'proc_stat_readable': proc_stat_readable,
+        'is_restricted': restricted_runtime,
+    }
+
+
+def style_info_field(value, width):
+    """Color and pad system info fields without negative-padding crashes."""
+    value_text = str(value)
+    return '\33[1;49;96m' + value_text + '\033[0m' + ' ' * max(0, width - len(value_text))
+
+
+def safe_metric_percent(metric_name, collector, warnings):
+    """Collect a metric percent safely and record a warning when unavailable."""
+    try:
+        metric_value = collector()
+        if metric_value is None:
+            raise ValueError('metric collector returned None')
+        return f'{float(metric_value):.1f}%'
+    except Exception as error:
+        warnings.append(f'{metric_name} unavailable: {error}')
+        return 'N/A'
+
+
+def build_system_snapshot():
+    """Build robust system metrics with compatibility fallbacks."""
+    runtime_profile = detect_runtime_profile()
+    warnings = []
+
+    if runtime_profile.get('proc_stat_readable') is False:
+        warnings.append('restricted /proc/stat access detected; CPU metrics may be unavailable')
+
+    disk_target = os.path.abspath(os.sep)
+    if not os.path.exists(disk_target):
+        disk_target = os.getcwd()
+
+    ram_usage = safe_metric_percent('RAM usage', lambda: psutil.virtual_memory().percent, warnings)
+    cpu_usage = safe_metric_percent('CPU usage', lambda: psutil.cpu_percent(), warnings)
+    disk_usage = safe_metric_percent('Disk usage', lambda: psutil.disk_usage(disk_target).percent, warnings)
+
+    return {
+        'runtime_profile': runtime_profile,
+        'ram_usage': ram_usage,
+        'cpu_usage': cpu_usage,
+        'disk_usage': disk_usage,
+        'warnings': warnings,
+    }
+
+
+def detect_missing_runtime_dependencies():
+    """Identify missing top-level modules for startup diagnostics."""
+    dependency_map = [
+        ('requests', 'requests'),
+        ('prompt_toolkit', 'prompt_toolkit'),
+        ('psutil', 'psutil'),
+        ('bs4', 'beautifulsoup4'),
+        ('phonenumbers', 'phonenumbers'),
+        ('mac_vendor_lookup', 'mac-vendor-lookup'),
+        ('whois', 'python-whois'),
+        ('dns', 'dnspython'),
+    ]
+    missing_packages = []
+    for module_name, package_name in dependency_map:
+        if importlib.util.find_spec(module_name) is None:
+            missing_packages.append(package_name)
+    return missing_packages
+
+
+def build_startup_diagnostics(error):
+    """Create actionable diagnostics for startup failures."""
+    runtime_profile = detect_runtime_profile()
+    missing_packages = detect_missing_runtime_dependencies()
+
+    diagnostic_items = [
+        ('OS', platform.platform()),
+        ('Python', platform.python_version()),
+        ('Executable', sys.executable),
+        ('Current Directory', os.getcwd()),
+        ('Runtime Profile', runtime_profile.get('profile', 'unknown')),
+        ('Compatibility Mode', str(PHOMBER_COMPATIBILITY_MODE)),
+    ]
+
+    suggestions = [
+        'Install dependencies: pip3 install -r requirements.txt',
+        'Use `python3 phomber.py -e` to show verbose trace details',
+    ]
+
+    error_text = str(error).lower()
+    if '/proc/stat' in error_text or isinstance(error, PermissionError):
+        suggestions.append('Restricted `/proc/stat` detected: run on full Linux/Windows/macOS or enable compatibility mode: PHOMBER_COMPATIBILITY_MODE=1')
+    if isinstance(error, FileNotFoundError):
+        suggestions.append('Run command from repository root and verify required files exist')
+    if runtime_profile.get('is_restricted'):
+        suggestions.append('Termux/iSH/Android runtimes may need extra permissions and can have partial feature support')
+
+    if missing_packages:
+        suggestions.append('Missing packages: ' + ', '.join(missing_packages))
+
+    return diagnostic_items, suggestions
+
+
+def print_startup_diagnostics(error):
+    """Print startup diagnostics in a user-friendly way."""
+    diagnostic_items, suggestions = build_startup_diagnostics(error)
+    printit('[+] Startup diagnostics:', coledt=[1, 49, 93], space_up=True)
+    for key_name, key_value in diagnostic_items:
+        printit(f'    > {key_name}: {key_value}', coledt=[1, 49, 97])
+
+    printit('[+] Suggested fixes:', coledt=[1, 49, 93], space_up=True)
+    for suggestion in suggestions:
+        printit(f'    > {suggestion}', coledt=[1, 49, 92])
+
+
 def get_research_time_estimate(scanner_name):
     """Return estimated duration range for each scanner."""
     estimate_map = {
         'number': '5-15 seconds',
+        'email': '4-20 seconds',
         'ip': '3-12 seconds',
         'mac': '1-5 seconds',
         'whois': '4-20 seconds',
@@ -102,6 +277,7 @@ def get_research_time_estimate_seconds(scanner_name):
     """Return average estimated duration (seconds) for live remaining-time updates."""
     estimate_seconds_map = {
         'number': 10,
+        'email': 10,
         'ip': 8,
         'mac': 3,
         'whois': 12,
@@ -228,6 +404,9 @@ try:
     PHOMBER_PROFILE_FETCH_TIMEOUT = float(os.environ.get('PHOMBER_PROFILE_FETCH_TIMEOUT', '8'))
 except (TypeError, ValueError):
     PHOMBER_PROFILE_FETCH_TIMEOUT = 8.0
+PHOMBER_ENABLE_HUDSON_ROCK = env_flag('PHOMBER_ENABLE_HUDSON_ROCK', default=True)
+PHOMBER_HUDSON_ROCK_TIMEOUT = safe_float_env('PHOMBER_HUDSON_ROCK_TIMEOUT', 10)
+PHOMBER_COMPATIBILITY_MODE = env_flag('PHOMBER_COMPATIBILITY_MODE', default=detect_runtime_profile().get('is_restricted', False))
 _sherlock_site_cache = None
 _active_scan_timers = {}
 silent_mode = False
@@ -449,6 +628,12 @@ def number_lookup(phone_number):
     \033[0m'''
         print(social_media_platforms)
         prv_op += social_media_platforms+'\n'
+
+        hudson_output, _ = run_hudson_rock_section('phone', phone_number.strip())
+        if hudson_output:
+            print(hudson_output)
+            prv_op += hudson_output+'\n'
+
         return finalize_scan(True)
         
     else:
@@ -1018,6 +1203,11 @@ def whois_lookup(domain):
     print(final_output)
     prv_op += final_output+'\n'
 
+    hudson_output, _ = run_hudson_rock_section('domain', domain.strip())
+    if hudson_output:
+        print(hudson_output)
+        prv_op += hudson_output+'\n'
+
     return finalize_scan(bol_val)
 
 # Reverse domain lookup
@@ -1478,6 +1668,116 @@ def format_username_identity(identity_data, enriched_sources, attempted_count):
     return final_output
 
 
+def hudson_rock_lookup(search_type, target_value):
+    """Query Hudson Rock Cavalier API for exposure intelligence."""
+    if not PHOMBER_ENABLE_HUDSON_ROCK:
+        return False, None, 'disabled'
+
+    endpoint_map = {
+        'username': 'search-by-username',
+        'phone': 'search-by-username',
+        'email': 'search-by-email',
+        'domain': 'search-by-domain',
+    }
+    endpoint_name = endpoint_map.get(search_type)
+    if not endpoint_name:
+        return False, None, f'unsupported search type: {search_type}'
+
+    base_url = 'https://cavalier.hudsonrock.com/api/json/v2/osint-tools'
+    query_key = 'username' if search_type in ['username', 'phone'] else search_type
+    query_value = str(target_value).strip()
+
+    headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0'}
+
+    try:
+        response = requests.get(
+            f'{base_url}/{endpoint_name}',
+            params={query_key: query_value},
+            timeout=PHOMBER_HUDSON_ROCK_TIMEOUT,
+            headers=headers,
+        )
+    except requests.RequestException as request_error:
+        return False, None, str(request_error)
+
+    try:
+        response_json = response.json()
+    except ValueError:
+        response_json = {'message': response.text[:300] if response.text else ''}
+
+    if response.status_code == 404:
+        if isinstance(response_json, dict):
+            response_json.setdefault('message', 'No data found')
+        else:
+            response_json = {'message': 'No data found'}
+        return True, response_json, None
+
+    if response.status_code >= 400:
+        message = ''
+        if isinstance(response_json, dict):
+            message = str(response_json.get('message') or response_json.get('error') or '').strip()
+        error_text = f'HTTP {response.status_code}' + (f' - {message}' if message else '')
+        return False, None, error_text
+
+    if not isinstance(response_json, dict):
+        response_json = {'data': response_json}
+
+    return True, response_json, None
+
+
+def hudson_rock_record_count(response_json):
+    """Estimate exposure record count from common response shapes."""
+    if not isinstance(response_json, dict):
+        return 0
+
+    for total_key in ['total', 'count', 'records_count', 'results_count']:
+        total_value = response_json.get(total_key)
+        if isinstance(total_value, int) and total_value >= 0:
+            return total_value
+
+    collection_keys = ['stealers', 'employees', 'users', 'records', 'results', 'items', 'data']
+    for key_name in collection_keys:
+        key_value = response_json.get(key_name)
+        if isinstance(key_value, list):
+            return len(key_value)
+
+    return 0
+
+
+def format_hudson_rock_section(scan_name, target_value, response_json):
+    """Render Hudson Rock API response in a compact terminal block."""
+    message = ''
+    if isinstance(response_json, dict):
+        message = compact_text(response_json.get('message') or response_json.get('error') or '', max_len=100) or ''
+
+    record_count = hudson_rock_record_count(response_json)
+    status_text = 'Potential exposure data found' if record_count > 0 else 'No exposure records reported'
+
+    section_output = f'''
+    \33[1;49;93m[+] Hudson Rock intel ({scan_name}):\033[0m
+    \33[1;49;97m> Target:\033[0m {target_value}
+    \33[1;49;97m> Source:\033[0m Hudson Rock Cavalier API
+    \33[1;49;97m> Status:\033[0m {status_text}
+    \33[1;49;97m> Estimated records:\033[0m {record_count}
+'''
+    if message:
+        section_output += f'    \33[1;49;97m> API message:\033[0m {message}\n'
+
+    return section_output, record_count > 0
+
+
+def run_hudson_rock_section(scan_name, target_value):
+    """Execute Hudson Rock lookup and return formatted output + success state."""
+    success, response_json, error_text = hudson_rock_lookup(scan_name, target_value)
+    if not success:
+        if error_text == 'disabled':
+            return '', None
+        failure_output = f'''\n    \33[1;49;93m[+] Hudson Rock intel ({scan_name}):\033[0m\n    \33[1;49;91m> Lookup skipped: {error_text}\033[0m\n'''
+        return failure_output, None
+
+    section_output, found_data = format_hudson_rock_section(scan_name, target_value, response_json)
+    return section_output, found_data
+
+
 def username_search_links(username):
     """Build direct profile and cross-engine search links for a username."""
     direct_profiles = {
@@ -1578,6 +1878,7 @@ def username_lookup(username):
 
     printit(f'    [+] Performing deep profile research (up to {PHOMBER_USERNAME_IDENTITY_SOURCES} profiles)...', coledt=[1, 49, 93], space_down=True)
     identity_data, enriched_sources, attempted_count = enrich_username_identity(username, found_profiles, headers)
+    hudson_output, _ = run_hudson_rock_section('username', username)
 
     if found_profiles:
         final_output = f'''
@@ -1596,6 +1897,7 @@ def username_lookup(username):
     \33[1;49;93m[+] Checked sources: \33[1;49;96m{checked}\033[0m
     \33[1;49;93m[+] Matches found: \33[1;49;96m{len(found_profiles)}\033[0m'''
         final_output += format_username_identity(identity_data, enriched_sources, attempted_count)
+        final_output += hudson_output
         final_output += username_search_links(username)
 
         print(final_output)
@@ -1614,10 +1916,54 @@ def username_lookup(username):
     \33[1;49;93m[+] Checked sources: \33[1;49;96m{checked}\033[0m
     '''
     final_output += format_username_identity(identity_data, enriched_sources, attempted_count)
+    final_output += hudson_output
     final_output += username_search_links(username)
     print(final_output)
     prv_op += final_output+'\n'
     return finalize_scan(False)
+
+
+def email_lookup(email_address):
+    """Reverse email lookup using Hudson Rock exposure intelligence."""
+    global prv_op
+    prv_op = ''
+    email_address = normalize_scan_target(email_address)
+    started_at = time.perf_counter()
+    announce_scan_timing('email', started_at)
+
+    def finalize_scan(result):
+        return complete_scan_timing('email', started_at, result)
+
+    printit(f'    [+] Verifying internet connection...', coledt=[1, 49, 93], space_down=True)
+    if not check_connection():
+        printit('    > Internet connection not available!', coledt=[1, 49, 91], space_down=True)
+        return finalize_scan(False)
+
+    printit(f'    [+] Grathering information about \33[1;49;96m{email_address}\33[1;49;93m...', coledt=[1, 49, 93], space_down=True)
+    prv_op += f'    \33[1;49;93m[#] Reverse email lookup for \33[1;49;96m{email_address}\33[1;49;93m:\033[0m' + '\n\n'
+
+    if not re.match(r'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$', email_address):
+        printit('    > Invalid email format! (Example: user@example.com)', coledt=[1, 49, 91])
+        return finalize_scan(False)
+
+    hudson_output, found_data = run_hudson_rock_section('email', email_address)
+    if not hudson_output:
+        hudson_output = '\n    \33[1;49;93m[+] Hudson Rock intel (email):\033[0m\n    \33[1;49;93m> No response data available\033[0m\n'
+
+    search_links = f'''
+    \33[1;49;93m[+] Search engine lookup:\033[0m
+
+    \33[1;49;92m> https://www.google.com/search?q={quote_plus(email_address)}
+    > https://www.bing.com/search?q={quote_plus(email_address)}
+    > https://duckduckgo.com/?q={quote_plus(email_address)}
+    > https://yandex.com/search/?text={quote_plus(email_address)}
+    > https://search.brave.com/search?q={quote_plus(email_address)}
+    \033[0m'''
+
+    final_output = hudson_output + search_links
+    print(final_output)
+    prv_op += final_output + '\n'
+    return finalize_scan(True)
 
 # --------------------------- Basic functions ------------------------ #
 
@@ -1772,17 +2118,24 @@ def control_center():
     └────────────────────────────────────────────────────┘'''
 
     # Variables
-    user = '\33[1;49;96m'+str(getpass.getuser())+'\033[0m'+ ' '*int(34-len(str(getpass.getuser())))    
-    hostname = '\33[1;49;96m'+str(platform.node())+'\033[0m'+' '*int(34-len(str(platform.node())))
-    os_name = '\33[1;49;96m'+str(platform.system())+'\033[0m'+' '*int(34-len(str(platform.system())))
-    ram = '\33[1;49;96m'+str(psutil.virtual_memory().percent)+"%"+'\033[0m'+' '*int(33-len(str(psutil.virtual_memory().percent)))
-    cpu = '\33[1;49;96m'+str(psutil.cpu_percent())+"%"+'\033[0m'+' '*int(32-len(str(psutil.cpu_percent())))
-    disk = '\33[1;49;96m'+str(psutil.disk_usage('/').percent)+"%"+'\033[0m'+' '*int(33-len(str(psutil.disk_usage('/').percent)))
-    sys_mac = '\33[1;49;96m'+str(':'.join(re.findall('..', '%012x' % uuid.getnode())))+'\033[0m'+' '*int(34-len(str(':'.join(re.findall('..', '%012x' % uuid.getnode())))))
+    system_snapshot = build_system_snapshot()
+    runtime_profile = system_snapshot.get('runtime_profile', {})
+    compatibility_warnings = list(system_snapshot.get('warnings', []))
+    if PHOMBER_COMPATIBILITY_MODE:
+        compatibility_warnings.append('compatibility mode enabled (reduced strictness for restricted runtimes)')
 
-    arch = '\33[1;49;96m'+str(platform.machine())+'\033[0m'+' '*int(34-len(str(platform.machine())))
+    user = style_info_field(str(getpass.getuser()), 34)
+    hostname = style_info_field(str(platform.node()), 34)
+    os_name = style_info_field(str(platform.system()), 34)
+    runtime_name = style_info_field(str(runtime_profile.get('profile', 'standard')), 34)
+    ram = style_info_field(system_snapshot.get('ram_usage', 'N/A'), 33)
+    cpu = style_info_field(system_snapshot.get('cpu_usage', 'N/A'), 32)
+    disk = style_info_field(system_snapshot.get('disk_usage', 'N/A'), 33)
+    sys_mac = style_info_field(str(':'.join(re.findall('..', '%012x' % uuid.getnode()))), 34)
+
+    arch = style_info_field(str(platform.machine()), 34)
     
-    ver = '\33[1;49;96m3.1.1\033[0m'+' '*int(34-len(str(3.0)))
+    ver = style_info_field('3.1.1', 34)
 
     sysinfo = f'''
     ┌────────────────────────────────────────────────────┐
@@ -1791,6 +2144,7 @@ def control_center():
     | \33[1;49;97mUser\033[0m          | {user} |
     | \33[1;49;97mHostname\033[0m      | {hostname} |
     | \33[1;49;97mOS\033[0m            | {os_name} |
+    | \33[1;49;97mRuntime\033[0m       | {runtime_name} |
     | \33[1;49;97mArchitecture\033[0m  | {arch} |
     | \33[1;49;97mSystem MAC\033[0m    | {sys_mac} |
     |----------------------------------------------------|
@@ -1809,6 +2163,11 @@ def control_center():
     | \33[1;49;97mGithub\033[0m        | \33[1;49;96mhttps://github.com/s41r4j/phomber\033[0m  |
     └────────────────────────────────────────────────────┘
     '''
+
+    if not silent_mode and compatibility_warnings:
+        printit('    [!] Compatibility notices:', coledt=[1, 49, 93], space_down=True)
+        for warning_text in sorted(set(compatibility_warnings)):
+            printit(f'    > {warning_text}', coledt=[1, 49, 93])
 
     help = '''
     ┌────────────────────────────────────────────────────┐
@@ -1833,6 +2192,7 @@ def control_center():
     |                <(Scanner Commands)>                |
     |----------------------------------------------------|
     | \33[1;49;97mnumber\033[0m        | Reverse phone number lookup        |
+    | \33[1;49;97memail\033[0m         | Reverse email lookup \33[1;49;91m*\033[0m             |
     | \33[1;49;97mip\033[0m            | Reverse ip address lookup \33[1;49;91m*\033[0m        |
     | \33[1;49;97mmac\033[0m           | Reverse mac address lookup         |
     | \33[1;49;97mwhois\033[0m         | Reverse whois lookup \33[1;49;91m*\033[0m             |
@@ -1967,6 +2327,14 @@ def control_center():
     \33[1;49;92m> EXAMPLE: \33[1;49;97mnumber +1234567890
     \033[0m'''
                     print(number_help)
+                elif cmd == 'email':
+                    crt_exp = exp[1]
+                    email_help = '''  \33[1;49;93m[+] Command Info: \33[1;49;93memail\n
+    \33[1;49;92m> DESCRIPTION: \33[1;49;97mWhen you type `email`, it performs email exposure lookup using Hudson Rock and search-engine pivots
+    \33[1;49;92m> SYNTAX: \33[1;49;97memail <email_address>
+    \33[1;49;92m> EXAMPLE: \33[1;49;97memail user@example.com
+    \033[0m'''
+                    print(email_help)
                 elif cmd == 'whois':
                     crt_exp = exp[1]
                     whois_help = '''  \33[1;49;93m[+] Command Info: \33[1;49;93mwhois\n
@@ -2141,6 +2509,22 @@ def control_center():
             else:
                 crt_exp = exp[3]
                 printit('    [!] Invalid command! Type `help` to see all available commands.', coledt=[1, 49, 91])
+        elif cmd == 'email':
+            crt_exp = exp[2]
+            printit('    > No email found! Type `help email` to see more info', coledt=[1, 49, 91])
+        elif cmd[:5] == 'email':
+            full_cmd = cmd
+            if (cmd+'#')[5] == ' ':
+                cmd = cmd[6:]
+                printit('    [+] Performing reverse email lookup...', coledt=[1, 49, 93], space_down=True)
+                if email_lookup(cmd):
+                    crt_exp = exp[4]
+                else:
+                    crt_exp = exp[3]
+                    prv_op = ''
+            else:
+                crt_exp = exp[3]
+                printit('    [!] Invalid command! Type `help` to see all available commands.', coledt=[1, 49, 91])
         elif cmd == 'ip':
             crt_exp = exp[2]
             printit('    > No ip address found! Type `help ip` to see more info', coledt=[1, 49, 91])
@@ -2258,6 +2642,7 @@ def main():
         print()
         if not silent_mode:
             printit(f'[!] An error occured: {e}', coledt=[1, 49, 91], space_up=True)
+            print_startup_diagnostics(e)
             # Checking for verbose errors
             try:
                 if '-e' in sys.argv or '--verbose-errors' in sys.argv:
