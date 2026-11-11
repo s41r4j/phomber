@@ -1,0 +1,11 @@
+import { catalogShell } from './catalog-pages.js';
+import { escape } from './shell.js';
+import type { Profile } from '../catalog/index.js';
+import type { Collection } from '../admin/collections.js';
+export function renderAdmin(): string {
+    return catalogShell('Wiki administration', `<p class="notice">Local admin mode is always enabled. You can manage this workspace immediately, with no login or unlock step.</p><h2>Library management</h2><p><a class="button" href="/admin/collections/">Manage collections</a> <a class="button" href="/articles/">Organize profile versions</a></p><p>Open a profile’s version history to edit its label, separate a mistaken identity match or move a version. Create, edit and archive collections from the collection manager.</p>`);
+}
+export function renderAdminCollections(collections: Collection[], profiles: Profile[], csrf: string): string {
+    const form = (c?: Collection) => `<form class="admin-form" method="post" action="/manage/collections"><input type="hidden" name="csrf" value="${csrf}">${c ? `<input type="hidden" name="id" value="${c.id}">` : ''}<label>Name <input name="name" required maxlength="120" value="${escape(c?.name || '')}"></label><label>Description <textarea name="description" rows="3" maxlength="2000">${escape(c?.description || '')}</textarea></label><fieldset class="member-list"><legend>Profiles</legend>${profiles.map(p => `<label><input type="checkbox" name="profiles" value="${p.id}" ${c?.profile_ids.includes(p.id) ? 'checked' : ''}> ${escape(p.title)} (${p.articles.length} versions)</label>`).join('') || 'No profiles yet.'}</fieldset><label><input type="checkbox" name="archived" value="yes" ${c?.archived ? 'checked' : ''}> Archived (hidden from the active collection list)</label><button>${c ? 'Save collection' : 'Create collection'}</button></form>`;
+    return catalogShell('Manage collections', `<p><a href="/admin/">Admin home</a> · <a href="/collections/">Browse collections</a></p><h2>Create collection</h2>${form()}<h2>Existing collections</h2>${collections.map(c => `<details><summary>${escape(c.name)}${c.archived ? ' (archived)' : ''}</summary>${form(c)}</details>`).join('') || '<p>No collections yet.</p>'}`);
+}

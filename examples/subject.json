@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "subject": {
+    "type": "person",
+    "name": "YOUR SUBJECT NAME",
+    "professional": {
+      "company": "KNOWN PUBLIC ORGANIZATION"
+    }
+  },
+  "research": {
+    "depth": "deep"
+  },
+  "output": [
+    "html",
+    "json"
+  ]
+}

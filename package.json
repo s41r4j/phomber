@@ -1,0 +1,68 @@
+{
+  "name": "phomber",
+  "version": "4.0.0-gen2.0",
+  "description": "PH0MBER Gen2: evidence-first public-source research, local wiki reports and CLI",
+  "type": "module",
+  "license": "GPL-3.0-only",
+  "author": "s41r4j",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/s41r4j/phomber.git"
+  },
+  "homepage": "https://github.com/s41r4j/phomber#readme",
+  "bugs": {
+    "url": "https://github.com/s41r4j/phomber/issues"
+  },
+  "keywords": ["osint", "cli", "research", "public-sources", "wiki"],
+  "publishConfig": {
+    "access": "public",
+    "tag": "beta",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "bin": {
+    "phomber": "dist/cli/index.js"
+  },
+  "files": [
+    "dist",
+    "src",
+    "scripts",
+    "tsconfig.json",
+    "schemas",
+    "examples",
+    "legacy/README.md",
+    "docs/AI.md",
+    "docs/ARTICLE_TEMPLATE.md",
+    "docs/MIGRATION.md",
+    "docs/RESPONSIBLE_USE.md",
+    "docs/SOURCES.md",
+    "docs/WIKI_INTERFACE.md",
+    "docs/RELEASING.md",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "clean": "node scripts/clean.mjs",
+    "build": "npm run clean && tsc && node scripts/prepare.mjs",
+    "test": "npm run build && node --test tests/*.test.mjs",
+    "check": "tsc --noEmit",
+    "prepack": "npm run build",
+    "prepublishOnly": "npm run release:check",
+    "release:check": "npm run check && npm test && npm run test:package",
+    "test:package": "node scripts/check-package.mjs",
+    "start": "node dist/cli/index.js",
+    "setup:local": "npm run build && node scripts/setup-local.mjs",
+    "local": "node scripts/local.mjs",
+    "dev": "npm run build && node scripts/local.mjs serve"
+  },
+  "dependencies": {
+    "ajv": "8.20.0",
+    "libphonenumber-js": "1.12.31"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.1",
+    "typescript": "5.9.3"
+  }
+}

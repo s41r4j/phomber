@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0",
+  "subject": {
+    "type": "person",
+    "name": "Example Researcher",
+    "aliases": ["Example R."],
+    "education": [{ "institution": "Example University", "degree": "Computer Science", "date": { "start": "2018", "end": "2022", "precision": "year" } }],
+    "professional": { "company": "Example Organization", "companies": ["Example Organization"], "history": [] },
+    "connections": [{ "name": "Example Collaborator", "relationship": "investigator supplied, unverified" }],
+    "projects": [{ "name": "Example Project" }],
+    "location": "Pune, India",
+    "custom": { "purpose": "Input format illustration only. This is not evidence of an actual person's identity." }
+  },
+  "research": { "depth": "standard" },
+  "output": ["html", "json"]
+}

@@ -1,0 +1,10 @@
+node_modules/
+dist/
+coverage/
+*.tgz
+.phomber/
+.env
+.env.*
+*.log
+references/
+docs/IMPLEMENTATION.md
