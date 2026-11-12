@@ -19,7 +19,9 @@ const env = {
 };
 async function npm(args, cwd = root) {
   try {
-    const result = await exec(process.execPath, [npmCLI, ...args], {
+    // A publish dry-run is inherited by lifecycle children. Packing/installing
+    // here must still create the temporary files used by the release check.
+    const result = await exec(process.execPath, [npmCLI, "--dry-run=false", ...args], {
       cwd, env, maxBuffer: 10_000_000, timeout: 180_000,
     });
     return result.stdout;

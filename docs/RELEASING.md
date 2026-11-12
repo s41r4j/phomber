@@ -1,6 +1,6 @@
 # Publishing PH0MBER
 
-The current release is the `4.0.0-gen2.0` beta. `package.json` sets the public npm registry, public access and the `beta` dist-tag, so the maintainer can publish with `npm publish`.
+The current release is the `4.0.0-gen2.0` beta. `package.json` sets the public npm registry, public access and the `beta` dist-tag. The project `.npmrc` also sets `tag=beta` so npm's command defaults and publish output agree with the manifest. The maintainer can publish with `npm publish`.
 
 ## Before publishing
 
@@ -36,4 +36,4 @@ Personal wiki archives, local reports, credentials, tests and internal implement
 
 ## Stable release
 
-When a stable release is intended, select a stable version and explicitly change `publishConfig.tag` to `latest`, update the lockfile and documentation, and rerun the release checks. The beta tag is intentional for the current Gen2 prerelease.
+When a stable release is intended, select a stable version, explicitly change `publishConfig.tag` and `.npmrc`'s `tag` to `latest`, update the lockfile and documentation, and rerun the release checks. The beta tag is intentional for the current Gen2 prerelease.
