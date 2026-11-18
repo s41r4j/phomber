@@ -33,15 +33,18 @@ async function report(w, name, finished) {
   await writeReport(v, w);
   return v;
 }
-test("related versions group provisionally, sort by recency and persist explicit splits/moves", async (t) => {
+test("same names stay separate until an explicit move; versions sort and decisions persist", async (t) => {
   const w = await setup(t),
     old = await report(w, "Same Person", "2026-01-02T00:00:00Z"),
     newer = await report(w, "Same Person", "2026-02-02T00:00:00Z"),
     other = await report(w, "Another Person", "2026-03-02T00:00:00Z"),
     catalog = new Catalog(w);
   let profiles = await catalog.read();
-  assert.equal(profiles.length, 2);
+  assert.equal(profiles.length, 3);
   assert.equal(profiles[0].articles[0].id, other.id);
+  const olderProfile = profiles.find(p => p.articles.some(a => a.id === old.id));
+  await catalog.move("report:" + newer.id, olderProfile.id);
+  profiles = await catalog.read();
   const group = profiles.find((p) => p.title === "Same Person");
   assert.equal(group.articles.length, 2);
   assert.equal(group.articles[0].id, newer.id);
@@ -162,6 +165,9 @@ test("real pages and CSRF-protected profile controls work without changing evide
   const w = await setup(t),
     a = await report(w, "Grouped Person", "2026-01-02T00:00:00Z"),
     b = await report(w, "Grouped Person", "2026-02-02T00:00:00Z");
+  const organizer = new Catalog(w);
+  const initial = await organizer.read();
+  await organizer.move("report:" + b.id, initial.find(p => p.articles.some(article => article.id === a.id)).id);
   const { server, url } = await startServer(w, 0);
   t.after(() => new Promise((r) => server.close(r)));
   for (const path of [

@@ -1,9 +1,12 @@
 import https from "node:https";
+import { setTimeout as sleep } from "node:timers/promises";
+import { isIPv4 } from "node:net";
 import { Resolver } from "node:dns/promises";
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { publicURL } from "../core/schema.js";
+import { project } from "../core/project.js";
 import { atomicJSON } from "../workspace/index.js";
 export type Json =
   | null
@@ -20,6 +23,7 @@ export const arr = (v: unknown): Json[] =>
   Array.isArray(v) ? (v as Json[]) : [];
 export const str = (v: unknown): string => (typeof v === "string" ? v : "");
 export function publicIPv4(ip: string): boolean {
+  if (!isIPv4(ip)) return false;
   const a = ip.split(".").map(Number);
   if (a.length !== 4 || a.some((n) => !Number.isInteger(n) || n < 0 || n > 255))
     return false;
@@ -40,73 +44,98 @@ export const pinnedLookup =
   (address: string): NonNullable<https.RequestOptions["lookup"]> =>
   (_host, options, cb) =>
     options.all ? cb(null, [{ address, family: 4 }]) : cb(null, address, 4);
+export class SourceError extends Error {
+  constructor(message: string, readonly code: string, readonly status?: number, readonly retryAfterMs?: number) {
+    super(message); this.name = "SourceError";
+  }
+}
+export function retryAfter(value: string | undefined, now = Date.now()): number | undefined {
+  if (!value) return undefined;
+  const seconds = /^\d+$/.test(value.trim()) ? Number(value) * 1000 : Date.parse(value) - now;
+  return Number.isFinite(seconds) ? Math.max(0, seconds) : undefined;
+}
+export interface ResponseMetadata { final_url?: string; next_url?: string; pagination_error?: string }
 export interface HttpResult {
   data: Json;
   retrieved_at: string;
   cached: boolean;
+  final_url?: string;
+  next_url?: string;
+  pagination_error?: string;
 }
 export class HttpClient {
   private next = new Map<string, number>();
+  private metadata = new Map<string, ResponseMetadata>();
+  private requests = 0;
   constructor(
     private cache: string,
     readonly signal?: AbortSignal,
     private offline = false,
     private ttl = 3600000,
+    private options: { maxRequests?: number; maxRetryAfterMs?: number } = {},
   ) {}
   async get(url: string): Promise<HttpResult> {
+    this.signal?.throwIfAborted();
+    if (this.requests >= (this.options.maxRequests ?? Infinity))
+      throw new SourceError("Investigation request budget exhausted.", "budget_exhausted");
+    this.requests++;
     const u = publicURL(url),
       key = createHash("sha256").update(u.href).digest("hex"),
       file = join(this.cache, key + ".json");
     try {
-      const c = JSON.parse(await readFile(file, "utf8")) as HttpResult;
-      if (Date.now() - Date.parse(c.retrieved_at) < this.ttl)
-        return { ...c, cached: true };
+      const c: unknown = JSON.parse(await readFile(file, "utf8"));
+      const entry = obj(c);
+      const age = Date.now() - Date.parse(str(entry.retrieved_at));
+      if (Object.hasOwn(entry, "data") && age >= 0 && age < this.ttl) {
+        this.signal?.throwIfAborted();
+        return { data: sanitize(entry.data!), retrieved_at: str(entry.retrieved_at), cached: true,
+          ...(typeof entry.final_url === "string" ? { final_url: publicURL(entry.final_url).href } : {}),
+          ...(typeof entry.next_url === "string" ? { next_url: publicURL(entry.next_url).href } : {}),
+          ...(typeof entry.pagination_error === "string" ? { pagination_error: entry.pagination_error } : {}),
+        };
+      }
     } catch {
       /* cache miss */
     }
-    if (this.offline) throw new Error("Offline: no fresh cached response.");
+    this.signal?.throwIfAborted();
+    if (this.offline) throw new SourceError("Offline: no fresh cached response.", "offline_cache_miss");
     for (let attempt = 0; attempt < 3; attempt++) {
       this.signal?.throwIfAborted();
-      const pause = Math.max(0, (this.next.get(u.origin) || 0) - Date.now());
-      if (pause) await this.delay(pause);
-      this.next.set(u.origin, Date.now() + 1100);
       try {
         const data = sanitize(await this.request(u, 0)),
           result = {
             data,
             retrieved_at: new Date().toISOString(),
             cached: false,
+            ...this.metadata.get(u.href),
           };
-        await atomicJSON(file, result);
+        try {
+          await atomicJSON(file, result);
+        } catch {
+          // Caching is optional; a disk failure must not discard retrieved evidence.
+        }
         return result;
       } catch (e) {
         const message = (e as Error).message;
         if (
           attempt === 2 ||
-          !/HTTP (429|5\d\d)|timed out|ECONNRESET/.test(message)
+          !(e instanceof SourceError && e.code === "rate_limited") && !/HTTP (429|5\d\d)|timed out|ECONNRESET/.test(message)
         )
           throw e;
-        await this.delay(1000 * 2 ** attempt);
+        const requested = e instanceof SourceError ? e.retryAfterMs : undefined;
+        if (requested !== undefined && requested > (this.options.maxRetryAfterMs ?? 30000)) throw e;
+        const backoff = requested ?? 1000 * 2 ** attempt + Math.floor(Math.random() * 250);
+        this.next.set(u.origin, Math.max(this.next.get(u.origin) || 0, Date.now() + backoff));
+        await this.delay(backoff);
       }
     }
     throw new Error("Request failed.");
   }
   private async delay(ms: number): Promise<void> {
-    await new Promise<void>((resolve, reject) => {
-      const done = () => {
-        this.signal?.removeEventListener("abort", abort);
-        resolve();
-      };
-      const timer = setTimeout(done, ms);
-      const abort = () => {
-        clearTimeout(timer);
-        reject(new Error("Cancelled"));
-      };
-      this.signal?.addEventListener("abort", abort, { once: true });
-      if (this.signal?.aborted) abort();
-    });
+    await sleep(ms, undefined, { signal: this.signal });
   }
-  private async request(u: URL, redirects: number): Promise<Json> {
+
+  private async request(u: URL, redirects: number, original = u.href): Promise<Json> {
     this.signal?.throwIfAborted();
     if (redirects > 3) throw new Error("Too many redirects.");
     const resolver = new Resolver({ timeout: 4000, tries: 1 });
@@ -119,6 +148,9 @@ export class HttpClient {
       this.signal?.removeEventListener("abort", abort);
     }
     if (!publicIPv4(address)) throw new Error("Blocked nonpublic destination.");
+    const pause = Math.max(0, (this.next.get(u.origin) || 0) - Date.now());
+    this.next.set(u.origin, Date.now() + pause + 1100);
+    if (pause) await this.delay(pause);
     return new Promise<Json>((resolve, reject) => {
       const req = https.request(
         u,
@@ -129,7 +161,7 @@ export class HttpClient {
           lookup: pinnedLookup(address),
           headers: {
             "User-Agent":
-              "PH0MBER-Gen2/4.0 (+https://github.com/s41r4j/phomber)",
+              `${project.name}-${project.generation}/${project.version} (+${project.website})`,
             Accept: "application/json",
           },
         },
@@ -139,7 +171,7 @@ export class HttpClient {
             res.resume();
             try {
               const next = publicURL(new URL(res.headers.location, u).href);
-              this.request(next, redirects + 1).then(resolve, reject);
+              this.request(next, redirects + 1, original).then(resolve, reject);
             } catch (e) {
               reject(e);
             }
@@ -148,12 +180,21 @@ export class HttpClient {
           if (status !== 200) {
             res.resume();
             reject(
-              new Error(
+              new SourceError(
                 `HTTP ${status}; access unavailable, not evidence of absence.`,
+                status === 429 || (status === 403 && (res.headers["retry-after"] || res.headers["x-ratelimit-remaining"] === "0")) ? "rate_limited" : status === 401 || status === 403 ? "access_denied" : status >= 500 ? "provider_failure" : "http_error",
+                status, retryAfter(Array.isArray(res.headers["retry-after"]) ? res.headers["retry-after"][0] : res.headers["retry-after"]) ??
+                  (res.headers["x-ratelimit-remaining"] === "0" && Number.isFinite(Number(res.headers["x-ratelimit-reset"])) ? Math.max(0, Number(res.headers["x-ratelimit-reset"]) * 1000 - Date.now()) : undefined),
               ),
             );
             return;
           }
+          const linkHeader = res.headers.link;
+          const nextLink = typeof linkHeader === "string" ? /<([^>]+)>;\s*rel="?next"?/.exec(linkHeader)?.[1] : undefined;
+          let nextURL: string | undefined, paginationError: string | undefined;
+          try { if (nextLink) nextURL = publicURL(new URL(nextLink, u).href).href; }
+          catch { paginationError = "Provider returned an unsafe pagination URL."; }
+          this.metadata.set(original, { final_url: u.href, ...(nextURL ? { next_url: nextURL } : {}), ...(paginationError ? { pagination_error: paginationError } : {}) });
           let size = 0;
           const chunks: Buffer[] = [];
           res.on("data", (b: Buffer) => {
@@ -163,6 +204,7 @@ export class HttpClient {
             else chunks.push(b);
           });
           res.on("error", reject);
+          res.on("aborted", () => reject(new Error("Source response was interrupted.")));
           res.on("end", () => {
             try {
               resolve(JSON.parse(Buffer.concat(chunks).toString()) as Json);

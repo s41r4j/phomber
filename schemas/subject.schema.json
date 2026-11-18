@@ -2,7 +2,10 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "PH0MBER investigation input v1",
   "type": "object",
-  "required": ["schema_version", "subject"],
+  "required": [
+    "schema_version",
+    "subject"
+  ],
   "additionalProperties": false,
   "properties": {
     "schema_version": {
@@ -347,7 +350,9 @@
           "maxItems": 100,
           "items": {
             "type": "object",
-            "required": ["platform"],
+            "required": [
+              "platform"
+            ],
             "additionalProperties": false,
             "properties": {
               "platform": {
@@ -368,10 +373,14 @@
             },
             "anyOf": [
               {
-                "required": ["username"]
+                "required": [
+                  "username"
+                ]
               },
               {
-                "required": ["url"]
+                "required": [
+                  "url"
+                ]
               }
             ]
           }
@@ -389,7 +398,11 @@
       "additionalProperties": false,
       "properties": {
         "depth": {
-          "enum": ["quick", "standard", "deep"]
+          "enum": [
+            "quick",
+            "standard",
+            "deep"
+          ]
         },
         "offline": {
           "type": "boolean"
@@ -402,6 +415,22 @@
             "minLength": 1,
             "maxLength": 4096
           }
+        },
+        "ai": {
+          "type": "boolean"
+        },
+        "ai_only": {
+          "type": "boolean"
+        },
+        "max_ai_calls": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "max_output_tokens": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 32000
         }
       }
     },
@@ -410,7 +439,10 @@
       "minItems": 1,
       "uniqueItems": true,
       "items": {
-        "enum": ["html", "json"]
+        "enum": [
+          "html",
+          "json"
+        ]
       }
     },
     "evidence": {
@@ -469,14 +501,21 @@
       "properties": {
         "start": {
           "type": "string",
-          "pattern": "^\\d{4}(-\\d{2}(-\\d{2})?)?$"
+          "pattern": "^\\d{4}(-\\d{2}(-\\d{2})?)?$",
+          "format": "partial-date"
         },
         "end": {
           "type": "string",
-          "pattern": "^\\d{4}(-\\d{2}(-\\d{2})?)?$"
+          "pattern": "^\\d{4}(-\\d{2}(-\\d{2})?)?$",
+          "format": "partial-date"
         },
         "precision": {
-          "enum": ["day", "month", "year", "unknown"]
+          "enum": [
+            "day",
+            "month",
+            "year",
+            "unknown"
+          ]
         },
         "uncertain": {
           "type": "boolean"

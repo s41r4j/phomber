@@ -1,7 +1,7 @@
 {
   "name": "phomber",
-  "version": "4.0.0-gen2.0",
-  "description": "PH0MBER Gen2: evidence-first public-source research, local wiki reports and CLI",
+  "version": "0.0.1",
+  "description": "PH0MBER Gen2: an OSINT researcher with inspectable evidence, local wiki reports and CLI",
   "type": "module",
   "license": "GPL-3.0-only",
   "author": "s41r4j",
@@ -9,14 +9,20 @@
     "type": "git",
     "url": "git+https://github.com/s41r4j/phomber.git"
   },
-  "homepage": "https://github.com/s41r4j/phomber#readme",
+  "homepage": "https://phomber.s41r4j.in",
   "bugs": {
     "url": "https://github.com/s41r4j/phomber/issues"
   },
-  "keywords": ["osint", "cli", "research", "public-sources", "wiki"],
+  "keywords": [
+    "osint",
+    "cli",
+    "research",
+    "public-sources",
+    "wiki"
+  ],
   "publishConfig": {
     "access": "public",
-    "tag": "beta",
+    "tag": "latest",
     "registry": "https://registry.npmjs.org/"
   },
   "engines": {
@@ -40,8 +46,11 @@
     "docs/SOURCES.md",
     "docs/WIKI_INTERFACE.md",
     "docs/RELEASING.md",
+    "docs/WEBSITE.md",
+    "CHANGELOG.md",
     "LICENSE",
-    "README.md"
+    "README.md",
+    "docs/ANALYST_WORKFLOW.md"
   ],
   "scripts": {
     "clean": "node scripts/clean.mjs",
@@ -50,7 +59,8 @@
     "check": "tsc --noEmit",
     "prepack": "npm run build",
     "prepublishOnly": "npm run release:check",
-    "release:check": "npm run check && npm test && npm run test:package",
+    "release:check": "npm run check:site && npm run check && npm test && npm run test:package",
+    "check:site": "node scripts/check-site.mjs",
     "test:package": "node scripts/check-package.mjs",
     "start": "node dist/cli/index.js",
     "setup:local": "npm run build && node scripts/setup-local.mjs",

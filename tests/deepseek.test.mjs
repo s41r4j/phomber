@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { Workspace } from "../dist/workspace/index.js";
 import { investigate } from "../dist/core/engine.js";
-import { researchWithAI, validateSections } from "../dist/ai/deepseek.js";
+import { researchWithAI, validateSections, prioritizeResearchQueries, isContactBrokerURL } from "../dist/ai/deepseek.js";
 import {
   saveCredential,
   readCredential,
@@ -31,6 +31,31 @@ async function base(t) {
     ),
   };
 }
+test("AI query budgets prioritize supplied handles and college context over broad names", () => {
+  const subject={name:'Casey Researcher',socials:[{platform:'instagram',username:'casey_public'}],education:[{institution:'EXAMPLE College'}]};
+  const queries=prioritizeResearchQueries(subject,['"Casey Researcher"','"Casey Researcher" EXAMPLE theatre','"casey_public"']);
+  assert.equal(queries[0],'"casey_public"');
+  assert.equal(queries[1],'"Casey Researcher" "EXAMPLE College"');
+  assert.ok(queries.indexOf('"Casey Researcher" EXAMPLE theatre')<queries.indexOf('"Casey Researcher"'));
+  assert.equal(queries.filter(query=>query==='"casey_public"').length,1);
+  assert.deepEqual(prioritizeResearchQueries(subject,[],false),[]);
+});
+test("AI excludes known contact brokers before fetch and before consuming the page budget", async t => {
+  const {inv}=await base(t), fetched=[];
+  const brokers=['signalhire.com','zoominfo.com','radaris.in','rocketreach.co','allpeople.biz','contactout.com'];
+  assert.equal(isContactBrokerURL('https://sub.signalhire.com/profile'),true);
+  assert.equal(isContactBrokerURL('https://signalhire.com.example.org/profile'),false);
+  await researchWithAI(inv,async(path,body)=>{
+    if(path==='/models')return {data:[{id:'deepseek-flash'}]};
+    if(path==='/v1/tools/search')return {results:[...brokers.map(host=>({url:'https://'+host+'/profile'})),{url:'https://example.edu/research'}]};
+    if(path==='/v1/tools/fetch'){fetched.push(body.url);return {content:'An official institution publishes public research information.'};}
+    const plan=body.messages[1].content.startsWith('Plan');
+    return {choices:[{message:{content:JSON.stringify(plan?{queries:['"Example Researcher" college']}:{claims:[],queries:[],limitations:[]})}}]};
+  });
+  assert.deepEqual(fetched,['https://example.edu/research']);
+  assert.ok(inv.ai.limitations.some(note=>note.includes('excluded before fetching')));
+  assert.ok(inv.sources.every(source=>!isContactBrokerURL(source.url)));
+});
 test("AI runs search/fetch, follows evidence and writes source-cited sections", async (t) => {
   const { inv } = await base(t);
   const calls = [];
@@ -272,4 +297,35 @@ test("evidence-only synthesis repairs citation identifiers without repeating sea
     inv.ai.sections[0].paragraphs[0].evidence_ids[0],
     "evidence-fixture",
   );
+});
+
+test("AI synthesis receives finding identity and conflict status with every excerpt", async (t) => {
+  const { inv }=await base(t);
+  const { addFinding }=await import('../dist/core/engine.js');
+  const source={id:'source',adapter:'fixture',url:'https://example.org/profile',status:'ok',retrieved_at:new Date().toISOString()};
+  inv.sources.push(source);
+  addFinding(inv,{category:'identity',field:'name',value:'Candidate Name',identity:'candidate'},source);
+  let received;
+  await researchWithAI(inv,async(path,body)=>{
+    if(path==='/models')return {data:[{id:'deepseek-flash'}]};
+    const prompt=body.messages[1].content;
+    received=JSON.parse(prompt.split('\nUNTRUSTED RESEARCH DATA:\n')[1]);
+    return {choices:[{message:{content:JSON.stringify({sections:[{title:'Overview',paragraphs:[{text:'A candidate profile lists Candidate Name.',evidence_ids:['E1']}]}]})}}]};
+  },{synthesisOnly:true});
+  assert.equal(received.evidence[0].identity,'candidate');
+  assert.equal(received.evidence[0].status,'lead');
+  assert.equal(inv.ai.status,'complete');
+  assert.throws(()=>validateSections({},inv),/must be an array/);
+});
+
+test("DeepSeek abort during a retry does not issue another billed attempt", async (t) => {
+  const { DeepSeek }=await import('../dist/ai/deepseek.js');
+  const controller=new AbortController();let calls=0;
+  t.mock.method(globalThis,'fetch',async()=>{
+    calls++;queueMicrotask(()=>controller.abort());
+    return new Response('{}',{status:429});
+  });
+  const provider=new DeepSeek('fixture',controller.signal);
+  await assert.rejects(()=>provider.request('/models'),{name:'AbortError'});
+  assert.equal(calls,1);
 });

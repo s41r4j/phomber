@@ -1,3 +1,6 @@
+import { renderWorkbench, renderRevisions, provenanceGraph } from "../reports/workbench.js";
+import { validateInvestigation } from "../core/schema.js";
+import { writeReport } from "../reports/html.js";
 import {Collections} from "../admin/collections.js";
 import {renderAdmin,renderAdminCollections} from "../reports/admin.js";
 import {brandMark} from "../reports/branding.js";
@@ -50,14 +53,22 @@ export async function startServer(
       res.end("Invalid host");
       return;
     }
-    if (req.method === "POST" && ['/manage/profiles','/manage/collections'].includes(req.url||'')) {
+    if (req.method === "POST" && ['/manage/profiles','/manage/collections','/manage/reviews'].includes(req.url||'')) {
       try {
         if(req.headers.origin!==`http://${host}` || req.headers['content-type']?.split(';')[0]!=='application/x-www-form-urlencoded')throw new Error('Invalid origin');
         let bytes=0,body='';for await(const chunk of req){bytes+=Buffer.byteLength(chunk);if(bytes>65536)throw new Error('Form too large');body+=chunk;}
         const form=new URLSearchParams(body),provided=form.get('csrf')||'';
         if(Buffer.byteLength(provided)!==Buffer.byteLength(csrf)||!timingSafeEqual(Buffer.from(provided),Buffer.from(csrf)))throw new Error('Invalid form token');
         let location='/admin/';
-        if(req.url==='/manage/collections'){
+        if(req.url==='/manage/reviews') {
+          const id = form.get('report') || '';
+          await workspace.review(id, form.get('finding') || '', form.get('revision') || '', {
+            decision: form.get('decision') || '', identity: form.get('identity') || '',
+            reason: form.get('reason') || '', analyst: form.get('analyst') || '',
+          });
+          await writeReport(await workspace.load(id), workspace);
+          location = '/reports/' + id + '/review/';
+        } else if(req.url==='/manage/collections'){
           await collections.save(form,new Set((await catalog.read()).map(p=>p.id)));location='/admin/collections/';
         }else {
           const action=form.get('action');let id:string;
@@ -66,7 +77,7 @@ export async function startServer(
           else throw new Error('Unknown action');location='/profiles/'+id+'/';
         }
         res.writeHead(303,{Location:location});res.end();
-      }catch{res.writeHead(403);res.end('Management request rejected. Use a valid form from this local wiki.');}
+      }catch(e){const stale = (e as Error).message.startsWith('Report changed.');res.writeHead(stale ? 409 : 403);res.end(stale ? 'Report changed. Refresh and review the current evidence.' : 'Management request rejected. Use a valid form from this local wiki.');}
       return;
     }
     if (req.method !== "GET" && req.method !== "HEAD") {
@@ -86,6 +97,28 @@ export async function startServer(
         res.setHeader("Content-Type", "text/html; charset=utf-8");
         res.end(req.method === "HEAD" ? "" : html);
       };
+      const researchPage = /^\/reports\/([a-z0-9-]+)\/(review|revisions)\/$/.exec(path);
+      if (researchPage && validId(researchPage[1]!)) {
+        const inv = await workspace.load(researchPage[1]!);
+        if (researchPage[2] === "review") sendHTML(renderWorkbench(inv, csrf));
+        else {
+          const compare = new URL(req.url || "/", `http://${host}`).searchParams.get("compare");
+          const previous = compare ? validateInvestigation(await workspace.readObject(inv.id, "revisions", compare)) : undefined;
+          sendHTML(renderRevisions(inv, await workspace.history(inv.id), previous));
+        }
+        return;
+      }
+      const objectRoute = /^\/reports\/([a-z0-9-]+)\/(revisions|snapshots)\/([a-f0-9]{64})\.json$/.exec(path);
+      if (objectRoute && validId(objectRoute[1]!)) {
+        const data = await workspace.readObject(objectRoute[1]!, objectRoute[2] as "revisions" | "snapshots", objectRoute[3]!);
+        res.setHeader("Content-Type", "application/json; charset=utf-8");
+        res.end(req.method === "HEAD" ? "" : JSON.stringify(data, null, 2)); return;
+      }
+      const graphRoute = /^\/reports\/([a-z0-9-]+)\/graph\.json$/.exec(path);
+      if (graphRoute && validId(graphRoute[1]!)) {
+        res.setHeader("Content-Type", "application/json; charset=utf-8");
+        res.end(req.method === "HEAD" ? "" : JSON.stringify(provenanceGraph(await workspace.load(graphRoute[1]!)), null, 2)); return;
+      }
       if(path==='/favicon.svg'||path==='/logo.svg'){
         res.setHeader('Content-Type','image/svg+xml');res.end(req.method==='HEAD'?'':brandMark);return;
       }

@@ -61,7 +61,7 @@ export interface Subject {
 export interface Input {
   schema_version: "1.0";
   subject: Subject;
-  research?: { depth?: Depth; offline?: boolean; omit?: string[] };
+  research?: { depth?: Depth; offline?: boolean; ai?: boolean; ai_only?: boolean; max_ai_calls?: number; max_output_tokens?: number; omit?: string[] };
   output?: ("html" | "json")[];
   evidence?: ImportedEvidence[];
 }
@@ -83,6 +83,15 @@ export interface Finding {
   confidence: { score: number | null; explanation: string };
   identity: "provided" | "candidate" | "anchored";
 }
+export interface CollectionTask {
+  id: string;
+  adapter: string;
+  url: string;
+  status: "queued" | "running" | "succeeded" | "partial" | "failed" | "skipped" | "cancelled";
+  started_at?: string;
+  finished_at?: string;
+  detail?: string;
+}
 export interface Source {
   id: string;
   adapter: string;
@@ -91,6 +100,11 @@ export interface Source {
   status: "ok" | "unavailable" | "unsupported";
   detail?: string;
   cached?: boolean;
+  snapshot_hash?: string;
+  adapter_version?: string;
+  error_code?: string;
+  final_url?: string;
+  pages?: number;
 }
 export interface Evidence {
   id: string;
@@ -112,6 +126,8 @@ export interface Connection {
   status: Status;
 }
 export interface Investigation {
+  reviews?: import("./trust.js").ReviewDecision[];
+  tasks?: CollectionTask[];
   portrait?: {
     data_url: string;
     source_id: string;

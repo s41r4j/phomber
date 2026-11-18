@@ -1,8 +1,12 @@
-# PH0MBER Gen2
+# PH0MBER Gen2 — OSINT Researcher
 
-A local, CLI-first public-source research framework. Give it known identifiers, collect genuine public API evidence, and produce a portable wiki report alongside structured JSON. The Node.js/TypeScript runtime needs no Python, Docker, or database. Wiki research uses DeepSeek AI with live Search/Fetch; source-only mode remains available with --no-ai.
+Project website: [phomber.s41r4j.in](https://phomber.s41r4j.in).
 
-Original project by **s41r4j** · GPLv3 · Gen2 prerelease `4.0.0-gen2.0` · Node.js **22+**.
+The standalone page lives in [website/index.html](website/index.html); see [GitHub Pages and domain setup](docs/WEBSITE.md). Only that public page is deployed. Your investigation wiki remains local.
+
+A local, CLI-first OSINT researcher for public-source investigations. Give it known identifiers, collect genuine public API evidence, and produce a portable wiki report alongside structured JSON. The Node.js/TypeScript runtime needs no Python, Docker, or database. Wiki research uses DeepSeek AI with live Search/Fetch; source-only mode remains available with --no-ai.
+
+Original project by **s41r4j** · GPLv3 · Gen2 version `0.0.1` · Node.js **22+**.
 
 The original Python implementations remain untouched in the repository and are preserved in [the legacy archive](legacy/README.md). The npm package includes the download guide; the Python ZIP stays in GitHub. Gen2 never executes it.
 
@@ -46,29 +50,46 @@ node dist/cli/index.js wiki --name "YOUR SUBJECT NAME" --no-serve
 node dist/cli/index.js serve
 ```
 
-This implementation has **not been published**. The registry returned E404 for `phomber` during the implementation check; availability and publisher identity must be rechecked before release. Once the maintainer publishes the package, the intended commands are:
+Use the npm distribution with the commands below. To verify an unpublished checkout first, use the local build or tarball instructions in this guide:
 
 ```sh
-npx phomber@beta
-npx phomber@beta help
-npx phomber@beta wiki
-npm install -g phomber@beta
+npx phomber
+npx phomber help
+npx phomber wiki
+npm install -g phomber
 phomber wiki
 ```
 
-The current prerelease uses the `beta` npm tag. Maintainers: see [the release checklist](docs/RELEASING.md). `npm publish` defaults to that tag and runs the release checks first.
+Version `0.0.1` is the first Gen2 release and uses the `latest` npm tag. Maintainers: see [the release checklist](docs/RELEASING.md). `npm publish` defaults to that tag and runs the release checks first.
 
 You can verify the distributable locally now:
 
 ```sh
 npm pack
-npm install -g ./phomber-4.0.0-gen2.0.tgz
+npm install -g ./phomber-0.0.1.tgz
 phomber help
 # Or execute the packed package without a global install:
-npm exec --package ./phomber-4.0.0-gen2.0.tgz -- phomber help
+npm exec --package ./phomber-0.0.1.tgz -- phomber help
 ```
 
 With no command, an interactive terminal opens the legacy-style shell with tab completion. In scripts, no arguments prints help. Use `help`, `wiki`, `reports`, or the original scanners from the shell. `exit` and `quit` end it.
+
+The help overview groups investigations, saved evidence, legacy scanners and utilities. Use `help wiki`, `help scanners`, `help serve` or `help interactive` for focused instructions and examples; `number --help` and other command-level help work too. Inside the prompt, omit the `phomber` prefix. From this checkout, use `npm run local -- help wiki`.
+
+To browse past investigations from this checkout, run `npm run dev`, or use `npm run local -- serve --open` after building. Open the printed localhost URL and choose a saved article. Both commands use the checkout's `.phomber/` workspace unless `PHOMBER_HOME` is set. An installed `phomber serve --open` uses `~/.phomber` by default: use the same workspace that created your reports. `admin` only prints the management URL for an already running server.
+
+## Analyst review and preserved evidence
+
+Source responses and report revisions now have integrity-checked snapshots. Use **Review findings** and **Revisions** on a report to inspect coverage, assess identity separately from claim credibility, record analyst decisions, and compare preserved states. New investigations stay separate until explicitly grouped.
+
+```sh
+phomber review REPORT_ID
+phomber history REPORT_ID
+phomber verify REPORT_ID
+phomber search "project name"
+```
+
+See [the analyst workflow](docs/ANALYST_WORKFLOW.md) for review commands, AI limits, checkpoint recovery, search and retention behavior.
 
 ## Build a wiki
 
@@ -179,7 +200,7 @@ Home resolution uses Node's cross-platform home-directory API:
   exports/
 ```
 
-Use `PHOMBER_HOME` to select an isolated workspace. Every new investigation gets a random UUID. Resume keeps its ID and creation timestamp and recalculates the current evidence view with cached responses where fresh; historical revisions are not retained. Checkpoints survive cancellation, and atomic file replacement protects individual JSON writes. The dashboard derives its index from report files so an interrupted index update does not hide valid records. Concurrent updates of the **same** investigation are not supported; use separate IDs.
+Use `PHOMBER_HOME` to select an isolated workspace. Every new investigation gets a random UUID. Resume keeps its ID and creation timestamp. Saves preserve content-addressed revisions. Fresh completed tasks from interrupted runs can recover from source snapshots when input is unchanged; otherwise the current evidence view is recalculated. Checkpoints survive cancellation, and atomic file replacement protects individual JSON writes. The dashboard derives its index from report files so an interrupted index update does not hide valid records. Report writes are serialized using per-report locks and review forms reject stale versions. Use separate investigation IDs for independent concurrent research.
 
 ```sh
 phomber config
@@ -232,7 +253,7 @@ The [legacy Python ZIP](https://github.com/s41r4j/phomber/blob/main/legacy/phomb
 
 ## Troubleshooting
 
-- **`npx phomber@beta` not found:** inside this checkout, build first and use `npx --no-install phomber help`. Outside the checkout, install the packed tarball until the beta is published.
+- **`npx phomber` not found:** inside this checkout, build first and use `npx --no-install phomber help`. Outside the checkout, install the packed tarball until version 0.0.1 is published.
 - **Node errors:** install Node 22 or later and rebuild after changing sources.
 - **No interactive terminal:** use explicit arguments or `--input`; questionnaire input is not read from pipes.
 - **HTTP 403/429/404 or API errors:** inspect `sources.json`; blocked or missing responses do not prove absence. Respect source restrictions and retry later.

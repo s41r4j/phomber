@@ -1,8 +1,10 @@
+import { contentHash } from "./trust.js";
+import type { Json } from "../adapters/http.js";
 import { randomUUID, createHash } from "node:crypto";
 import { join } from "node:path";
 import { buildPlan, collect } from "../adapters/index.js";
-import { HttpClient } from "../adapters/http.js";
-import { validateInput, publicURL } from "./schema.js";
+import { HttpClient, SourceError } from "../adapters/http.js";
+import { validateInput, publicURL, validPartialDate } from "./schema.js";
 import { Workspace } from "../workspace/index.js";
 import type {
   Input,
@@ -24,6 +26,7 @@ export function addFinding(
       record.field,
       record.value,
       record.identity || "provided",
+      record.identity === "candidate" ? source?.id || "" : "",
     ].join("|"),
   );
   let finding = inv.findings.find((x) => x.id === id);
@@ -38,10 +41,10 @@ export function addFinding(
       source_ids: [],
       identity: record.identity || "provided",
       confidence: {
-        score: source && anchored ? 1 : null,
+        score: null,
         explanation:
           source && anchored
-            ? "Exact field retrieved from the explicitly supplied account or domain. Score 1 measures source extraction, not the real-world truth or ownership of this account."
+            ? "Exact field retrieved from the supplied resource. Identity ownership and claim credibility are unassessed; no probability is assigned."
             : source
               ? "Candidate match only; no identity probability assigned."
               : "Provided by the investigator; not independently checked.",
@@ -61,22 +64,12 @@ export function addFinding(
       ),
       retrieved_at: source.retrieved_at,
     });
-    if (
-      finding.identity === "anchored" &&
-      new Set(
-        finding.source_ids.map(
-          (s) => inv.sources.find((x) => x.id === s)?.adapter.split("-")[0],
-        ),
-      ).size > 1
-    ) {
-      finding.status = "corroborated";
-      finding.confidence.explanation =
-        "Matching field on explicitly supplied resources from multiple source families; account ownership remains investigator supplied.";
-    }
+    // Repeated reporting is retained as evidence, never automatic independent corroboration.
+
   }
   if (
     record.date?.start &&
-    /^\d{4}(-\d{2}(-\d{2})?)?$/.test(record.date.start) &&
+    validPartialDate(record.date.start) &&
     !inv.timeline.some(
       (t) => t.title === record.field && t.date.start === record.date?.start,
     )
@@ -90,7 +83,7 @@ export function addFinding(
   if (
     record.category === "timeline" &&
     !record.date &&
-    /^\d{4}-\d{2}-\d{2}/.test(record.value)
+    /^\d{4}-\d{2}-\d{2}/.test(record.value) && validPartialDate(record.value.slice(0, 10))
   ) {
     const date = {
       start: record.value.slice(0, 10),
@@ -261,8 +254,24 @@ export async function investigate(
   inv.warnings.push(
     "Verification describes evidence retrieved from a resource; it does not prove account ownership or the truth of self-reported claims. Precise locations and contact details are not collected.",
   );
-  const plan = buildPlan(input);
+  const plan: ReturnType<typeof buildPlan> = input.research?.ai_only
+    ? { tasks: [], skipped: [], unsupported: [], queries: ["Research through DeepSeek Search/Fetch only; source adapters are disabled."] }
+    : buildPlan(input);
+  if (input.research?.ai_only)
+    inv.warnings.push("DeepSeek-only mode: source adapters and separate portrait downloads are disabled.");
   inv.plan = plan.queries;
+  inv.tasks = [...plan.tasks, ...plan.skipped].map(task => ({ id: key(task.url), adapter: task.adapter,
+    url: task.url, status: plan.skipped.includes(task) ? "skipped" : "queued" }));
+  for (const task of plan.skipped)
+    inv.sources.push({
+      id: key(task.url), adapter: task.adapter, url: task.url,
+      retrieved_at: now, status: "unsupported",
+      detail: "Not collected: investigation request limit reached. Increase depth or narrow the supplied identifiers.",
+    });
+  if (plan.skipped.length)
+    inv.warnings.push(`${plan.skipped.length} source requests skipped because the ${inv.depth} request limit was reached.`);
+  if (!plan.tasks.length && !input.research?.ai_only)
+    inv.warnings.push("No automated source requests are available for the supplied identifiers. Add a supported profile, name, username or domain, or use AI web research.");
   for (const p of plan.unsupported) {
     const url = p.url || "";
     const id = key("unsupported" + p.platform + (p.username || url));
@@ -295,6 +304,8 @@ export async function investigate(
     join(workspace.root, "cache"),
     options.signal,
     input.research?.offline,
+    3600000,
+    { maxRequests: inv.depth === "quick" ? 8 : inv.depth === "standard" ? 30 : 70 },
   );
   await workspace.save(inv);
   for (const task of plan.tasks) {
@@ -304,23 +315,50 @@ export async function investigate(
     }
     options.progress?.("Collecting " + task.adapter);
     const id = key(task.url);
+    const checkpoint = inv.tasks!.find(t => t.id === id)!;
+    checkpoint.status = "running"; checkpoint.started_at = new Date().toISOString();
+    await workspace.save(inv);
     try {
-      const result = await collect(task, http),
-        source: Source = {
+      const previous = options.resume;
+      const saved = previous?.sources.find(s => s.id === id && s.status === "ok" && s.snapshot_hash);
+      const age = saved ? Date.now() - Date.parse(saved.retrieved_at) : Infinity;
+      const recover = saved && age >= 0 && age < 3600000 &&
+        ["interrupted", "running"].includes(previous!.status) &&
+        contentHash(previous!.input) === contentHash(input) &&
+        previous!.tasks?.some(t => t.id === id && t.status === "succeeded");
+      const result = recover ? await (async () => {
+        const payload = await workspace.readObject(inv.id, "snapshots", saved.snapshot_hash!) as Json;
+        const pages = saved.pages && saved.pages > 1 && payload && typeof payload === "object" && !Array.isArray(payload)
+          ? (payload as { pages: Json[] }).pages : [payload];
+        if (!Array.isArray(pages)) throw new Error("Invalid checkpoint snapshot.");
+        checkpoint.detail = "Recovered from an intact, fresh collection checkpoint.";
+        return { payload, records: pages.flatMap(data => task.parse(data)).filter(r => r.value.trim()).map(r => ({ ...r, identity: task.identity })),
+          retrieved_at: saved.retrieved_at, cached: !!saved.cached, final_url: saved.final_url,
+          pages: saved.pages || 1, limitation: undefined };
+      })() : await collect(task, http, inv.depth === "quick" ? 1 : inv.depth === "standard" ? 3 : 5);
+      const source: Source = {
           id,
           adapter: task.adapter,
           url: task.url,
           retrieved_at: result.retrieved_at,
           status: "ok",
           cached: result.cached,
-          detail: result.records.length
+          snapshot_hash: await workspace.preserveSource(inv.id, result.payload),
+          adapter_version: "gen2-json-v1",
+          final_url: result.final_url,
+          pages: result.pages,
+          detail: result.limitation || (result.records.length
             ? undefined
-            : "No usable records returned; this is not evidence of absence.",
+            : "No usable records returned; this is not evidence of absence."),
         };
       inv.sources = inv.sources.filter((s) => s.id !== id);
       inv.sources.push(source);
       for (const record of result.records) addFinding(inv, record, source);
+      checkpoint.status = result.limitation ? "partial" : "succeeded";
+      checkpoint.detail = result.limitation || checkpoint.detail;
     } catch (e) {
+      checkpoint.status = options.signal?.aborted ? "cancelled" : "failed";
+      checkpoint.detail = (e as Error).message;
       inv.sources = inv.sources.filter((s) => s.id !== id);
       inv.sources.push({
         id,
@@ -328,6 +366,7 @@ export async function investigate(
         url: task.url,
         retrieved_at: new Date().toISOString(),
         status: "unavailable",
+        error_code: e instanceof SourceError ? e.code : options.signal?.aborted ? "cancelled" : "collection_failed",
         detail: options.signal?.aborted
           ? "Cancelled"
           : (e as Error).message.replace(
@@ -336,17 +375,21 @@ export async function investigate(
             ),
       });
     }
+    checkpoint.finished_at = new Date().toISOString();
     inv.updated_at = new Date().toISOString();
     await workspace.save(inv);
   }
-  if (options.signal?.aborted) inv.status = "interrupted";
+  if (options.signal?.aborted) {
+    inv.status = "interrupted";
+    for (const task of inv.tasks || []) if (task.status === "queued") task.status = "cancelled";
+  }
   correlate(inv);
   inv.timeline.sort((a, b) =>
     (a.date.start || "").localeCompare(b.date.start || ""),
   );
   inv.warnings = [...new Set(inv.warnings)];
   if (inv.status === "running")
-    inv.status = inv.sources.some((s) => s.status !== "ok")
+    inv.status = !inv.sources.length || inv.sources.some((s) => s.status !== "ok") || inv.tasks?.some(t => t.status !== "succeeded")
       ? "partial"
       : "complete";
   const verified = inv.findings.filter(

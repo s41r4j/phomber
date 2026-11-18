@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { mkdtemp, rm, writeFile, symlink } from "node:fs/promises";
+import { mkdtemp, readdir, rm, writeFile, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import http from "node:http";
@@ -99,6 +99,35 @@ test("CLI JSON file and repeat flags share the engine", async (t) => {
   );
   assert.equal(JSON.parse(r.stdout).input.subject.education.length, 2);
 });
+test("CLI rejects conflicting DeepSeek-only flags before accessing credentials",async t=>{
+  const root=await setup(t);
+  const run=(...args)=>exec(process.execPath,[cli,'wiki','--name','Example','--ai-only',...args],{env:{...process.env,PHOMBER_HOME:root,DEEPSEEK_API_KEY:''}});
+  for(const flag of ['--offline','--no-ai'])
+    await assert.rejects(()=>run(flag),e=>e.code===1 && /requires online AI/.test(e.stderr) && !/key required/.test(e.stderr));
+});
+test("command help is specific and has no collection, shell or workspace side effects", async (t) => {
+  const root = await setup(t);
+  const run = (...args) => exec(process.execPath, [cli, ...args], {
+    env: { ...process.env, PHOMBER_HOME: root }, timeout: 5000,
+  });
+  const overview = (await run("help")).stdout;
+  assert.match(overview, /Start here[\s\S]*Saved investigations[\s\S]*Legacy scanners[\s\S]*Utilities[\s\S]*Examples/);
+  const { scanners } = await import("../dist/legacy-commands/index.js");
+  for (const name of scanners) {
+    const detailed = (await run("help", name)).stdout;
+    assert.match(detailed, new RegExp(`Usage: phomber ${name}\\b`));
+    assert.equal((await run(name, "--help")).stdout, detailed);
+    assert.match(overview, new RegExp(`\\b${name}\\b`));
+  }
+  assert.match((await run("help", "scanners")).stdout, /Number format|phone-number format/);
+  assert.match((await run("wiki", "-h")).stdout, /--synthesize-only/);
+  assert.match((await run("serve", "--open", "--help")).stdout, /same PHOMBER_HOME/);
+  assert.match((await run("auth", "--help")).stdout, /DEEPSEEK_API_KEY/);
+  assert.match((await run("shell", "--help")).stdout, /native operating-system shell/);
+  assert.match((await run("help", "interactive")).stdout, /save \[PATH\]/);
+  await assert.rejects(() => run("help", "unknown"), e => e.code === 1 && /Unknown help topic/.test(e.stderr));
+  assert.deepEqual(await readdir(root), []);
+});
 test("localhost dashboard and JSON routes work; unsafe paths, hosts, methods and symlinks fail", async (t) => {
   const root = await setup(t),
     w = new Workspace(root);
@@ -159,4 +188,15 @@ test("localhost dashboard and JSON routes work; unsafe paths, hosts, methods and
     (await request(url, `/reports/${inv.id}/profile.json`)).status,
     200,
   );
+});
+
+test("synthesis-only refuses disabled AI or changed input before accessing a key", async (t) => {
+  const root=await setup(t),w=new Workspace(root);
+  const inv=await investigate({schema_version:'1.0',subject:{name:'Original'},research:{offline:true}},w);
+  inv.input.research.offline=false;
+  await w.save(inv);
+  const run=(...args)=>exec(process.execPath,[cli,'wiki','--resume',inv.id,'--synthesize-only','--no-serve',...args],{env:{...process.env,PHOMBER_HOME:root,DEEPSEEK_API_KEY:''}});
+  await assert.rejects(()=>run('--no-ai'),e=>e.code===1 && /requires AI and online mode/.test(e.stderr));
+  await assert.rejects(()=>run('--name','Different'),e=>e.code===1 && /cannot change investigation input/.test(e.stderr));
+  assert.equal((await w.load(inv.id)).input.subject.name,'Original');
 });

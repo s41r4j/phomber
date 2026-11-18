@@ -107,6 +107,10 @@ export function reportTitle(inv: Investigation): string {
       .sort((a, b) => b.value.length - a.value.length)[0]?.value ||
     inv.input.subject.usernames?.[0] ||
     inv.input.subject.socials?.[0]?.username ||
+    inv.input.subject.professional?.company ||
+    inv.input.subject.domains?.[0] ||
+    inv.input.subject.websites?.[0] ||
+    inv.input.subject.socials?.[0]?.url ||
     "Unnamed subject"
   );
 }
@@ -199,10 +203,8 @@ export class Catalog {
     for (const a of articles) {
       let id = registry.assignments[a.key];
       if (!id || !registry.profiles[id]) {
-        const matches = Object.entries(registry.profiles).filter(([, p]) =>
-          a.keys.some((k) => p.keys.includes(k)),
-        );
-        id = matches.length === 1 ? matches[0]![0] : "profile-" + randomUUID();
+        // New investigations stay separate until an analyst explicitly moves them.
+        id = "profile-" + randomUUID();
         registry.assignments[a.key] = id;
         registry.profiles[id] ??= {
           title: a.title,

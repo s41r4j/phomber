@@ -1,3 +1,4 @@
+import { assessFinding } from "../core/trust.js";
 import { articleText, ARTICLE_TEMPLATE, type ArticleBlock } from "../core/article.js";
 import { escape, link, page, appearance, researchMeta } from "./shell.js";
 import { reportTitle } from "../catalog/index.js";
@@ -16,7 +17,7 @@ export function dateTime(value?: string): string {
 }
 export function articleTabs(id: string, active = "Article"): string {
     const base = "/reports/" + id + "/";
-    return `<div class="article-tools"><div class="tabs"><a class="${active === "Article" ? "active" : ""}" href="${base}">Article</a><a class="${active === "Evidence" ? "active" : ""}" href="${base}evidence/">Evidence</a><a class="${active === "Page information" ? "active" : ""}" href="${base}info/">Page information</a></div><div class="tabs"><a href="${base}profile.json">View data</a><a href="${base}history/">Versions</a><a href="/admin/">Manage wiki</a></div></div>`;
+    return `<div class="article-tools"><div class="tabs"><a class="${active === "Article" ? "active" : ""}" href="${base}">Article</a><a class="${active === "Evidence" ? "active" : ""}" href="${base}evidence/">Evidence</a><a class="${active === "Page information" ? "active" : ""}" href="${base}info/">Page information</a></div><div class="tabs"><a href="${base}review/">Review findings</a><a href="${base}revisions/">Revisions</a><a href="${base}profile.json">View data</a><a href="${base}history/">Versions</a><a href="/admin/">Manage wiki</a></div></div>`;
 }
 const titles = [
     "Education",
@@ -203,7 +204,7 @@ export function renderBiography(inv: Investigation, profileURL?: string, version
         rows.push(['Notable projects', selected.slice(0, 4).map(f => `<a href="#${projectTarget}">${escape(f.field)}</a>`).join(', ')]);
     const photo = inv.findings.find((f) => /profile (image|photo)|portrait/i.test(f.field) &&
         /^data:image\/(png|jpeg|webp);base64,[a-z\d+/=]+$/i.test(f.value));
-    const infobox = `<aside class="infobox biography-infobox" aria-label="Profile information"><div class="infobox-title">${escape(name)}</div>${handle ? `<div class="infobox-subtitle">${escape(handle)}</div>` : ""}${inv.portrait ? `<div class="infobox-image"><img src="${escape(inv.portrait.data_url)}" alt="Portrait from cited public profile"><div class="image-caption">Portrait from the cited candidate profile.${portraitRefs}<br>Portrait retrieved ${escape(dateTime(inv.portrait.retrieved_at))}</div></div>` : photo ? `<div class="infobox-image"><img src="${escape(photo.value)}" alt="Source-provided portrait of ${escape(name)}"><div class="image-caption">Source-provided portrait${refs(photo.source_ids)}</div></div>` : ""}<table><tbody>${rows.map(([label, value]) => `<tr><th>${label}</th><td>${value}</td></tr>`).join("")}<tr><th>Identity status</th><td>${inv.findings.some((f) => f.identity === "candidate") ? "Candidate account links; human review required" : "Source attribution recorded"}</td></tr><tr><th>Last researched</th><td>${escape(dateTime(inv.research_timing?.finished_at || inv.updated_at))}</td></tr></tbody></table></aside>`;
+    const infobox = `<aside class="infobox biography-infobox" aria-label="Profile information"><div class="infobox-title">${escape(name)}</div>${handle ? `<div class="infobox-subtitle">${escape(handle)}</div>` : ""}${inv.portrait ? `<div class="infobox-image"><img src="${escape(inv.portrait.data_url)}" alt="Portrait from cited public profile"><div class="image-caption">Portrait from the cited candidate profile.${portraitRefs}<br>Portrait retrieved ${escape(dateTime(inv.portrait.retrieved_at))}</div></div>` : photo ? `<div class="infobox-image"><img src="${escape(photo.value)}" alt="Source-provided portrait of ${escape(name)}"><div class="image-caption">Source-provided portrait${refs(photo.source_ids)}</div></div>` : ""}<table><tbody>${rows.map(([label, value]) => `<tr><th>${label}</th><td>${value}</td></tr>`).join("")}<tr><th>Identity status</th><td>${inv.findings.some((f) => f.source_ids.length && !["matched", "different"].includes(assessFinding(inv, f).identity)) ? "Unresolved account links; human review required" : "See analyst identity decisions in the workbench"}</td></tr><tr><th>Last researched</th><td>${escape(dateTime(inv.research_timing?.finished_at || inv.updated_at))}</td></tr></tbody></table></aside>`;
     const renderBlock = (b: ArticleBlock): string => {
         if (b.type === 'paragraph')
             return `<p data-search>${escape(b.text)}${evidenceRefs(b.evidence_ids)}</p>`;
@@ -310,7 +311,7 @@ export function renderEvidence(inv: Investigation): string {
         .map((f) => `<tr class="finding" id="finding-${escape(f.id)}" data-search><th>${escape(f.category)}<br>${escape(f.field)}</th><td>${escape(f.value)}<br>${refs(f)}${inv.evidence
         .filter((e) => e.finding_id === f.id)
         .map((e) => `<details><summary>Source excerpt · ${escape(dateTime(e.retrieved_at))}</summary><blockquote>${escape(e.excerpt)}</blockquote></details>`)
-        .join("")}</td><td><span class="badge ${f.status}">${escape(f.status)}</span><p>${escape(f.confidence.explanation)}</p></td></tr>`)
+        .join("")}</td><td><span class="badge ${f.status}">${escape(assessFinding(inv,f).extraction)}</span><p>Identity: ${escape(assessFinding(inv,f).identity)}<br>Claim: ${escape(assessFinding(inv,f).claim)}<br>Review: ${escape(assessFinding(inv,f).review)}</p><p>${escape(f.confidence.explanation)}</p></td></tr>`)
         .join("")}</tbody></table><h2>Source availability</h2><ul>${inv.sources.map((s) => `<li>${s.url ? link(s.url) : escape(s.adapter)} — ${escape(s.status)}. ${escape(s.detail || "")}</li>`).join("")}</ul><details id="raw-data"><summary>Structured data</summary><pre id="profile-data">${escape(JSON.stringify(inv, null, 2))}</pre></details>`;
     return utility(inv, "Evidence", content);
 }

@@ -11,6 +11,7 @@ export interface APICall {
   cache_miss_tokens: number;
   billable_tool: boolean;
   model?: string;
+  usage_observed?: boolean;
 }
 export interface ResearchUsage {
   calls: APICall[];
@@ -32,6 +33,7 @@ export function summarizeUsage(calls: APICall[]): ResearchUsage {
     max = 0,
     known = true;
   for (const c of calls) {
+    if (c.status === 0 || c.usage_observed === false && c.status === 200) known = false;
     if (c.billable_tool) {
       min += 0.00075;
       max += 0.00075;

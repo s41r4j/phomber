@@ -155,6 +155,24 @@
           },
           "cached": {
             "type": "boolean"
+          },
+          "adapter_version": {
+            "type": "string"
+          },
+          "error_code": {
+            "type": "string"
+          },
+          "final_url": {
+            "type": "string"
+          },
+          "snapshot_hash": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "pages": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
           }
         }
       }
@@ -637,6 +655,108 @@
         "caption": {
           "type": "string",
           "maxLength": 4096
+        }
+      }
+    },
+    "reviews": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "finding_id",
+          "evidence_hash",
+          "decision",
+          "identity",
+          "reason",
+          "analyst",
+          "created_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "finding_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidence_hash": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "decision": {
+            "enum": [
+              "accepted",
+              "rejected",
+              "needs-review"
+            ]
+          },
+          "identity": {
+            "enum": [
+              "unresolved",
+              "matched",
+              "different"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "analyst": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "created_at": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "adapter",
+          "url",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "adapter": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "queued",
+              "running",
+              "succeeded",
+              "failed",
+              "skipped",
+              "cancelled",
+              "partial"
+            ]
+          },
+          "started_at": {
+            "type": "string"
+          },
+          "finished_at": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          }
         }
       }
     }

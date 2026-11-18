@@ -463,3 +463,120 @@ test("a conflicting social URL cannot anchor another platform account", () => {
     /does not match/,
   );
 });
+
+test("bounded plans expose skipped sources and company-only reports stay partial", async (t) => {
+  const w = await setup(t);
+  const inv = await investigate({schema_version:'1.0', subject:{professional:{company:'Example'}}, research:{offline:true}}, w);
+  assert.equal(inv.status, 'partial');
+  assert.match(inv.warnings.join(' '), /No automated source/);
+  const subject = {socials:Array.from({length:10}, (_,i)=>({platform:'github',username:`account${i}`}))};
+  const plan = buildPlan({schema_version:'1.0',subject,research:{depth:'quick'}});
+  assert.equal(plan.tasks.length, 8);
+  assert.equal(plan.skipped.length, 2);
+  const limited = await investigate({schema_version:'1.0',subject,research:{depth:'quick',offline:true}},w);
+  assert.equal(limited.sources.filter(s=>s.detail?.includes('request limit reached')).length,2);
+});
+
+test("profile URLs reject content paths and direct usernames normalize consistently", () => {
+  for (const url of ['https://github.com/octocat/repo','https://github.com/settings','https://gitlab.com/'])
+    assert.throws(()=>normalizeSocial(url), /profile URL/);
+  const plan = buildPlan({schema_version:'1.0',subject:{socials:[{platform:'GitHub',username:'@octocat'}]}});
+  assert.equal(plan.tasks[0].url,'https://api.github.com/users/octocat');
+  assert.equal(plan.unsupported.length,0);
+});
+
+test("cache reads sanitize old entries, reject malformed/future data and honor cancellation", async (t) => {
+  const w = await setup(t), url='https://api.github.com/users/octocat';
+  await seed(w,url,{...fixture,email:'private@example.org',bio:'mail private@example.org'});
+  const client = new HttpClient(join(w.root,'cache'), undefined, true);
+  const result = await client.get(url);
+  assert.equal(result.data.email,undefined);
+  assert.equal(result.data.bio,'mail [email omitted]');
+  const file=join(w.root,'cache',createHash('sha256').update(url).digest('hex')+'.json');
+  for (const entry of [{retrieved_at:new Date().toISOString()},{data:{},retrieved_at:new Date(Date.now()+60000).toISOString()},{data:{},retrieved_at:new Date(Date.now()-3600001).toISOString()},null]) {
+    await writeFile(file,JSON.stringify(entry));
+    await assert.rejects(()=>client.get(url),/Offline/);
+  }
+  await seed(w,url,fixture);
+  const controller=new AbortController();controller.abort();
+  await assert.rejects(()=>new HttpClient(join(w.root,'cache'),controller.signal,true).get(url),{name:'AbortError'});
+});
+
+test("HTTP retries transient errors and preserves successful data when cache writes fail", async (t) => {
+  const w=await setup(t), client=new HttpClient(join(w.root,'missing-cache-directory'));
+  let attempts=0;
+  // Replace only the network boundary, keeping retry, cache and sanitization behavior real.
+  client.request=async()=>{if(++attempts===1)throw new Error('HTTP 503');return {...fixture,email:'private@example.org'};};
+  const result=await client.get('https://api.github.com/users/octocat');
+  assert.equal(attempts,2);
+  assert.equal(result.data.login,'octocat');
+  assert.equal(result.data.email,undefined);
+  const permanent=new HttpClient(join(w.root,'cache'));
+  let permanentAttempts=0;
+  permanent.request=async()=>{permanentAttempts++;throw new Error('HTTP 404');};
+  await assert.rejects(()=>permanent.get('https://api.github.com/users/missing'),/404/);
+  assert.equal(permanentAttempts,1);
+});
+
+test("HTTP cancellation interrupts retry delays without another request", async (t) => {
+  const w=await setup(t), controller=new AbortController();
+  const client=new HttpClient(join(w.root,'cache'),controller.signal);
+  let attempts=0;
+  client.request=async()=>{attempts++;queueMicrotask(()=>controller.abort());throw new Error('HTTP 429');};
+  await assert.rejects(()=>client.get('https://api.github.com/users/octocat'),{name:'AbortError'});
+  assert.equal(attempts,1);
+});
+
+test("DNS response failures cannot masquerade as successful empty answers", () => {
+  const task=buildPlan({schema_version:'1.0',subject:{domains:['example.org']},research:{depth:'quick'}}).tasks[0];
+  for (const data of [{Status:2},{Status:5},{}])assert.throws(()=>task.parse(data),/DNS lookup failed/);
+  assert.deepEqual(task.parse({Status:3}),[]);
+  assert.equal(task.parse({Status:0,Answer:[{type:1,data:'8.8.8.8'}]})[0].value,'8.8.8.8');
+});
+
+test("report validation rejects duplicate IDs and inconsistent evidence provenance", async (t) => {
+  const w=await setup(t);await seed(w,'https://api.github.com/users/octocat',fixture);
+  const inv=await investigate(input(),w);
+  const duplicate=structuredClone(inv);duplicate.sources.push(duplicate.sources[0]);
+  assert.throws(()=>validateInvestigation(duplicate),/duplicate/);
+  const broken=structuredClone(inv);broken.findings.find(f=>f.id===broken.evidence[0].finding_id).source_ids=[];
+  assert.throws(()=>validateInvestigation(broken),/broken evidence/);
+  const timeline=structuredClone(inv);timeline.timeline[0].source_ids=['missing'];
+  assert.throws(()=>validateInvestigation(timeline),/broken source/);
+});
+
+test("HTTP transport blocks private DNS and unsafe redirects and bounds response bodies", async (t) => {
+  const {Resolver}=await import('node:dns/promises');
+  const {default:https}=await import('node:https');
+  const {EventEmitter}=await import('node:events');
+  let address='127.0.0.1', calls=0, scenario='redirect';
+  t.mock.method(Resolver.prototype,'resolve4',async()=>[address]);
+  t.mock.method(https,'request',(url,options,callback)=>{
+    calls++;
+    assert.equal(options.family,4);
+    const req=new EventEmitter();
+    req.destroy=(error)=>{req.emit('error',error);req.emit('close');};
+    req.end=()=>queueMicrotask(()=>{
+      const res=new EventEmitter();res.resume=()=>{};
+      res.statusCode=scenario==='redirect'?302:200;
+      res.headers=scenario==='redirect'?{location:'http://localhost/private'}:{};
+      callback(res);
+      if(scenario==='oversize')res.emit('data',Buffer.alloc(2_000_001));
+      if(scenario==='invalid-json'){res.emit('data',Buffer.from('not JSON'));res.emit('end');}
+      req.emit('close');
+    });
+    return req;
+  });
+  const w=await setup(t),client=new HttpClient(join(w.root,'cache'));
+  const url=new URL('https://example.org/data');
+  await assert.rejects(()=>client.request(url,0),/nonpublic/);
+  assert.equal(calls,0);
+  address='8.8.8.8';
+  await assert.rejects(()=>client.request(url,0),/public HTTPS/);
+  assert.equal(calls,1);
+  scenario='oversize';
+  await assert.rejects(()=>client.request(url,0),/2 MB/);
+  scenario='invalid-json';
+  await assert.rejects(()=>client.request(url,0),/valid JSON/);
+  for(const ip of ['8..8.8','8.8.8.','008.8.8.8','8.8.8.256'])assert.equal(publicIPv4(ip),false);
+});

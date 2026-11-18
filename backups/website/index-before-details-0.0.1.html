@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="PH0MBER Gen2 is an open-source OSINT toolkit for public-source research, inspectable evidence and a local investigation wiki. Node.js, npm and NPX. Version 0.0.1.">
+  <meta name="theme-color" content="#f6f5f0">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta property="og:title" content="PH0MBER Gen2 — Public sources. Inspectable evidence.">
+  <meta property="og:description" content="Research from your terminal. Review the evidence. Browse your own local wiki.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://phomber.s41r4j.in/">
+  <meta name="phomber-version" content="0.0.1">
+  <link rel="canonical" href="https://phomber.s41r4j.in/">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231b302c'/%3E%3Ctext x='15' y='46' fill='%23f6f5f0' font-family='Georgia,serif' font-size='45'%3EP%3C/text%3E%3C/svg%3E">
+  <title>PH0MBER Gen2 — Public sources. Inspectable evidence.</title>
+  <style>
+    :root{color-scheme:light;--paper:#f6f5f0;--white:#fffefa;--ink:#202e2b;--muted:#5c6762;--line:#d6dbd1;--green:#1c5142;--soft:#e6ebe1;--mono:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace}
+    *{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:30px}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}a{color:inherit;text-underline-offset:4px}a:hover{color:var(--green)}button,a{-webkit-tap-highlight-color:transparent}button:focus-visible,a:focus-visible{outline:3px solid #298367;outline-offset:5px}button{font:inherit}code,pre,.eyebrow,.label,.step-number,.terminal-title{font-family:var(--mono)}code{font-size:.87em}p,h1,h2,h3{margin-top:0}h1,h2{font-family:Georgia,"Times New Roman",serif;font-weight:400;letter-spacing:-.045em;line-height:1.05}h1{font-size:clamp(48px,5.3vw,78px);margin-bottom:26px}h2{font-size:clamp(34px,3.4vw,48px);margin-bottom:20px}h3{font-size:18px;line-height:1.4;margin-bottom:9px}p{margin-bottom:18px}.wrap{width:min(1180px,calc(100% - 64px));margin:auto}.skip{position:absolute;top:-100px;left:20px;background:var(--white);padding:12px;z-index:5}.skip:focus{top:10px}
+    header{border-bottom:1px solid var(--line)}.masthead{min-height:94px;display:flex;align-items:center;justify-content:space-between;gap:24px}.brand{display:flex;align-items:center;gap:12px;text-decoration:none}.brand svg{width:44px;height:44px}.brand-name{font-family:Georgia,serif;font-weight:700;font-size:28px;letter-spacing:-1px}.brand-sub{display:block;font:10px/1.1 var(--mono);letter-spacing:.12em;color:var(--muted);margin-top:3px}nav{display:flex;align-items:center;gap:25px;font-size:13px}nav a{text-decoration:none}nav a:hover{text-decoration:underline}.version{font:11px var(--mono);border:1px solid #b4c6b9;padding:6px 10px;border-radius:3px;background:var(--soft);white-space:nowrap}.hero{padding:76px 0 68px;display:grid;grid-template-columns:1.08fr 1fr;gap:64px;align-items:center}.eyebrow{font-size:10px;letter-spacing:.15em;color:var(--green);font-weight:600;margin-bottom:25px}.intro{font-size:17px;color:var(--muted);max-width:520px;line-height:1.75}.actions{display:flex;align-items:center;gap:24px;margin-top:30px;font-size:14px}.button{display:inline-flex;gap:15px;align-items:center;background:var(--green);color:white;text-decoration:none;padding:12px 20px;border:1px solid var(--green);border-radius:3px}.button:hover{background:#153e32;color:white}.requirements{margin:18px 0 0;font-size:11px;color:var(--muted);font-family:var(--mono)}.terminal{background:#182823;color:#e6ede7;border:1px solid #263d33;border-radius:7px;overflow:hidden;box-shadow:9px 12px 0 #e5e7dd}.terminal-title{padding:13px 19px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #34453d;font-size:10px;letter-spacing:.04em;color:#c0cfc4}.terminal-dots{display:flex;gap:5px}.terminal-dots i{width:6px;height:6px;background:#82978a;border-radius:50%}.terminal-body{padding:27px 25px 18px;font:12px/1.85 var(--mono)}.terminal-body p{margin-bottom:20px}.prompt{color:#87c5a4;user-select:none}.terminal-note{color:#a5b7aa}.terminal-comment{color:#bed1c1}.terminal-path{color:#e2d6a1}.terminal-footer{padding:12px 25px;border-top:1px solid #34453d;font-size:10px;color:#b7c5bb;letter-spacing:.04em}.principles{display:grid;grid-template-columns:repeat(3,1fr);border-block:1px solid var(--line);padding:23px 0;gap:30px}.principles p{margin:4px 0 0;color:var(--muted);font-size:12px}.principles strong{font-size:13px;font-weight:600}.principles .label{color:var(--green);font-size:10px;margin-right:9px}
+    section{padding:64px 0;border-bottom:1px solid var(--line)}.section-top{display:grid;grid-template-columns:1fr 1fr;gap:50px;align-items:end;margin-bottom:30px}.section-top p{color:var(--muted);font-size:14px;margin-bottom:4px;max-width:450px}.label{font-size:10px;letter-spacing:.13em;color:var(--green);display:block;margin-bottom:16px}.steps{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:4px;background:var(--white)}.step{padding:25px 22px}.step+.step{border-left:1px solid var(--line)}.step-number{font-size:11px;color:var(--muted);display:block;margin-bottom:24px}.step p{font-size:13px;color:var(--muted);min-height:44px;line-height:1.65}.command{display:flex;align-items:flex-start;gap:10px;background:#eeefe8;border:1px solid #dde1d6;border-radius:3px;padding:12px;margin-top:15px;min-width:0}.command code{font-size:11px;line-height:1.7;overflow-wrap:anywhere;white-space:pre-wrap;flex:1;min-width:0}.copy{display:none;flex:none;padding:3px 5px;font:9px var(--mono);border:1px solid #bac5b7;background:var(--white);border-radius:2px;color:var(--green);cursor:pointer}.js .copy{display:block}.copy:hover{background:var(--soft)}.quiet{color:var(--muted);font-size:12px;margin:18px 0 0}.command-list{display:grid;grid-template-columns:1fr 1fr;gap:16px 42px}.command-row{display:grid;grid-template-columns:1fr 1.1fr;gap:20px;border-bottom:1px solid var(--line);padding:15px 0;font-size:12px}.command-row code{font-size:12px;color:var(--green);overflow-wrap:anywhere}.command-row span{color:var(--muted)}.command-row:last-child{border-bottom:0}.workflow{display:grid;grid-template-columns:.9fr 1.1fr;gap:70px}.workflow p{font-size:14px;color:var(--muted)}.evidence-sheet{border:1px solid var(--line);background:var(--white);border-radius:4px;padding:26px 30px}.sheet-heading{display:flex;justify-content:space-between;gap:15px;font-size:10px;font-family:var(--mono);padding-bottom:17px;border-bottom:1px solid var(--line);margin-bottom:3px;color:var(--muted)}.evidence-row{display:grid;grid-template-columns:30px 1fr;gap:12px;padding:17px 0;border-bottom:1px solid var(--line)}.evidence-row:last-child{border:0;padding-bottom:0}.evidence-row>span{font-family:var(--mono);color:var(--green);font-size:11px}.evidence-row strong{display:block;font-size:13px}.evidence-row p{font-size:12px;margin:4px 0 0;line-height:1.6}.boundaries{display:grid;grid-template-columns:1fr 1fr;gap:56px}.boundaries h2{font-size:35px}.boundaries p{font-size:13px;color:var(--muted)}.boundary-note{border-left:2px solid #8ea58d;padding-left:22px}.end-links{display:flex;gap:20px;flex-wrap:wrap;font-size:13px;margin-top:24px}footer{padding:28px 0 34px;display:flex;align-items:center;justify-content:space-between;gap:20px;color:var(--muted);font-size:11px}footer p{margin:0}footer a{color:var(--ink)}#copy-status{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--white);border-radius:4px;padding:8px 15px;font-size:12px;pointer-events:none;z-index:10}#copy-status:empty{display:none}
+    @media(max-width:1000px){.hero{gap:35px}h1{font-size:58px}.terminal-body{font-size:11px;padding-inline:18px}.terminal-footer{padding-inline:18px}.step{padding:23px 16px}.workflow{gap:35px}}
+    @media(max-width:760px){.wrap{width:calc(100% - 36px)}.masthead{min-height:84px;flex-wrap:wrap;padding:17px 0;gap:16px}nav{gap:18px;font-size:12px}.brand-name{font-size:25px}.brand svg{width:38px;height:38px}.version{font-size:10px}.hero{grid-template-columns:1fr;padding:45px 0;gap:35px}h1{font-size:clamp(43px,10vw,65px)}.intro{font-size:16px}.terminal{box-shadow:5px 7px 0 #e5e7dd}.terminal-body{font-size:12px;padding:22px}.principles{gap:18px}.principles strong{display:block;font-size:12px}.principles .label{display:block;margin-bottom:7px}.section-top,.workflow,.boundaries{grid-template-columns:1fr;gap:20px}.section-top{margin-bottom:25px}.section-top p{max-width:none}.steps{grid-template-columns:1fr}.step{padding:23px}.step+.step{border-left:0;border-top:1px solid var(--line)}.step-number{margin-bottom:12px}.step p{min-height:0}.command{max-width:100%}.command code{font-size:12px}.command-list{grid-template-columns:1fr;gap:0}.command-row{padding:16px 0}.evidence-sheet{padding:22px}.boundaries{gap:28px}section{padding:45px 0}footer{align-items:flex-start;flex-direction:column;gap:10px}.eyebrow{font-size:9px}}
+    @media(max-width:390px){nav{gap:14px}.brand-sub{font-size:9px}.version{display:none}.terminal-body{font-size:10px;padding:18px}.command-row{grid-template-columns:1fr;gap:5px}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+  </style>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header>
+    <div class="wrap masthead">
+      <a class="brand" href="#" aria-label="PH0MBER home">
+        <svg viewBox="0 0 60 60" aria-hidden="true" fill="none"><circle cx="30" cy="30" r="25" stroke="currentColor" stroke-width="1.2"/><ellipse cx="30" cy="30" rx="12" ry="25" stroke="currentColor" opacity=".55"/><path d="M7 20h46M5 32h50M10 44h40M30 5v50" stroke="currentColor" opacity=".45"/><text x="19" y="38" fill="currentColor" font-family="Georgia,serif" font-size="25">P</text><text x="34" y="43" fill="currentColor" font-family="Georgia,serif" font-size="13">W</text></svg>
+        <span><span class="brand-name">PH0MBER</span><span class="brand-sub">PUBLIC-SOURCE RESEARCH</span></span>
+      </a>
+      <nav aria-label="Main navigation">
+        <a href="#start">Get started</a><a href="#commands">Commands</a><a href="https://github.com/s41r4j/phomber">GitHub ↗</a><span class="version">GEN2 · v0.0.1</span>
+      </nav>
+    </div>
+  </header>
+  <main id="main" class="wrap">
+    <div class="hero">
+      <div>
+        <p class="eyebrow">OPEN SOURCE INTELLIGENCE / GEN2</p>
+        <h1>Public sources.<br>Inspectable evidence.</h1>
+        <p class="intro">Research from your terminal. Follow findings back to their sources, review identity matches, and turn your investigation into a readable local wiki.</p>
+        <div class="actions"><a class="button" href="#start">Start researching <span aria-hidden="true">↗</span></a><a href="https://github.com/s41r4j/phomber#readme">Read the docs</a></div>
+        <p class="requirements">Node.js 22+ · npm / npx · GPL-3.0-only</p>
+      </div>
+      <div class="terminal" aria-label="Example terminal workflow">
+        <div class="terminal-title"><span class="terminal-dots" aria-hidden="true"><i></i><i></i><i></i></span><span>PH0MBER / WORKFLOW EXAMPLE</span><span aria-hidden="true">⌘</span></div>
+        <div class="terminal-body">
+          <p><span class="prompt">$ </span>npm install -g phomber</p>
+          <p><span class="terminal-comment"># Collect public API evidence without AI</span><br><span class="prompt">$ </span>phomber wiki --social github:octocat --no-ai</p>
+          <p class="terminal-note">Source excerpts → evidence ledger<br>Candidate matches → analyst review<br>Report revisions → integrity checks</p>
+          <p><span class="terminal-comment"># Browse your saved investigations</span><br><span class="prompt">$ </span>phomber serve<br><span class="terminal-path">http://127.0.0.1:4317/</span></p>
+        </div>
+        <div class="terminal-footer">YOUR TERMINAL. YOUR WORKSPACE. VISIBLE SOURCES.</div>
+      </div>
+    </div>
+    <div class="principles" aria-label="Project principles">
+      <div><strong><span class="label">01 /</span> Evidence comes first</strong><p>Excerpts, retrieval dates and source links.</p></div>
+      <div><strong><span class="label">02 /</span> Identity stays a question</strong><p>Matching handles remain candidate leads.</p></div>
+      <div><strong><span class="label">03 /</span> Read it locally</strong><p>A wiki served from your own workspace.</p></div>
+    </div>
+    <section id="start" aria-labelledby="start-title">
+      <div class="section-top"><div><span class="label">GET STARTED</span><h2 id="start-title">Three commands.<br>A clearer investigation.</h2></div><p>Use the interactive terminal or run commands directly. Source-only research needs no AI key. AI assistance is optional and billed by your provider.</p></div>
+      <div class="steps">
+        <article class="step"><span class="step-number">01 / INSTALL</span><h3>One npm package.</h3><p>Install globally. Prefer a one-off run? Use <code>npx phomber</code> instead.</p><div class="command"><code id="cmd-install">npm install -g phomber</code><button class="copy" data-copy="cmd-install" aria-label="Copy installation command">Copy</button></div></article>
+        <article class="step"><span class="step-number">02 / INVESTIGATE</span><h3>Start with what you know.</h3><p>A guided questionnaire collects your context. This example keeps AI disabled.</p><div class="command"><code id="cmd-wiki">phomber wiki --no-ai</code><button class="copy" data-copy="cmd-wiki" aria-label="Copy investigation command">Copy</button></div></article>
+        <article class="step"><span class="step-number">03 / READ</span><h3>Open your local wiki.</h3><p>Serve past investigations, then open the printed URL in your browser.</p><div class="command"><code id="cmd-serve">phomber serve</code><button class="copy" data-copy="cmd-serve" aria-label="Copy server command">Copy</button></div></article>
+      </div>
+      <p class="quiet">Gen2 version 0.0.1 · npm commands become available after publication. <a href="https://www.npmjs.com/package/phomber">View package status ↗</a></p>
+    </section>
+    <section id="commands" aria-labelledby="commands-title">
+      <div class="section-top"><div><span class="label">THE TERMINAL, SIMPLIFIED</span><h2 id="commands-title">A small command set.<br>Room to go deeper.</h2></div><p>Run <code>phomber</code> by itself to enter the interactive prompt. Inside it, omit the <code>phomber</code> prefix. Every command has focused help.</p></div>
+      <div class="command-list">
+        <div>
+          <div class="command-row"><code>phomber wiki --no-ai</code><span>Guided source-only investigation</span></div>
+          <div class="command-row"><code>phomber serve</code><span>Browse saved investigations</span></div>
+          <div class="command-row"><code>phomber reports</code><span>List reports and their IDs</span></div>
+          <div class="command-row"><code>phomber review REPORT_ID</code><span>Inspect finding assessments</span></div>
+          <div class="command-row"><code>phomber verify REPORT_ID</code><span>Check preserved evidence integrity</span></div>
+        </div>
+        <div>
+          <div class="command-row"><code>phomber number +442079460000</code><span>Offline numbering-plan metadata</span></div>
+          <div class="command-row"><code>phomber dns example.com</code><span>Public DNS records</span></div>
+          <div class="command-row"><code>phomber whois example.com</code><span>Domain registration via RDAP</span></div>
+          <div class="command-row"><code>phomber search "project"</code><span>Search local research</span></div>
+          <div class="command-row"><code>phomber help scanners</code><span>All six scanners and examples</span></div>
+        </div>
+      </div>
+      <p class="quiet">NPX follows the same pattern: <code>npx phomber serve</code> or <code>npx phomber help</code>. Add <code>--open</code> to serve only if you want the browser to open automatically.</p>
+    </section>
+    <section class="workflow" aria-labelledby="evidence-title">
+      <div><span class="label">FROM COLLECTION TO REVIEW</span><h2 id="evidence-title">A result is a lead.<br>Keep the evidence.</h2><p>Retrieving a page does not establish identity or prove a claim. PH0MBER keeps source collection, identity assessment and analyst decisions visible as separate steps.</p><p>Review excerpts in the wiki, record a reason for your decision, and compare preserved report states as your investigation changes.</p><a href="https://github.com/s41r4j/phomber/blob/main/docs/ANALYST_WORKFLOW.md">Explore the analyst workflow ↗</a></div>
+      <div class="evidence-sheet"><div class="sheet-heading"><span>THE EVIDENCE WORKFLOW</span><span>01 → 04</span></div>
+        <div class="evidence-row"><span>01</span><div><strong>Collect within bounds</strong><p>Public APIs, bounded pagination, request limits and explicit source failures.</p></div></div>
+        <div class="evidence-row"><span>02</span><div><strong>Preserve what was used</strong><p>Sanitized response snapshots, retrieval metadata and SHA-256 content checks.</p></div></div>
+        <div class="evidence-row"><span>03</span><div><strong>Review the match and the claim</strong><p>Evidence-bound decisions with analyst attribution, reasons and stale-review detection.</p></div></div>
+        <div class="evidence-row"><span>04</span><div><strong>Revisit and export</strong><p>Revision comparisons, local search and portable HTML/JSON report folders.</p></div></div>
+      </div>
+    </section>
+    <section class="boundaries" aria-labelledby="scope-title">
+      <div><span class="label">CLEAR BOUNDARIES</span><h2 id="scope-title">Research responsibly.<br>Understand the limits.</h2><p>Use public information with a legitimate purpose. Candidate accounts need human review, providers can be unavailable, and AI prose can be wrong. Partial coverage remains visible.</p><div class="end-links"><a href="https://github.com/s41r4j/phomber/blob/main/docs/RESPONSIBLE_USE.md">Responsible use ↗</a><a href="https://github.com/s41r4j/phomber/issues">Report an issue ↗</a></div></div>
+      <div class="boundary-note"><h3>Local workspace. Explicit external research.</h3><p>Reports are stored on your computer. Public-source collection contacts external services. Wiki research uses billed DeepSeek AI by default; <code>--no-ai</code> disables it and <code>--offline</code> uses fresh cached evidence only.</p><p>This website is the project guide. Your investigation wiki runs separately on localhost. Phone tools provide numbering-plan metadata, not subscriber identity or live tracking. IP and domain tools provide registration information.</p><p>Gen2 is a local research tool. Authenticated team case management, PDF ingestion and broad registry connectors are outside this release.</p></div>
+    </section>
+    <footer><p><strong>PH0MBER</strong> · Gen2 v0.0.1 · By <a href="https://github.com/s41r4j">s41r4j</a></p><p><a href="https://github.com/s41r4j/phomber">Source</a> · <a href="https://github.com/s41r4j/phomber/blob/main/LICENSE">GPL-3.0-only</a> · No analytics or external assets</p></footer>
+  </main>
+  <div id="copy-status" role="status" aria-live="polite"></div>
+  <script>
+    document.documentElement.classList.add('js');
+    let statusTimer;
+    document.addEventListener('click', async event => {
+      const button = event.target.closest?.('button[data-copy]');
+      if (!button) return;
+      const code = document.getElementById(button.dataset.copy);
+      const status = document.getElementById('copy-status');
+      try {
+        await navigator.clipboard.writeText(code.textContent);
+        status.textContent = 'Command copied';
+      } catch {
+        const range = document.createRange();
+        range.selectNodeContents(code);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+        status.textContent = 'Command selected. Copy it with your keyboard.';
+      }
+      clearTimeout(statusTimer);
+      statusTimer = setTimeout(() => { status.textContent = ''; }, 4000);
+    });
+  </script>
+</body>
+</html>

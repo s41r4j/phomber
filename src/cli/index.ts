@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import { searchWorkspace } from "../workspace/search.js";
+import { assessFinding, contentHash, compareReports } from "../core/trust.js";
+import { validateInvestigation } from "../core/schema.js";
 import { enrichPortrait } from "../reports/portrait.js";
 import { balanceChange, summarizeUsage } from "../ai/usage.js";
 import { DeepSeek, researchWithAI } from "../ai/deepseek.js";
@@ -22,48 +25,9 @@ import { readLibrary, loadLibrary } from "../reports/library.js";
 import { scanner, scanners } from "../legacy-commands/index.js";
 import { parse, inputFromArgs, tokenize } from "./input.js";
 import { questionnaire } from "./interactive.js";
+import { project } from "../core/project.js";
+import { helpText, interactiveCommands } from "./help.js";
 import type { Input, Investigation } from "../core/types.js";
-const HELP = `PH0MBER Gen2 — evidence-first public-source research
-
-Usage: phomber <command> [options]
-  wiki                         Interactive investigation builder
-  wiki --social github:USER    Research a supplied public profile
-  wiki --name NAME             Discover name matches as unverified leads
-  wiki --input subject.json    Import schema-versioned input
-  wiki --resume ID             Update a saved investigation using its stable ID
-  serve [--port 4317]          Host saved reports on 127.0.0.1
-  admin [--port 4317]         Show the local wiki management URL
-  reports                     List saved investigations
-  reports open ID             Open an offline HTML report
-  reports export ID            Copy a portable report folder to exports/
-  reports delete ID --yes      Permanently remove a saved investigation
-  library [import FILE]       List or import archived wiki articles
-  auth deepseek               Enter a hidden DeepSeek key (NPX: session-only)
-  auth logout                 Delete the saved local key
-  config                      Show local configuration
-  cache clear --yes           Clear local cached source responses
-  number|ip|mac|whois|dns|username TARGET    Legacy scanner equivalents
-  help [COMMAND]              Show help
-  info|check|dork|exp           Legacy utilities
-  shell COMMAND               Explicitly execute a native shell command
-
-Wiki options:
-  --name --type --location    Scalar values override JSON input
-  --alias --username --company --education --social --connection
-  --website --domain --project    Repeatable; append to JSON input
-  --depth quick|standard|deep --offline --omit FIELD (repeatable)
-  --format text|json|html      Stdout format (all report files are saved)
-  --output DIRECTORY          Export an additional portable report folder
-  --no-serve --port NUMBER --open --help
-
-With no command: interactive legacy shell in a terminal, help in scripts.
-Shell-only: save [PATH], flush, clear, change [0-7], exit/quit.
-Standalone scanners support --format json. Ctrl+C cancels collection and saves progress.
-Default workspace: ~/.phomber (override PHOMBER_HOME for isolated use).
-Wiki uses DeepSeek AI + Search/Fetch by default (billed to your key).
-Use --no-ai for source-adapter-only research. --offline also disables AI.
---model MODEL overrides deepseek-flash; --save-key opts into NPX key persistence.
-`;
 let previous = "",
   color = 36;
 function print(value: unknown, json = false): void {
@@ -119,7 +83,7 @@ async function host(
 }
 async function execute(argv: string[], workspace: Workspace): Promise<void> {
   const command = argv[0] || "help";
-  if (command === "shell") {
+  if (command === "shell" && !["--help", "-h"].includes(argv[1] || "")) {
     const script = argv.slice(1).join(" ");
     if (!script) throw new Error("Usage: phomber shell <native command>");
     await new Promise<void>((resolve, reject) => {
@@ -140,11 +104,11 @@ async function execute(argv: string[], workspace: Workspace): Promise<void> {
     command === "-h" ||
     v.help
   ) {
-    print(HELP);
+    print(helpText(command === "help" ? args.positionals[0] : ["--help", "-h"].includes(command) ? undefined : command));
     return;
   }
   if (command === "--version") {
-    print("4.0.0-gen2.0");
+    print(project.version);
     return;
   }
   if (command === "exit" || command === "quit") return;
@@ -160,6 +124,33 @@ async function execute(argv: string[], workspace: Workspace): Promise<void> {
     throw new Error("--depth must be quick, standard or deep.");
   if (v.format && !["text", "json", "html"].includes(String(v.format)))
     throw new Error("--format must be text, json or html.");
+  if (["review", "history", "diff", "verify"].includes(command)) {
+    const [id, argument] = args.positionals;
+    if (!id) throw new Error("An investigation ID is required.");
+    const inv = await workspace.load(id);
+    if (command === "history") print(await workspace.history(id));
+    else if (command === "diff") {
+      if (!argument) throw new Error("Usage: phomber diff REPORT_ID REVISION_HASH");
+      print(compareReports(validateInvestigation(await workspace.readObject(id, "revisions", argument)), inv));
+    } else if (command === "verify") {
+      const revisions = await workspace.history(id), hashes = new Set<string>();
+      for (const version of [inv, ...await Promise.all(revisions.map(async r => validateInvestigation(await workspace.readObject(id, "revisions", r.hash))))])
+        for (const source of version.sources) if (source.snapshot_hash) hashes.add(source.snapshot_hash);
+      for (const hash of hashes) await workspace.readObject(id, "snapshots", hash);
+      print({ report: id, revisions: revisions.length, snapshots: hashes.size, integrity: "passed", unpreserved_sources: inv.sources.filter(s => s.status === "ok" && !s.snapshot_hash).length });
+    } else if (argument) {
+      await workspace.review(id, argument, contentHash(inv), { decision: String(v.decision || ""), identity: String(v.identity || "unresolved"), reason: String(v.reason || ""), analyst: String(v.analyst || "") });
+      await writeReport(await workspace.load(id), workspace);
+      print({ report: id, finding: argument, review: "saved" });
+    } else print(inv.findings.map(f => ({ id: f.id, field: f.field, value: f.value, ...assessFinding(inv, f) })));
+    return;
+  }
+  if (command === "search") {
+    const query = args.positionals.join(" ").trim().toLocaleLowerCase();
+    if (!query) throw new Error("Usage: phomber search QUERY");
+    print(await searchWorkspace(workspace, query));
+    return;
+  }
   if (command === "admin") {
     if(port===0) throw new Error("Use the running server’s actual port.");
     const target=`http://127.0.0.1:${port}/admin/`;
@@ -254,6 +245,7 @@ async function execute(argv: string[], workspace: Workspace): Promise<void> {
         );
       const path = await workspace.safeReport(id);
       await rm(path, { recursive: true });
+      await rm(join(workspace.root, "search.sqlite"), { force: true });
       await workspace.updateIndex();
       print("Deleted " + id);
     } else throw new Error("Use reports open, export or delete.");
@@ -279,7 +271,14 @@ async function execute(argv: string[], workspace: Workspace): Promise<void> {
     } else input = await inputFromArgs(args, old?.input);
     if (v["synthesize-only"] && !old)
       throw new Error("--synthesize-only requires --resume REPORT_ID");
-    const useAI = !v["no-ai"] && !input.research?.offline;
+    const useAI = !v["no-ai"] && input.research?.ai !== false && !input.research?.offline;
+    if (v["synthesize-only"]) {
+      if (!useAI) throw new Error("--synthesize-only requires AI and online mode.");
+      const researchContext = (value: Input) => ({ schema_version: value.schema_version, subject: value.subject,
+        evidence: value.evidence, omit: value.research?.omit });
+      if (contentHash(researchContext(input)) !== contentHash(researchContext(old!.input)))
+        throw new Error("--synthesize-only cannot change investigation input. Resume without it to recollect evidence for changed identifiers or omissions.");
+    }
     if (useAI)
       process.stderr.write(
         "AI research sends this investigation's subject context and collected public evidence to DeepSeek for billed search, fetch and synthesis. No other reports are shared.\n",
@@ -302,10 +301,11 @@ async function execute(argv: string[], workspace: Workspace): Promise<void> {
                   ? (s) => process.stderr.write("  · " + s + "\n")
                   : undefined,
             });
+      if (v["synthesize-only"]) { inv.input = input; inv.depth = input.research?.depth || inv.depth; if (!controller.signal.aborted) inv.status = "running"; }
       if (apiKey && inv.status !== "interrupted") {
         inv.status = "running";
         await workspace.save(inv);
-        const provider = new DeepSeek(apiKey, controller.signal);
+        const provider = new DeepSeek(apiKey, controller.signal, { maxCalls: input.research?.max_ai_calls, maxOutputTokens: input.research?.max_output_tokens });
         let balanceBefore: import("../adapters/http.js").Json = null;
         try {
           balanceBefore = await provider.request("/user/balance");
@@ -318,6 +318,7 @@ async function execute(argv: string[], workspace: Workspace): Promise<void> {
             (path, body) => provider.request(path, body),
             {
               synthesisOnly: !!v["synthesize-only"],
+              preserveSource: payload => workspace.preserveSource(inv.id, payload),
               model:
                 typeof v.model === "string" ? v.model : savedConfig.ai?.model,
               signal: controller.signal,
@@ -362,7 +363,7 @@ async function execute(argv: string[], workspace: Workspace): Promise<void> {
         Date.parse(finished_at) -
         Date.parse(inv.research_timing?.started_at || inv.created_at),
     };
-    if (!input.research?.offline) {
+    if (!input.research?.offline && !input.research?.ai_only && inv.status !== "interrupted") {
       try {
         await enrichPortrait(inv, workspace);
       } catch {
@@ -417,22 +418,7 @@ async function shell(workspace: Workspace): Promise<void> {
       await readFile(join(workspace.root, "history.json"), "utf8"),
     );
   } catch {}
-  const names = [
-    "help",
-    "wiki",
-    "reports",
-    "library",
-    "serve",
-    "config",
-    ...scanners,
-    "shell",
-    "save",
-    "flush",
-    "clear",
-    "change",
-    "exit",
-    "quit",
-  ];
+  const names = interactiveCommands;
   process.stdout.write("PH0MBER Gen2 · Type help to begin.\n");
   for (;;) {
     // Close the outer editor before a command opens its own questionnaire.

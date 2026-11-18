@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { parsePhoneNumberFromString } from "libphonenumber-js/max";
 import { HttpClient, obj, str, arr, publicIPv4 } from "../adapters/http.js";
 import { accountTasks, collect } from "../adapters/index.js";
+import { project } from "../core/project.js";
 import type { Workspace } from "../workspace/index.js";
 export const scanners = [
   "number",
@@ -24,6 +25,7 @@ export async function scanner(
   workspace: Workspace,
   signal?: AbortSignal,
 ): Promise<unknown> {
+  signal?.throwIfAborted();
   if (
     !target &&
     ["number", "ip", "mac", "whois", "dns", "username"].includes(command)
@@ -164,10 +166,12 @@ export async function scanner(
       await http.get("https://api.github.com/rate_limit");
       return { reachable: true };
     } catch {
+      signal?.throwIfAborted();
       try {
         await http.get("https://dns.google/resolve?name=example.com&type=A");
         return { reachable: true, source: "Google public DNS" };
       } catch (e) {
+        signal?.throwIfAborted();
         return { reachable: false, detail: (e as Error).message };
       }
     }
@@ -187,7 +191,8 @@ export async function scanner(
   if (command === "info")
     return {
       name: "PH0MBER Gen2",
-      version: "4.0.0-gen2.0",
+      tagline: project.tagline,
+      version: project.version,
       runtime: process.version,
       platform: platform(),
       release: release(),

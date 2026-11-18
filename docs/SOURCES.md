@@ -4,7 +4,7 @@ Collection is deliberately bounded. There is no scraping of login pages, CAPTCHA
 
 | Integration | Collected data | Constraints / documentation |
 | --- | --- | --- |
-| GitHub REST | Public account, non-fork repositories, public organization memberships; name search candidates | Unauthenticated rate limits; repositories limited to 10 standard / 30 deep, no pagination. [API](https://docs.github.com/en/rest/users/users) |
+| GitHub REST | Public account, non-fork repositories, public organization memberships; name search candidates | Unauthenticated rate limits; repository pages contain 10 standard / 30 deep records, bounded to 3 standard / 5 deep pages within the investigation lookup budget. [API](https://docs.github.com/en/rest/users/users) |
 | GitLab REST | Public user search by exact username | Anonymous access may be restricted. [API](https://docs.gitlab.com/api/users/) |
 | DEV Community | Public account by username | [API](https://developers.forem.com/api/v1#tag/users) |
 | Hugging Face | Public user overview | Availability and API shape may change. [Hub API](https://huggingface.co/docs/hub/api) |
@@ -24,22 +24,22 @@ Education, professional history, awards, community activity and other extensible
 
 Input validation → query/endpoint planning → bounded API collection → field normalization → duplicate removal → resource cross-reference and contradiction review → provenance-linked report.
 
-Quick: at most 8 requests; GitHub username candidates, name/entity discovery and DNS. Standard: at most 30; adds GitLab, repositories, author publication search and RDAP. Deep: at most 70; adds DEV/Hugging Face candidates, more repositories, public organization memberships and annual archive pointers. Limits apply after deduplication; the input determines which endpoints are relevant. No recursively expanding crawl is performed.
+Quick: at most 8 requests; GitHub username candidates, name/entity discovery and DNS. Standard: at most 30; adds GitLab, repositories, author publication search and RDAP. Deep: at most 70; adds DEV/Hugging Face candidates, more repositories, public organization memberships and annual archive pointers. Limits apply after deduplication; requests beyond the limit appear as unsupported sources with an explicit limit warning, so bounded collection cannot silently claim full coverage. Reports with no automated requests remain partial. The input determines which endpoints are relevant. No recursively expanding crawl is performed.
 
-HTTP: one request per origin per 1.1 seconds during an investigation, 12-second request timeout plus bounded DNS resolution, max 2 MB per response, max 3 redirects. 429/5xx/reset/timeout errors retry up to twice with exponential backoff. Independent CLI processes do not share a rate limiter. `Retry-After` scheduling is not currently implemented. IPv4 transport is pinned to a resolved public address to prevent DNS rebinding; IPv6-only sources are unsupported. API error text is shown without copying credentials. Responses are cached for one hour; stale cache entries are not used offline. Cache sanitization excludes contacts, RDAP entities, email fields, credentials and email strings before persistence.
+HTTP: one request per origin per 1.1 seconds during an investigation, 12-second request timeout plus bounded DNS resolution, max 2 MB per response, max 3 redirects. 429/5xx/reset/timeout errors retry up to twice with exponential backoff. Independent CLI processes do not share a rate limiter. Valid `Retry-After` and GitHub quota reset headers are honored for bounded waits up to 30 seconds; longer waits stop for a later retry. IPv4 transport is pinned to a resolved public address to prevent DNS rebinding; IPv6-only sources are unsupported. API error text is shown without copying credentials. Responses are cached for one hour; stale cache entries are not used offline. Cache sanitization excludes contacts, RDAP entities, email fields, credentials and email strings before persistence and again on cache reads. Malformed, stale and future-dated cache entries are rejected. Cache write failures do not discard successfully retrieved evidence.
 
 ## Verification vocabulary
 
 - **User-provided:** investigator input, not independently checked.
 - **Verified:** an exact field retrieved from an explicitly supplied account/domain. Does not prove person ownership or the truth of an account biography.
-- **Corroborated:** identical anchored fields found in multiple adapter source families. Does not assert that self-reports are independently true.
+- **Corroborated:** a legacy collection label. New collection never infers independent corroboration from matching values on different websites.
 - **Lead:** name search, username matches and investigator-imported evidence. No identity probability is assigned.
 - **Conflicting:** an anchored account's name/company differs from supplied context. Both values remain visible; this may be an alias or changed employment.
 - **Unavailable/unsupported:** retrieval could not occur. Not proof of absence.
 
-Confidence is deterministic and explained: 1 only measures exact extraction from a supplied resource; unresolved identity probabilities are null. No probabilistic confidence numbers are invented. Only an explicit source-backed public organization membership enters the generated connections list. Investigator-supplied connections remain unverified input. Timeline entries retain provenance, partial date precision and uncertainty.
+New findings leave numeric confidence null and expose separate extraction, identity, credibility and analyst-review assessments. Old reports may retain score 1 as an extraction-only legacy value. No probabilistic confidence numbers are invented. Only an explicit source-backed public organization membership enters the generated connections list. Investigator-supplied connections remain unverified input. Timeline entries retain provenance, partial date precision and uncertainty.
 
-Resume reuses the ID and creation date, recalculates the current findings from current input and fresh/cache-backed source responses, and deduplicates evidence. It is not a historical revision ledger. This avoids retaining fields requested for omission or silently treating stale findings as current.
+Resume reuses the ID and creation date. Every save preserves revisions; interrupted runs may restore completed tasks from intact, fresh snapshots with unchanged input. Other resumes recalculate the current findings from source responses. Omissions affect current data; preserved history remains until the full report is deleted. See [the analyst workflow](ANALYST_WORKFLOW.md).
 
 ## Extending adapters
 

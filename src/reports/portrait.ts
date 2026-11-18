@@ -10,6 +10,7 @@ import {
 } from "../adapters/http.js";
 import type { Investigation } from "../core/types.js";
 import type { Workspace } from "../workspace/index.js";
+import { project } from "../core/project.js";
 /** Downloads only an image returned by an already-cited GitHub profile API. No inferred image URLs. */
 export async function enrichPortrait(
   inv: Investigation,
@@ -49,7 +50,7 @@ export async function enrichPortrait(
         {
           family: 4,
           lookup: pinnedLookup(address),
-          headers: { "User-Agent": "PH0MBER/4.0" },
+          headers: { "User-Agent": `${project.name}/${project.version}` },
         },
         (res) => {
           if (res.statusCode !== 200) {

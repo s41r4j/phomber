@@ -1,0 +1,39 @@
+name: Project website
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'website/**'
+      - 'package.json'
+      - 'scripts/check-site.mjs'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Validate the standalone site
+        run: node scripts/check-site.mjs
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: website
+      - name: Deploy website
+        id: deployment
+        uses: actions/deploy-pages@v4

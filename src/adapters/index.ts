@@ -1,4 +1,4 @@
-import { HttpClient, obj, arr, str, type Json } from "./http.js";
+import { SourceError, HttpClient, obj, arr, str, type Json } from "./http.js";
 import type { Candidate, Depth, Input, Social } from "../core/types.js";
 import { publicURL } from "../core/schema.js";
 export interface Task {
@@ -58,6 +58,11 @@ export function normalizeSocial(value: string): Social {
         "www.youtube.com": "youtube",
       };
     const platform = hosts[u.hostname] || u.hostname;
+    const parts = u.pathname.split("/").filter(Boolean);
+    if (API_PLATFORMS.has(platform) && parts.length !== 1)
+      throw new Error("Supply an account profile URL, not a repository or content URL.");
+    if (platform === "github" && /^(settings|login|signup|search|explore|marketplace|orgs|users|topics|collections|features|about|pricing|contact|security|sponsors|notifications|new|organizations)$/i.test(parts[0] || ""))
+      throw new Error("Supply a GitHub account profile URL.");
     return {
       platform,
       url: u.href,
@@ -192,13 +197,14 @@ export function accountTasks(
 export function buildPlan(input: Input): {
   tasks: Task[];
   unsupported: Social[];
+  skipped: Task[];
   queries: string[];
 } {
   const s = input.subject,
     depth = input.research?.depth || "standard";
   const tasks: Task[] = [];
   const socials = (s.socials || []).map((p) => {
-    if (!p.url) return { ...p, platform: p.platform.toLowerCase() };
+    if (!p.url) return { ...p, platform: p.platform.toLowerCase(), username: p.username?.replace(/^@/, "") };
     const normalized = normalizeSocial(p.url);
     if (
       p.platform.toLowerCase() !== normalized.platform ||
@@ -331,14 +337,17 @@ export function buildPlan(input: Input): {
       adapter: "dns",
       url: `https://dns.google/resolve?name=${encodeURIComponent(domain)}&type=A`,
       identity: "anchored",
-      parse: (d) =>
-        arr(obj(d).Answer)
+      parse: (d) => {
+        if (obj(d).Status !== 0 && obj(d).Status !== 3)
+          throw new Error("DNS lookup failed; response status: " + String(obj(d).Status));
+        return arr(obj(d).Answer)
           .filter((a) => obj(a).type === 1)
           .map((a) => ({
             category: "technical",
             field: `${domain} A record`,
             value: str(obj(a).data),
-          })),
+          }));
+      },
     });
     if (depth === "deep")
       tasks.push({
@@ -363,11 +372,10 @@ export function buildPlan(input: Input): {
   const unique = tasks.filter(
     (t, i) => tasks.findIndex((x) => x.url === t.url) === i,
   );
+  const limit = depth === "quick" ? 8 : depth === "standard" ? 30 : 70;
   return {
-    tasks: unique.slice(
-      0,
-      depth === "quick" ? 8 : depth === "standard" ? 30 : 70,
-    ),
+    skipped: unique.slice(limit),
+    tasks: unique.slice(0, limit),
     unsupported: socials.filter(
       (p) =>
         !API_PLATFORMS.has(p.platform) ||
@@ -379,14 +387,40 @@ export function buildPlan(input: Input): {
 export async function collect(
   task: Task,
   http: HttpClient,
-): Promise<{ records: Candidate[]; retrieved_at: string; cached: boolean }> {
-  const response = await http.get(task.url);
-  return {
-    records: task
-      .parse(response.data)
-      .filter((r) => r.value.trim())
-      .map((r) => ({ ...r, identity: task.identity })),
-    retrieved_at: response.retrieved_at,
-    cached: response.cached,
-  };
+  maxPages = 1,
+): Promise<{ records: Candidate[]; retrieved_at: string; cached: boolean; payload: Json; final_url?: string; pages: number; limitation?: string }> {
+  if (!Number.isInteger(maxPages) || maxPages < 1 || maxPages > 5) throw new Error("Page limit must be between 1 and 5.");
+  const first = await http.get(task.url), responses = [first];
+  const payloads: Json[] = [first.data];
+  let next = first.next_url, limitation: string | undefined = first.pagination_error;
+  // Only list endpoints with known pagination semantics may follow a provider's Link header.
+  const paginated = ["github-projects", "github-organizations"].includes(task.adapter);
+  const origin = publicURL(task.url), seen = new Set([origin.href]);
+  while (paginated && next && responses.length < maxPages) {
+    let url: URL;
+    try { url = publicURL(next); }
+    catch { limitation = "Pagination stopped: unsafe continuation URL."; break; }
+    if (url.origin !== origin.origin || url.pathname !== origin.pathname ||
+      [...url.searchParams.keys()].some(k => !origin.searchParams.has(k) && k !== "page") ||
+      [...origin.searchParams.entries()].some(([k, v]) => url.searchParams.get(k) !== v) ||
+      !/^[1-9]\d*$/.test(url.searchParams.get("page") || "") || seen.has(url.href)) {
+      limitation = "Pagination stopped: untrusted or repeated continuation URL."; break;
+    }
+    seen.add(url.href);
+    try {
+      const response = await http.get(url.href);
+      responses.push(response); payloads.push(response.data); next = response.next_url;
+      if (response.pagination_error) { limitation = response.pagination_error; break; }
+    } catch (e) {
+      http.signal?.throwIfAborted();
+      limitation = e instanceof SourceError ? e.code + ": " + e.message : (e as Error).message;
+      break;
+    }
+  }
+  if (paginated && next && !limitation) limitation = "Pagination limit reached; additional records may exist.";
+  const records = responses.flatMap(r => task.parse(r.data)).filter(r => r.value.trim())
+    .map(r => ({ ...r, identity: task.identity }));
+  return { records, retrieved_at: first.retrieved_at, cached: responses.every(r => r.cached),
+    payload: payloads.length === 1 ? first.data : { pages: payloads }, final_url: first.final_url,
+    pages: responses.length, ...(limitation ? { limitation } : {}) };
 }

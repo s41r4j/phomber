@@ -1,3 +1,4 @@
+import { assessFinding } from './trust.js';
 import type { Investigation } from './types.js';
 export interface CitedText {
     text: string;
@@ -42,10 +43,17 @@ const array = (v: unknown): unknown[] => Array.isArray(v) ? v : [];
 const text = (v: unknown, max = 6000): string => { if (typeof v !== 'string' || !v.trim() || v.length > max)
     throw new Error('Article text is missing or exceeds its limit.'); return v; };
 export function validateArticleSections(value: unknown, inv: Investigation): ArticleSection[] {
-    const allowed = new Set(inv.evidence.map(e => e.id));
+    const allowed = new Set(inv.evidence.filter(e => {
+        const finding = inv.findings.find(f => f.id === e.finding_id);
+        if (!finding) return false;
+        const assessment = assessFinding(inv, finding);
+        return assessment.claim !== 'rejected' && assessment.identity !== 'different';
+    }).map(e => e.id));
     const citations = (v: unknown): string[] => { const ids = array(v); if (!ids.length || ids.length > 200 || ids.some(id => typeof id !== 'string' || !allowed.has(id)))
         throw new Error('AI narrative contains unsupported evidence citations.'); return [...new Set(ids as string[])]; };
     const cited = (v: unknown): CitedText => { const p = record(v); return { text: text(p.text), evidence_ids: citations(p.evidence_ids) }; };
+    if (!Array.isArray(record(value).sections))
+        throw new Error('Article sections must be an array.');
     const sections = array(record(value).sections);
     if (sections.length > 30)
         throw new Error('Too many article sections.');

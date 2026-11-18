@@ -26,15 +26,19 @@ const strings = [
   "resume",
   "type",
   "model",
+  "decision", "identity", "reason", "analyst", "max-ai-calls", "max-output-tokens",
 ];
 const booleans = [
   "no-ai",
+  "ai",
+  "ai-only",
   "synthesize-only",
   "save-key",
   "help",
   "no-serve",
   "open",
   "offline",
+  "online",
   "yes",
 ];
 export function parse(argv: string[]) {
@@ -114,10 +118,17 @@ export async function inputFromArgs(args: Args, base?: Input): Promise<Input> {
       s.projects,
       many("project").map((name) => ({ name })),
     );
+  if (v.offline && v.online) throw new Error("Choose --offline or --online.");
+  if (v.ai && v["no-ai"]) throw new Error("Choose --ai or --no-ai.");
+  if (v["ai-only"] && (v["no-ai"] || v.offline))
+    throw new Error("--ai-only requires online AI; do not combine it with --no-ai or --offline.");
   input.research = {
     ...input.research,
+    ...(v["ai-only"] ? { ai: true, ai_only: true, offline: false } : v["no-ai"] ? { ai: false, ai_only: false } : v.ai ? { ai: true } : {}),
+    ...(v["max-ai-calls"] !== undefined ? { max_ai_calls: Number(v["max-ai-calls"]) } : {}),
+    ...(v["max-output-tokens"] !== undefined ? { max_output_tokens: Number(v["max-output-tokens"]) } : {}),
     ...(v.depth ? { depth: v.depth as Depth } : {}),
-    ...(v.offline ? { offline: true } : {}),
+    ...(v.offline ? { offline: true } : v.online ? { offline: false } : {}),
     ...(v.omit ? { omit: append(input.research?.omit, many("omit")) } : {}),
   };
   if (v.format && !["json", "html", "text"].includes(String(v.format)))

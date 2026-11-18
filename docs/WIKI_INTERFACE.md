@@ -24,9 +24,9 @@ The index defaults to latest known research completion, not alphabetic order. Ar
 
 ## Profiles and versions
 
-`profiles.json` in the workspace stores stable profile IDs and article-to-profile assignments. Matching normalized display names or profile identifiers initially group related material for browsing. For archives, identifiers are taken from their infobox links rather than every mentioned collaborator. This is a provisional organizational match, not identity verification. No evidence records or confidence levels are merged.
+`profiles.json` in the workspace stores stable profile IDs and article-to-profile assignments. New articles remain separate even when display names or handles match. An analyst explicitly moves articles into a shared profile when appropriate. Existing saved assignments are preserved. For archives, identifiers are taken from their infobox links rather than every mentioned collaborator. This is a provisional organizational match, not identity verification. No evidence records or confidence levels are merged.
 
-Each report/archive keeps its own source file, ID, dates, citations and status. The generated investigation and the four Sairaj archive designs now appear as five versions under one profile. Other people remain separate. Undated archive ordering uses file names; version numbers are catalog sequence, not invented research dates.
+Each report/archive keeps its own source file, ID, dates, citations and status. Explicitly grouped investigations can appear as versions under one profile; grouping is organizational and does not approve identity. Undated archive ordering uses file names; version numbers are catalog sequence, not invented research dates.
 
 “Different person - separate version” creates a new profile for a mistaken match. “Move version” merges a selected version into another existing profile. A local label can distinguish different people with the same name. These controls are reversible through moving versions and do not delete or rewrite research evidence. Explicit assignments persist after restarting. A later article matching multiple separated profiles is kept separate instead of silently choosing one.
 
@@ -52,3 +52,7 @@ The whole local wiki is in admin mode automatically. The same server is used by 
 `phomber admin --port 4317` prints the management URL for an already-running server; it does not grant access or create credentials. In this checkout use `npm run local -- admin --port 4317` if you want this optional shortcut. Use the actual running port.
 
 Collection settings persist in restricted-permission `collections.json`. Profile labels and version assignments remain in `profiles.json`. There is no stored admin credential or browser session. AI API credentials remain separate. The UI cannot run shell commands, initiate paid research, retrieve credentials or delete evidence.
+
+## Analyst workbench
+
+`/reports/:id/review/` provides evidence-bound analyst decisions and collection coverage. `/reports/:id/revisions/` lists integrity-checked preserved states and comparisons; `/reports/:id/graph.json` exports source-to-finding provenance. Snapshot/revision JSON is served only through validated hash routes. Review submissions use Origin/CSRF checks and reject changed report versions with HTTP 409. See [the analyst workflow](ANALYST_WORKFLOW.md).
