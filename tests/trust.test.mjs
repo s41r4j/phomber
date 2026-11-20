@@ -159,7 +159,7 @@ test('search index updates transactionally, removes deleted reports and treats S
 });
 test('CLI review, history, integrity verification and local search work together',async t=>{
   const {w,inv,f}=await base(t),env={...process.env,PHOMBER_HOME:w.root,DEEPSEEK_API_KEY:''};
-  const run=async(...args)=>JSON.parse((await exec(process.execPath,['dist/cli/index.js',...args],{env})).stdout);
+  const run=async(...args)=>JSON.parse((await exec(process.execPath,['dist/cli/index.js',...args,'--format','json'],{env})).stdout);
   assert.equal((await run('review',inv.id)).find(r=>r.id===f.id).review,'pending');
   assert.equal((await run('review',inv.id,f.id,'--decision','accepted','--identity','matched','--reason','Reviewed primary cross-link.','--analyst','Fixture')).review,'saved');
   assert.ok((await run('history',inv.id)).length>=2);

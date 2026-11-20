@@ -1,6 +1,7 @@
 import { SourceError, HttpClient, obj, arr, str, type Json } from "./http.js";
 import type { Candidate, Depth, Input, Social } from "../core/types.js";
 import { publicURL } from "../core/schema.js";
+import { matchingAuthors } from "../core/publications.js";
 export interface Task {
   adapter: string;
   url: string;
@@ -132,7 +133,7 @@ export function accountTasks(
               field: str(obj(r).name),
               value: [str(obj(r).description), str(obj(r).html_url)]
                 .filter(Boolean)
-                .join(" — "),
+                .join(" - "),
               date: {
                 start: str(obj(r).created_at).slice(0, 10),
                 precision: "day",
@@ -263,7 +264,7 @@ export function buildPlan(input: Input): {
             str(obj(r).concepturi),
           ]
             .filter(Boolean)
-            .join(" — "),
+            .join(" - "),
         })),
     });
     if (depth !== "quick")
@@ -272,7 +273,7 @@ export function buildPlan(input: Input): {
         url: `https://api.crossref.org/works?query.author=${encodeURIComponent(s.name)}&rows=${depth === "deep" ? 15 : 5}&select=DOI,title,author,published,URL`,
         identity: "candidate",
         parse: (d) =>
-          arr(obj(obj(d).message).items).map((r) => {
+          arr(obj(obj(d).message).items).filter(r => matchingAuthors(s, obj(r).author).length > 0).map((r) => {
             const v = obj(r),
               parts = arr(obj(v.published)["date-parts"])[0];
             return {
@@ -284,6 +285,8 @@ export function buildPlan(input: Input): {
                 authors: arr(v.author).map((a) => ({
                   given: obj(a).given,
                   family: obj(a).family,
+                  name: obj(a).name,
+                  ORCID: obj(a).ORCID,
                 })),
                 DOI: v.DOI,
               }),

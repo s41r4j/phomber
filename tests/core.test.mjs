@@ -214,7 +214,7 @@ test("source parsers extract real API shapes without contact fields", () => {
   assert.ok(!records.some((r) => r.field === "email"));
   const pub = buildPlan({
     schema_version: "1.0",
-    subject: { name: "Name" },
+    subject: { name: "Example Researcher" },
     research: { depth: "standard" },
   }).tasks.find((t) => t.adapter === "crossref");
   assert.equal(
@@ -223,6 +223,7 @@ test("source parsers extract real API shapes without contact fields", () => {
         items: [
           {
             title: ["A paper"],
+            author: [{given:"Example",family:"Researcher"}],
             URL: "https://doi.org/10.example/paper",
             published: { "date-parts": [[2020]] },
           },

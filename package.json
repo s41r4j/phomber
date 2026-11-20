@@ -1,9 +1,9 @@
 {
   "name": "phomber",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "PH0MBER Gen2: an OSINT researcher with inspectable evidence, local wiki reports and CLI",
   "type": "module",
-  "license": "GPL-3.0-only",
+  "license": "MIT",
   "author": "s41r4j",
   "repository": {
     "type": "git",
@@ -39,6 +39,8 @@
     "schemas",
     "examples",
     "legacy/README.md",
+    "docs/README.md",
+    "docs/TODO.md",
     "docs/AI.md",
     "docs/ARTICLE_TEMPLATE.md",
     "docs/MIGRATION.md",
@@ -50,7 +52,9 @@
     "CHANGELOG.md",
     "LICENSE",
     "README.md",
-    "docs/ANALYST_WORKFLOW.md"
+    "docs/ANALYST_WORKFLOW.md",
+    ".images/brand",
+    "docs/USAGE.md"
   ],
   "scripts": {
     "clean": "node scripts/clean.mjs",
@@ -69,7 +73,9 @@
   },
   "dependencies": {
     "ajv": "8.20.0",
-    "libphonenumber-js": "1.12.31"
+    "libphonenumber-js": "1.12.31",
+    "tldts": "7.5.4",
+    "unpdf": "1.6.0"
   },
   "devDependencies": {
     "@types/node": "22.19.1",

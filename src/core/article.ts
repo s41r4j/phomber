@@ -1,5 +1,6 @@
 import { assessFinding } from './trust.js';
 import type { Investigation } from './types.js';
+import { publicationAttribution } from './publications.js';
 export interface CitedText {
     text: string;
     evidence_ids: string[];
@@ -36,19 +37,26 @@ export interface AIResearch {
     sections: ArticleSection[];
     limitations: string[];
 }
-export const ARTICLE_INSTRUCTIONS = `Use the PH0MBER article template. Return JSON with a sections array. Each section has a title and ordered blocks. Supported blocks are paragraph or quote {type,text,evidence_ids}, subheading {type,title}, list {type,ordered,items:[{text,evidence_ids}]}, and table {type,caption,columns:[string],rows:[{cells:[string],evidence_ids}]}. Every factual paragraph, quote, list item and table row requires evidence IDs. Table rows must match the number of columns. Quotations must exactly match cited evidence. Use at most 30 sections, 100 blocks per section, 12 table columns and 100 table rows or list items. Use informative section titles and interleave text, tables and lists where helpful. The renderer supplies the title, infobox, References, External links and Article metadata. Do not generate those reserved sections or raw HTML. Do not use em dashes (U+2014). Omit unsupported topics rather than generating empty sections explaining there is no information. Missing facts must be omitted rather than invented. Example: {"sections":[{"title":"Overview","blocks":[{"type":"paragraph","text":"A cited summary.","evidence_ids":["E1"]}]}]}`;
+export const ARTICLE_INSTRUCTIONS = `Use the PH0MBER article template. Return JSON with a sections array. Each section has a title and ordered blocks. Supported blocks are paragraph or quote {type,text,evidence_ids}, subheading {type,title}, list {type,ordered,items:[{text,evidence_ids}]}, and table {type,caption,columns:[string],rows:[{cells:[string],evidence_ids}]}. Every factual paragraph, quote, list item and table row requires evidence IDs. Cite only records whose subject attribution permits article use. Never combine given/family names across different co-authors or turn a different surname into an alias. A matching full author name alone does not link a publication to this subject. Table rows must match the number of columns. Quotations must exactly match cited evidence. Use at most 30 sections, 100 blocks per section, 12 table columns and 100 table rows or list items. Use informative section titles and interleave text, tables and lists where helpful. The renderer supplies the title, infobox, References, External links and Article metadata. Do not generate those reserved sections or raw HTML. Do not use em dashes (U+2014). Omit unsupported topics rather than generating empty sections explaining there is no information. Missing facts must be omitted rather than invented. Example: {"sections":[{"title":"Overview","blocks":[{"type":"paragraph","text":"A cited summary.","evidence_ids":["E1"]}]}]}`;
 export const ARTICLE_TEMPLATE = { version: '1.0', required: ['title', 'infobox', 'references', 'metadata'], optional_blocks: ['paragraph', 'table', 'list', 'subheading', 'quote'], max_sections: 30 } as const;
 const record = (v: unknown): Record<string, unknown> => v !== null && typeof v === 'object' && !Array.isArray(v) ? v as Record<string, unknown> : {};
 const array = (v: unknown): unknown[] => Array.isArray(v) ? v : [];
 const text = (v: unknown, max = 6000): string => { if (typeof v !== 'string' || !v.trim() || v.length > max)
     throw new Error('Article text is missing or exceeds its limit.'); return v; };
-export function validateArticleSections(value: unknown, inv: Investigation): ArticleSection[] {
-    const allowed = new Set(inv.evidence.filter(e => {
+export function articleEvidenceIDs(inv: Investigation, strictAttribution = true): Set<string> {
+    return new Set(inv.evidence.filter(e => {
         const finding = inv.findings.find(f => f.id === e.finding_id);
         if (!finding) return false;
         const assessment = assessFinding(inv, finding);
-        return assessment.claim !== 'rejected' && assessment.identity !== 'different';
+        return assessment.claim !== 'rejected' && assessment.identity !== 'different' &&
+            (!strictAttribution || publicationAttribution(inv, finding).article);
     }).map(e => e.id));
+}
+export function validateArticleSections(value: unknown, inv: Investigation, options: {
+    strictAttribution?: boolean; allowedEvidenceIDs?: Set<string>;
+} = {}): ArticleSection[] {
+    const allowed = articleEvidenceIDs(inv, options.strictAttribution !== false);
+    if (options.allowedEvidenceIDs) for (const id of allowed) if (!options.allowedEvidenceIDs.has(id)) allowed.delete(id);
     const citations = (v: unknown): string[] => { const ids = array(v); if (!ids.length || ids.length > 200 || ids.some(id => typeof id !== 'string' || !allowed.has(id)))
         throw new Error('AI narrative contains unsupported evidence citations.'); return [...new Set(ids as string[])]; };
     const cited = (v: unknown): CitedText => { const p = record(v); return { text: text(p.text), evidence_ids: citations(p.evidence_ids) }; };
@@ -102,6 +110,25 @@ export function validateArticleSections(value: unknown, inv: Investigation): Art
             throw new Error('Too many paragraphs.');
         return { title, paragraphs: paragraphs.map(cited) };
     }).filter(s => s.paragraphs.length || s.blocks?.length);
+}
+/** Legacy prose remains in revisions/data; unsupported blocks must not be shown as biography. */
+export function safeArticleSections(inv: Investigation): ArticleSection[] {
+    const allowed = articleEvidenceIDs(inv);
+    const eligible = (value: CitedText | {evidence_ids: string[]}) => value.evidence_ids.length > 0 && value.evidence_ids.every(id => allowed.has(id));
+    return (inv.ai?.sections || []).flatMap(section => {
+        if (!section.blocks) {
+            const paragraphs = section.paragraphs.filter(eligible);
+            return paragraphs.length ? [{title: section.title, paragraphs}] : [];
+        }
+        const blocks: ArticleBlock[] = section.blocks.flatMap((block): ArticleBlock[] => {
+            if (block.type === 'paragraph' || block.type === 'quote') return eligible(block) ? [block] : [];
+            if (block.type === 'list') { const items = block.items.filter(eligible); return items.length ? [{...block,items}] : []; }
+            if (block.type === 'table') { const rows = block.rows.filter(eligible); return rows.length ? [{...block,rows}] : []; }
+            return [block];
+        });
+        if (!blocks.some(block => block.type !== 'subheading')) return [];
+        return [{title:section.title,blocks,paragraphs:blocks.flatMap(block => block.type === 'paragraph' || block.type === 'quote' ? [{text:block.text,evidence_ids:block.evidence_ids}] : [])}];
+    });
 }
 export function articleText(sections: ArticleSection[]): string { return sections.flatMap(s => [s.title, ...(s.blocks ? s.blocks.flatMap(b => b.type === 'paragraph' || b.type === 'quote' ? [b.text] : b.type === 'subheading' ? [b.title] : b.type === 'list' ? b.items.map(i => i.text) : [b.caption || '', ...b.columns, ...b.rows.flatMap(r => r.cells)]) : s.paragraphs.map(p => p.text))]).join(' '); }
 /** Adapt provider short citation labels to stored evidence IDs before validation. */

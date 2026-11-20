@@ -3,19 +3,20 @@ import { join } from "node:path";
 import { contentHash } from "../core/trust.js";
 import type { Workspace } from "./index.js";
 import type { IndexEntry } from "../core/types.js";
+import { searchWords, matchesSearch } from "../core/search.js";
 
 /** JSON reports remain portable; this transactional full-text index is rebuildable. */
 export async function searchWorkspace(workspace: Workspace, query: string): Promise<{ engine: string; results: IndexEntry[] }> {
-  const terms = query.normalize("NFKC").match(/[\p{L}\p{N}_-]+/gu) || [];
+  const terms = searchWords(query);
   if (!terms.length || query.length > 4096 || terms.length > 50)
     throw new Error("Search needs 1–50 words and at most 4096 characters.");
   const entries = await workspace.list(true);
+  const matching = entries.filter(entry => matchesSearch(entry.name + " " + entry.search_text, terms));
   let sqlite: typeof import("node:sqlite");
   try { sqlite = await import("node:sqlite"); }
   catch (e) {
     if ((e as NodeJS.ErrnoException).code !== "ERR_UNKNOWN_BUILTIN_MODULE") throw e;
-    return { engine: "portable-scan", results: entries.filter(e => terms.every(term =>
-      (e.name + " " + e.search_text).normalize("NFKC").toLowerCase().includes(term.toLowerCase()))) };
+    return { engine: "portable-scan", results: matching.slice(0, 100) };
   }
   const file = join(workspace.root, "search.sqlite");
   try { await writeFile(file, "", { flag: "wx", mode: 0o600 }); }
@@ -43,8 +44,9 @@ export async function searchWorkspace(workspace: Workspace, query: string): Prom
       }
       db.exec("COMMIT");
     } catch (e) { db.exec("ROLLBACK"); throw e; }
-    const expression = terms.map(term => '"' + term.replaceAll('"', '""') + '"').join(" AND ");
+    const expression = terms.map(term => '"' + term.replaceAll('"', '""') + '"*').join(" AND ");
     const results = db.prepare("SELECT d.metadata FROM documents_fts JOIN documents d ON d.id=documents_fts.id WHERE documents_fts MATCH ? ORDER BY bm25(documents_fts) LIMIT 100").all(expression);
-    return { engine: "sqlite-fts5", results: results.map(r => JSON.parse(String(r.metadata)) as IndexEntry) };
+    const rank = new Map(results.map((row, i) => [String((JSON.parse(String(row.metadata)) as IndexEntry).id), i]));
+    return { engine: "sqlite-fts5", results: matching.sort((a, b) => (rank.get(a.id) ?? 100) - (rank.get(b.id) ?? 100)).slice(0, 100) };
   } finally { db.close(); }
 }

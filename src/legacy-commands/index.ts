@@ -7,8 +7,10 @@ import { HttpClient, obj, str, arr, publicIPv4 } from "../adapters/http.js";
 import { accountTasks, collect } from "../adapters/index.js";
 import { project } from "../core/project.js";
 import type { Workspace } from "../workspace/index.js";
+import { checkEmail } from "./email.js";
 export const scanners = [
   "number",
+  "email",
   "ip",
   "mac",
   "whois",
@@ -28,10 +30,11 @@ export async function scanner(
   signal?.throwIfAborted();
   if (
     !target &&
-    ["number", "ip", "mac", "whois", "dns", "username"].includes(command)
+    ["number", "email", "ip", "mac", "whois", "dns", "username"].includes(command)
   )
     throw new Error(`Usage: phomber ${command} <target>`);
   const http = new HttpClient(join(workspace.root, "cache"), signal);
+  if (command === "email") return checkEmail(target, signal);
   if (command === "number") {
     if (!/^\+[1-9]\d{1,14}$/.test(target))
       throw new Error(

@@ -1,5 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import { mkdtemp, rm, stat, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -10,7 +12,6 @@ import {
   saveCredential,
   readCredential,
   forgetCredential,
-  isNpx,
 } from "../dist/ai/credentials.js";
 import { validateInvestigation } from "../dist/core/schema.js";
 import { renderReport, renderDashboard } from "../dist/reports/html.js";
@@ -166,7 +167,7 @@ test("unsupported evidence citations fail; unknown models fail before paid searc
     /model unavailable/,
   );
 });
-test("credentials remain separate from reports, restricted, removable and NPX detected", async (t) => {
+test("installed and NPX runs share saved credentials; session-only storage is explicit", async (t) => {
   const { w, inv } = await base(t);
   await saveCredential(w, "fixture-not-a-real-key");
   assert.equal(await readCredential(w), "fixture-not-a-real-key");
@@ -176,13 +177,21 @@ test("credentials remain separate from reports, restricted, removable and NPX de
       0o600,
     );
   assert.ok(!JSON.stringify(inv).includes("fixture-not-a-real-key"));
+  const credentialsURL = new URL("../dist/ai/credentials.js", import.meta.url).href;
+  const workspaceURL = new URL("../dist/workspace/index.js", import.meta.url).href;
+  const code = `import {getKey} from ${JSON.stringify(credentialsURL)};
+    import {Workspace} from ${JSON.stringify(workspaceURL)};
+    console.log(await getKey(new Workspace()));`;
+  const run = (npmCommand, ephemeral = "") => promisify(execFile)(process.execPath,
+    ["--input-type=module", "--eval", code], {
+      env: { ...process.env, PHOMBER_HOME: w.root, DEEPSEEK_API_KEY: "", npm_command: npmCommand, PHOMBER_EPHEMERAL_KEY: ephemeral },
+    });
+  for (const command of ["", "exec", "run-script"])
+    assert.equal((await run(command)).stdout.trim(), "fixture-not-a-real-key");
+  for (const command of ["", "exec"])
+    await assert.rejects(() => run(command, "1"), e => /DeepSeek key required/.test(e.stderr));
   await forgetCredential(w);
   assert.equal(await readCredential(w), undefined);
-  const old = process.env.npm_command;
-  process.env.npm_command = "exec";
-  assert.equal(isNpx(), true);
-  if (old === undefined) delete process.env.npm_command;
-  else process.env.npm_command = old;
 });
 test("home features newest person, without a fixed archived individual, and logo includes W", () => {
   const v = {

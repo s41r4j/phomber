@@ -281,7 +281,7 @@ export function renderWikiNodes(nodes: WikiNode[]): string {
           !/^data:image\/(png|jpeg|gif|webp);base64,[a-z\d+/=\s]+$/i.test(n.src)
         )
           return n.alt
-            ? `<span class="image-omitted">${esc(n.alt)} — external image omitted</span>`
+            ? `<span class="image-omitted">${esc(n.alt)} - external image omitted</span>`
             : "";
         return `<img${attrs} src="${esc(n.src)}" alt="${esc(n.alt || "Archived profile image")}" loading="lazy">`;
       }

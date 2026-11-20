@@ -3,6 +3,7 @@ import { validateInvestigation } from "../core/schema.js";
 import { writeReport } from "../reports/html.js";
 import {Collections} from "../admin/collections.js";
 import {renderAdmin,renderAdminCollections} from "../reports/admin.js";
+import { renderDeleteReport, renderManageReports } from "../reports/manage.js";
 import {brandMark} from "../reports/branding.js";
 import { randomBytes, timingSafeEqual } from "node:crypto";
 import { Catalog } from "../catalog/index.js";
@@ -41,7 +42,9 @@ export async function startServer(
     res.setHeader("Content-Security-Policy", csp);
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("X-Frame-Options", "DENY");
-    res.setHeader("Referrer-Policy", "no-referrer");
+    // no-referrer makes native form POSTs send Origin: null in browsers.
+    // Keep same-origin form checks usable without sending referrers externally.
+    res.setHeader("Referrer-Policy", "same-origin");
     res.setHeader("Cache-Control", "no-store");
     res.setHeader(
       "Permissions-Policy",
@@ -53,14 +56,19 @@ export async function startServer(
       res.end("Invalid host");
       return;
     }
-    if (req.method === "POST" && ['/manage/profiles','/manage/collections','/manage/reviews'].includes(req.url||'')) {
+    if (req.method === "POST" && ['/manage/profiles','/manage/collections','/manage/reviews','/manage/reports'].includes(req.url||'')) {
       try {
         if(req.headers.origin!==`http://${host}` || req.headers['content-type']?.split(';')[0]!=='application/x-www-form-urlencoded')throw new Error('Invalid origin');
         let bytes=0,body='';for await(const chunk of req){bytes+=Buffer.byteLength(chunk);if(bytes>65536)throw new Error('Form too large');body+=chunk;}
         const form=new URLSearchParams(body),provided=form.get('csrf')||'';
         if(Buffer.byteLength(provided)!==Buffer.byteLength(csrf)||!timingSafeEqual(Buffer.from(provided),Buffer.from(csrf)))throw new Error('Invalid form token');
         let location='/admin/';
-        if(req.url==='/manage/reviews') {
+        if(req.url==='/manage/reports') {
+          if (form.get('action') !== 'delete' || form.get('confirm') !== 'yes' || !/^[a-f0-9]{64}$/.test(form.get('revision') || ''))
+            throw new Error('Deletion needs confirmation from the current report page.');
+          await workspace.deleteReport(form.get('report') || '', form.get('revision')!);
+          location = '/admin/reports/';
+        } else if(req.url==='/manage/reviews') {
           const id = form.get('report') || '';
           await workspace.review(id, form.get('finding') || '', form.get('revision') || '', {
             decision: form.get('decision') || '', identity: form.get('identity') || '',
@@ -77,7 +85,7 @@ export async function startServer(
           else throw new Error('Unknown action');location='/profiles/'+id+'/';
         }
         res.writeHead(303,{Location:location});res.end();
-      }catch(e){const stale = (e as Error).message.startsWith('Report changed.');res.writeHead(stale ? 409 : 403);res.end(stale ? 'Report changed. Refresh and review the current evidence.' : 'Management request rejected. Use a valid form from this local wiki.');}
+      }catch(e){const stale = (e as Error).message.startsWith('Report changed.');res.writeHead(stale ? 409 : 403);res.end(stale ? 'Report changed. Refresh this page before retrying.' : 'Management request rejected. Use a valid form from this local wiki.');}
       return;
     }
     if (req.method !== "GET" && req.method !== "HEAD") {
@@ -97,6 +105,13 @@ export async function startServer(
         res.setHeader("Content-Type", "text/html; charset=utf-8");
         res.end(req.method === "HEAD" ? "" : html);
       };
+      if (path === '/admin/reports/') {
+        sendHTML(renderManageReports(await workspace.list())); return;
+      }
+      const deletePage = /^\/reports\/([a-z0-9-]+)\/delete\/$/.exec(path);
+      if (deletePage && validId(deletePage[1]!)) {
+        sendHTML(renderDeleteReport(await workspace.load(deletePage[1]!), csrf)); return;
+      }
       const researchPage = /^\/reports\/([a-z0-9-]+)\/(review|revisions)\/$/.exec(path);
       if (researchPage && validId(researchPage[1]!)) {
         const inv = await workspace.load(researchPage[1]!);
@@ -133,6 +148,10 @@ export async function startServer(
         )
       ) {
         const profiles = await catalog.read();
+        const params = new URL(req.url || '/', `http://${host}`).searchParams;
+        const query = params.get('search') || '';
+        if (query.length > 4096) { res.writeHead(400); res.end('Search query is too long.'); return; }
+        const kind = ['research', 'archive'].includes(params.get('collection') || '') ? params.get('collection')! : 'all';
         sendHTML(
           path === "/about/"
             ? renderAbout()
@@ -140,7 +159,7 @@ export async function startServer(
               ? renderCollections(profiles,await collections.read())
               : path === "/activity/"
                 ? renderActivity(profiles)
-                : renderCatalog(profiles, path === "/"),
+                : renderCatalog(profiles, path === "/", query, kind),
         );
         return;
       }
@@ -149,6 +168,8 @@ export async function startServer(
       if (profileMatch) {
         const profile = profiles.find((p) => p.id === profileMatch[1]);
         if (!profile) {
+          const replacement = profiles.find(p => p.aliases?.includes(profileMatch[1]!));
+          if (replacement) { res.writeHead(303, { Location: `/profiles/${replacement.id}/` }); res.end(); return; }
           res.writeHead(404);
           res.end("Profile not found");
           return;
@@ -252,6 +273,7 @@ export async function startServer(
               ? "/profiles/" + article.profile_id + "/"
               : undefined,
             article?.version,
+            true,
           ),
         );
         return;

@@ -33,7 +33,7 @@ async function report(w, name, finished) {
   await writeReport(v, w);
   return v;
 }
-test("same names stay separate until an explicit move; versions sort and decisions persist", async (t) => {
+test("names alone stay separate; explicit moves, version sorting and decisions persist", async (t) => {
   const w = await setup(t),
     old = await report(w, "Same Person", "2026-01-02T00:00:00Z"),
     newer = await report(w, "Same Person", "2026-02-02T00:00:00Z"),
@@ -61,10 +61,10 @@ test("same names stay separate until an explicit move; versions sort and decisio
     await readFile(join(w.reportPath(newer.id), "investigation.json"), "utf8"),
     original,
   );
-  await catalog.rename(split, "Same name — another person");
+  await catalog.rename(split, "Same name - another person");
   assert.equal(
     (await new Catalog(w).read()).find((p) => p.id === split).title,
-    "Same name — another person",
+    "Same name - another person",
   );
   const merged = await catalog.move("report:" + newer.id, group.id);
   assert.equal(merged, group.id);
@@ -146,7 +146,7 @@ test("biography is prose-first with numbered references, dynamic infobox, dates 
   const html = renderBiography(v);
   assert.ok(html.includes("Profile information"));
   assert.ok(html.includes("Software researcher"));
-  assert.ok(html.includes("profile-reported"));
+  assert.ok(html.includes("possible match; source-reported"));
   assert.ok(
     html.indexOf("The professional profile reports") <
       html.indexOf("<h2>References</h2>"),

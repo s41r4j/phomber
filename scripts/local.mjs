@@ -7,8 +7,7 @@ const entry = join(root, 'dist', 'cli', 'index.js');
 try { await access(entry); }
 catch { console.error('Build PH0MBER first: npm run setup:local'); process.exit(1); }
 const child = spawn(process.execPath, [entry, ...process.argv.slice(2)], {
-  cwd: root,
-  env: { ...process.env, PHOMBER_HOME: process.env.PHOMBER_HOME || join(root, '.phomber') },
+  env: process.env,
   stdio: 'inherit',
 });
 const interrupt = () => child.kill('SIGINT');

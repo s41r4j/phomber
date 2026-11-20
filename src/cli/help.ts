@@ -7,6 +7,14 @@ type Topic = {
 };
 
 const scannerTopics: Record<string, Topic> = {
+  email: {
+    summary: "Check supplied email syntax and public mail-domain DNS.",
+    usage: "email ADDRESS [--format json]",
+    examples: ["email me@example.com", "email me@example.com --format json"],
+    notes: ["Use only your own details or addresses whose owners authorize the check.",
+      "Shows a masked address. MX records do not prove mailbox existence or ownership.",
+      "No SMTP probes, messages, contact harvesting or breach lookup. Privacy cleanup is planned separately."],
+  },
   number: {
     summary: "Check phone-number format and numbering-plan metadata offline.",
     usage: "number +COUNTRY_CODE_AND_NUMBER [--format json]",
@@ -49,11 +57,12 @@ const scannerTopics: Record<string, Topic> = {
 };
 
 const topics: Record<string, Topic> = {
-  wiki: {
+  find: {
     summary: "Build a public-source investigation, or update a saved one.",
-    usage: "wiki [subject options] [research options]",
+    usage: 'find ["FULL NAME"] [subject options] [research options]',
     options: [
       "Subject (scalar; override JSON input):",
+      '  "FULL NAME"              Short form of --name; quote names with spaces',
       "  --name NAME --type TYPE --location TEXT",
       "Subject (repeatable; append to JSON input):",
       "  --alias TEXT --username HANDLE --social PLATFORM:HANDLE_OR_URL",
@@ -68,11 +77,11 @@ const topics: Record<string, Topic> = {
       "  --no-ai / --ai           Disable / explicitly enable AI sharing",
       "  --ai-only                Use DeepSeek only; skip adapters and portraits",
       "  --offline / --online     Use fresh cache only / enable network access",
-      "  --omit FIELD             Omit an input category (repeatable)",
+      "  --omit FIELD             Omit a subject or contact field (repeatable)",
       "  --model MODEL            Override the configured/discovered AI model",
       "  --max-ai-calls NUMBER    Cap provider attempts (default: 100; max: 1000)",
       "  --max-output-tokens N    Cap each model output (default: 12000; max: 32000)",
-      "  --save-key               Explicitly persist an NPX session key",
+      "  --save-key               Persist a key even in explicit session-only mode",
       "Output:",
       "  --format text|json|html  Select stdout format; report files are still saved",
       "  --output DIRECTORY      Export an additional portable report folder",
@@ -80,16 +89,17 @@ const topics: Record<string, Topic> = {
       "  --port NUMBER --open     Choose a server port / open the report",
     ],
     examples: [
-      "wiki --no-ai",
-      "wiki --social github:octocat --no-ai --no-serve",
-      'wiki --name "YOUR SUBJECT" --ai-only --no-serve',
-      'wiki --name "YOUR SUBJECT" --company "KNOWN CONTEXT" --no-ai --no-serve',
-      "wiki --input subject.json --offline --no-serve",
-      "wiki --resume REPORT_ID --no-ai --no-serve",
-      "wiki --resume REPORT_ID --online --ai --synthesize-only --no-serve",
+      "find --no-ai",
+      "find --social github:octocat --no-ai --no-serve",
+      'find "YOUR SUBJECT" --ai-only --no-serve',
+      'find --name "YOUR SUBJECT" --company "KNOWN CONTEXT" --no-ai --no-serve',
+      "find --input subject.json --offline --no-serve",
+      "find --resume REPORT_ID --no-ai --no-serve",
+      "find --resume REPORT_ID --online --ai --synthesize-only --no-serve",
     ],
     notes: [
-      "Without a subject, wiki opens a guided questionnaire in a terminal.",
+      "Without a subject, find opens a guided questionnaire in a terminal.",
+      "--omit email redacts recognizable addresses from new web/PDF snapshots and AI chat prompts.",
       "New investigations use billed DeepSeek AI by default; --no-ai disables it.",
       "--no-ai and --offline are saved preferences; --ai and --online override them.",
       "Offline mode always disables AI. Source failures can produce partial reports.",
@@ -106,7 +116,7 @@ const topics: Record<string, Topic> = {
       "Open the printed URL. If the port is busy, the actual port may change.",
       "Reads saved reports from the current workspace; it does not run new research.",
       "In this checkout: npm run local -- serve --open (build first).",
-      "Or run npm run dev to rebuild and serve the checkout's .phomber/ workspace.",
+      "Or run npm run dev to rebuild and serve the same shared workspace.",
       "Use the same PHOMBER_HOME as the investigation. Ctrl+C stops the server.",
     ],
   },
@@ -118,11 +128,13 @@ const topics: Record<string, Topic> = {
       "reports open REPORT_ID               Open the saved offline HTML",
       "reports export REPORT_ID             Export into the workspace's exports/",
       "reports export REPORT_ID --output DIR  Choose an export destination",
-      "reports delete REPORT_ID --yes       Permanently delete the report",
+      "reports delete REPORT_ID             Confirm deletion in a terminal",
+      "reports delete REPORT_ID --yes       Delete without prompting (scripts)",
     ],
     examples: ["reports", "reports open REPORT_ID", "reports export REPORT_ID"],
     notes: ["Use serve --open to browse all saved reports in the wiki.",
-      "Deletion includes revisions and snapshots; separate exports and cache remain."],
+      "Deletion includes revisions and snapshots; separate exports and cache remain.",
+      "The wiki offers Delete report on each investigation and Admin > Manage investigations."],
   },
   review: {
     summary: "Inspect finding assessments or record an analyst decision.",
@@ -173,8 +185,8 @@ const topics: Record<string, Topic> = {
     usage: "auth deepseek [--save-key] | auth logout",
     examples: ["auth deepseek", "auth logout"],
     notes: ["DEEPSEEK_API_KEY supplies an environment key without saving it.",
-      "Installed execution saves keys locally; NPX sessions require --save-key to persist.",
-      "Use wiki to enter a session key for an NPX investigation. Never pass keys as arguments."],
+      "Installed, NPX and checkout commands share saved keys in the same workspace.",
+      "PHOMBER_EPHEMERAL_KEY=1 opts into session-only keys; --save-key persists explicitly. Never pass keys as arguments."],
   },
   config: {
     summary: "Show local configuration and the configured AI model.",
@@ -225,14 +237,14 @@ const topics: Record<string, Topic> = {
       "exit / quit     Leave the interactive prompt",
     ],
     notes: ["Enter commands without the phomber prefix; Tab completes command names.",
-      "wiki opens the investigation questionnaire. serve hosts the saved wiki until Ctrl+C.",
+      "find opens the investigation questionnaire. serve hosts the saved wiki until Ctrl+C.",
       "In this checkout, npm run local opens the same prompt after building.",
       "With no arguments in a script or pipe, PH0MBER prints help instead."],
   },
   help: {
     summary: "Show a short overview or detailed command help.",
     usage: "help [COMMAND|scanners|interactive]",
-    examples: ["help", "help wiki", "help scanners", "number --help"],
+    examples: ["help", "help find", "help scanners", "number --help"],
     notes: ["Both help COMMAND and COMMAND --help show command-specific help."],
   },
 };
@@ -242,13 +254,13 @@ export const interactiveCommands = [
   "save", "flush", "clear", "change", "exit", "quit",
 ];
 
-const overview = `PH0MBER Gen2 — OSINT Researcher and a local investigation wiki
+const overview = `PH0MBER Gen2 - OSINT Researcher and a local investigation wiki
 
 Usage: phomber <command> [options]
        phomber                     Open the interactive terminal
 
 Start here
-  wiki                             Guided investigation builder
+  find ["FULL NAME"]               Research a subject or open the guided builder
   serve --open                     Browse past investigations in the wiki
   help COMMAND                     Options and examples for one command
 
@@ -262,7 +274,8 @@ Saved investigations and evidence
   search "QUERY"                   Search local findings and article text
   library [import FILE]            List or import archived wiki articles
 
-Legacy scanners
+Source checks
+  email ADDRESS                    Email syntax and mail-domain DNS
   number +PHONE                    Offline phone-number metadata
   ip PUBLIC_IPV4                   IP registration via RDAP
   mac MAC_ADDRESS                  MAC vendor lookup
@@ -280,36 +293,40 @@ Utilities
   --version                        Show version
 
 Examples
-  phomber wiki --social github:octocat --no-ai --no-serve
+  phomber find --social github:octocat --no-ai --no-serve
   phomber number +442079460000 --format json
   phomber serve --open
 
 New wiki investigations use billed AI by default. Use --no-ai to disable it.
-Use wiki --ai-only for DeepSeek Search/Fetch without adapters or portrait downloads.
-Installed workspace: ~/.phomber; override with PHOMBER_HOME.
-In this checkout: npm run local -- <command> uses .phomber/ unless overridden.
-Run npm run dev to rebuild and serve that checkout workspace.
-More help: phomber help wiki | phomber help scanners | phomber help interactive
+Use find --ai-only for DeepSeek Search/Fetch without adapters or portrait downloads.
+Shared workspace: ~/.phomber (Windows: %USERPROFILE%\\.phomber).
+Installed, NPX and checkout commands share reports, settings, cache and saved keys.
+Readable text is the default. Add --format json for machine-readable output.
+Use PHOMBER_HOME with an absolute path to select a different workspace.
+Run npm run dev to rebuild and serve the shared workspace from this checkout.
+More help: phomber help find | phomber help scanners | phomber help interactive
 `;
 
 function render(name: string, topic: Topic): string {
   return [
-    `PH0MBER Gen2 — ${name}`,
+    `PH0MBER Gen2 - ${name}`,
     topic.summary,
     `\nUsage: phomber ${topic.usage}`,
     ...(topic.options ? ["\nOptions and actions:", ...topic.options.map(line => `  ${line}`)] : []),
     ...(topic.examples ? ["\nExamples:", ...topic.examples.map(line => `  phomber ${line}`)] : []),
     ...(topic.notes ? ["\nNotes:", ...topic.notes.map(line => `  ${line}`)] : []),
-    "\nUse phomber help for the command overview.",
+    "\nOutput defaults to readable text. Add --format json for scripts.",
+    "Use phomber help for the command overview.",
     "In the interactive prompt, omit the phomber prefix.\n",
   ].join("\n");
 }
 
 export function helpText(topic?: string): string {
+  if (topic === "wiki") topic = "find";
   if (!topic) return overview;
   if (topic === "scanners")
     return [
-      "PH0MBER Gen2 — legacy scanners",
+      "PH0MBER Gen2 - source checks",
       "\nUsage: phomber <scanner> TARGET [--format json]",
       "\nScanners:",
       ...Object.entries(scannerTopics).map(([name, entry]) => `  ${name}\n    ${entry.summary}`),

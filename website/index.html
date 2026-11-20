@@ -3,57 +3,62 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="phomber-version" content="0.0.1">
-  <meta name="description" content="PH0MBER Gen2 — an open-source OSINT researcher with inspectable evidence, a local investigation wiki and a simple terminal workflow. Version 0.0.1.">
+  <meta name="phomber-version" content="0.0.2">
+  <meta name="description" content="PH0MBER Gen2 - an open-source OSINT researcher with inspectable evidence, a local investigation wiki and a simple terminal workflow. Version 0.0.2.">
   <meta name="theme-color" content="#ffffff">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <meta property="og:title" content="PH0MBER — OSINT Researcher">
+  <meta property="og:title" content="PH0MBER - OSINT Researcher">
   <meta property="og:description" content="A field guide to public evidence. Research from your terminal, review the sources and build your own local wiki.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://phomber.s41r4j.in/">
   <link rel="canonical" href="https://phomber.s41r4j.in/">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23f1f5ff'/%3E%3Ctext x='15' y='46' fill='%233366cc' font-family='Georgia,serif' font-size='45'%3EP%3C/text%3E%3C/svg%3E">
-  <title>PH0MBER — OSINT Researcher · Gen2</title>
+  <title>PH0MBER - OSINT Researcher · Gen2</title>
   <style>
     :root{color-scheme:light;--bg:#fff;--ink:#202122;--muted:#626873;--line:#d8dce3;--strong-line:#aeb7c5;--soft:#f8f9fb;--blue:#36c;--blue-soft:#f0f5ff;--serif:Georgia,"Times New Roman",serif;--mono:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace}
     *{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:25px}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.8 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}a{color:var(--blue);text-decoration:none;text-underline-offset:4px}a:hover{text-decoration:underline}button,input{font:inherit}button{cursor:pointer;color:inherit}button:focus-visible,a:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--blue);outline-offset:4px}p,h1,h2,h3,figure{margin:0}code,.eyebrow,.release,.micro,.command-count{font-family:var(--mono)}code{font-size:.87em;overflow-wrap:anywhere}p{color:var(--muted)}[hidden]{display:none!important}.js-only{display:none}.js .js-only{display:flex}.wrap{width:min(1460px,calc(100% - 72px));margin:auto}.skip{position:absolute;left:15px;top:-100px;background:var(--bg);border:1px solid var(--blue);padding:10px;z-index:10}.skip:focus{top:12px}
     .masthead{display:grid;grid-template-columns:245px minmax(240px,470px) 1fr;align-items:center;gap:36px;min-height:112px}.brand{display:flex;align-items:center;gap:13px;color:var(--ink);width:max-content}.brand:hover{text-decoration:none}.brand svg{width:48px;height:48px;color:#4e5a71}.brand-name{font-family:var(--serif);font-size:29px;font-weight:700;letter-spacing:-.045em;line-height:1.1}.tagline{font:9px/1.4 var(--mono);letter-spacing:.16em;display:block;margin-top:6px;color:var(--muted)}.header-search{display:flex;height:37px;position:relative}.header-search label{position:absolute;left:12px;top:4px;font-size:19px;color:#7a8496}.header-search input{background:var(--bg);border:1px solid var(--strong-line);border-right:0;min-width:0;width:100%;padding:6px 10px 6px 34px;font-size:12px}.header-search button{background:var(--soft);border:1px solid var(--strong-line);padding:0 16px;font-size:11px;font-weight:600}.header-links{display:flex;justify-content:flex-end;align-items:center;gap:24px;font-size:11px}.release{font-size:9px;letter-spacing:.04em;background:var(--blue-soft);border:1px solid #cbd9f4;border-radius:2px;padding:4px 8px;color:#36578f;white-space:nowrap}
-    .page-grid{display:grid;grid-template-columns:158px minmax(0,1fr);gap:45px;align-items:start}.contents{position:sticky;top:30px;padding-top:44px;font-size:11px}.contents-title{font-weight:600;font-size:12px;padding-bottom:8px;margin-bottom:8px;border-bottom:1px solid var(--line);color:var(--ink)}.contents a{display:block;padding:5px 0;color:#505b6e}.contents a:hover{color:var(--blue)}.contents a:first-of-type{color:var(--blue);font-weight:600}.sidebar-note{border-top:1px solid var(--line);margin-top:26px;padding-top:15px;font-size:10px;line-height:1.8;color:var(--muted)}.sidebar-note span{display:block;font-family:var(--serif);font-size:17px;color:#7b8ca5;margin-bottom:5px}.article{min-width:0;padding-top:20px}.article-title{display:flex;align-items:center;justify-content:space-between;gap:24px;border-bottom:1px solid var(--strong-line);padding-bottom:9px}.article-title h1{font:400 40px/1.2 var(--serif);letter-spacing:-.045em}.article-title>span{font-size:10px;color:var(--muted)}.article-tabs{display:flex;align-items:center;justify-content:space-between;gap:25px;border-bottom:1px solid var(--line);margin-bottom:17px}.tab-group{display:flex;gap:25px;align-items:center;font-size:11px}.tab-group a,.tab-group span{padding:9px 0}.tab-group .selected{color:var(--ink);border-bottom:2px solid var(--ink)}.from-line{font-size:10px;color:#737b87}.lead-grid{display:grid;grid-template-columns:1.04fr .96fr;gap:37px;align-items:center;padding:28px 0 42px}.eyebrow{font-size:9px;letter-spacing:.12em;color:var(--blue);font-weight:500}.hero h2{font:400 clamp(37px,4vw,61px)/1.08 var(--serif);letter-spacing:-.05em;margin:20px 0 24px;max-width:640px}.hero h2 em{font-weight:400;color:var(--blue)}.hero-description{font-size:14px;line-height:1.9;max-width:470px}.hero-description strong{color:var(--ink);font-weight:600}.hero-actions{display:flex;align-items:center;gap:24px;margin-top:26px;font-size:11px}.button{background:var(--blue);border:1px solid var(--blue);color:#fff;padding:10px 17px;display:inline-flex;gap:24px;align-items:center;border-radius:2px;font-weight:600}.button:hover{background:#2852a3;color:#fff;text-decoration:none}.hero-meta{font:9px var(--mono);color:var(--muted);margin-top:21px;line-height:1.8}
+    .github-stars{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;white-space:nowrap;border:1px solid var(--line);border-radius:2px;padding:4px 8px;line-height:1.8;font:10px/1.8 var(--mono);color:#536279;background:var(--soft)}.github-stars:hover{border-color:#b6c9e8;color:var(--blue);background:var(--blue-soft);text-decoration:none}.github-stars svg{width:12px;height:12px;flex-shrink:0}.github-stars .star-count{font-variant-numeric:tabular-nums}
+    .page-grid{display:grid;grid-template-columns:158px minmax(0,1fr);gap:45px;align-items:start}.contents{position:sticky;top:30px;padding-top:44px;font-size:11px}.contents-title{font-weight:600;font-size:12px;padding-bottom:8px;margin-bottom:8px;border-bottom:1px solid var(--line);color:var(--ink)}.contents a{display:block;padding:5px 0;color:#505b6e}.contents a:hover{color:var(--blue)}.contents a[aria-current="page"]{color:var(--blue);font-weight:600}.sidebar-note{border-top:1px solid var(--line);margin-top:26px;padding-top:15px;font-size:10px;line-height:1.8;color:var(--muted)}.sidebar-note span{display:block;font-family:var(--serif);font-size:17px;color:#7b8ca5;margin-bottom:5px}.article{min-width:0;padding-top:20px}.article-title{display:flex;align-items:center;justify-content:space-between;gap:24px;border-bottom:1px solid var(--strong-line);padding-bottom:9px}.article-title h1{font:400 40px/1.2 var(--serif);letter-spacing:-.045em}.article-title>span{font-size:10px;color:var(--muted)}.article-tabs{display:flex;align-items:center;justify-content:space-between;gap:25px;border-bottom:1px solid var(--line);margin-bottom:17px}.tab-group{display:flex;gap:25px;align-items:center;font-size:11px}.tab-group a,.tab-group span{padding:9px 0}.tab-group .selected{color:var(--ink);border-bottom:2px solid var(--ink)}.from-line{font-size:10px;color:#737b87}.lead-grid{display:grid;grid-template-columns:1.04fr .96fr;gap:37px;align-items:center;padding:28px 0 42px}.eyebrow{font-size:9px;letter-spacing:.12em;color:var(--blue);font-weight:500}.hero h2{font:400 clamp(37px,4vw,61px)/1.08 var(--serif);letter-spacing:-.05em;margin:20px 0 24px;max-width:640px}.hero h2 em{font-weight:400;color:var(--blue)}.hero-description{font-size:14px;line-height:1.9;max-width:470px}.hero-description strong{color:var(--ink);font-weight:600}.hero-actions{display:flex;align-items:center;gap:24px;margin-top:26px;font-size:11px}.button{background:var(--blue);border:1px solid var(--blue);color:#fff;padding:10px 17px;display:inline-flex;gap:24px;align-items:center;border-radius:2px;font-weight:600}.button:hover{background:#2852a3;color:#fff;text-decoration:none}.hero-meta{font:9px var(--mono);color:var(--muted);margin-top:21px;line-height:1.8}
     .atlas-box{position:relative;border:1px solid #c6d3e6;background:#fbfcff;min-width:0;padding-top:13px;border-radius:2px;overflow:hidden}.atlas-top{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:0 17px}.atlas-top h3{font:400 18px var(--serif);color:#31435e}.atlas-index{font:8px var(--mono);letter-spacing:.1em;color:#7a8da9}.atlas-stage{position:relative;width:100%;aspect-ratio:1.13;max-height:370px;background:radial-gradient(ellipse at 50% 45%,#edf4ff55,transparent 67%)}.atlas-stage canvas{display:none;width:100%;height:100%}.atlas-fallback{width:100%;height:100%;display:block}.atlas-ready canvas{display:block}.atlas-ready .atlas-fallback{display:none}.atlas-controls{display:flex;justify-content:space-between;align-items:center;padding:0 17px 13px;gap:12px;font:8px var(--mono);color:#697e9e}.atlas-controls button{display:none;min-height:28px;background:#fff;border:1px solid #c5d1e3;border-radius:2px;padding:4px 8px;font:9px var(--mono);color:#415879}.atlas-ready .atlas-controls button{display:block}.atlas-box figcaption{font-size:9px;line-height:1.65;color:#6d788b;border-top:1px solid #d9e2f0;padding:10px 17px;background:#f2f6fd}.atlas-details{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #d9e2f0;font-size:9px;background:#fff}.atlas-details>div{padding:9px 16px}.atlas-details>div+div{border-left:1px solid #d9e2f0}.atlas-details strong{display:block;font-weight:600;color:#3b4d69}.atlas-details span{color:#7a8491}.lead-note{border:1px solid #d1dced;border-left:3px solid #6e93cf;background:#f8faff;padding:13px 18px;display:flex;align-items:flex-start;gap:15px;font-size:11px;margin:0 0 32px}.lead-note strong{font-size:13px;line-height:1.4;color:#5474a4}.lead-note p{color:#536279;line-height:1.8}
     section{margin-bottom:42px;scroll-margin-top:25px}.section-heading{display:flex;align-items:baseline;justify-content:space-between;gap:20px;border-bottom:1px solid var(--strong-line);margin-bottom:21px;padding-bottom:7px}.section-heading h2{font:400 27px/1.2 var(--serif);letter-spacing:-.025em;color:#26313f}.section-heading a{font-size:9px;white-space:nowrap}.section-heading h2 small{font:9px var(--mono);color:#7e8a9d;margin-right:13px;letter-spacing:0}.section-intro{font-size:12px;line-height:1.85;max-width:790px;margin-bottom:22px}.setup-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(210px,.7fr);gap:32px}.switcher{border-bottom:1px solid var(--line);gap:20px;align-items:center;margin-bottom:20px}.switcher button{border:0;background:transparent;color:#6d7789;font-size:11px;padding:0 0 8px}.switcher button[aria-pressed=true]{border-bottom:2px solid var(--blue);color:var(--blue)}.step{position:relative;padding:0 0 23px 39px}.step-number{position:absolute;left:0;top:0;width:23px;height:23px;border:1px solid #c3d1e5;background:#f1f6ff;border-radius:50%;display:flex;align-items:center;justify-content:center;font:10px var(--serif);color:#4770aa}.step:not(:last-of-type):before{content:"";position:absolute;top:29px;bottom:6px;left:11px;border-left:1px solid #dde4ef}.step h3{font-size:12px;font-weight:600;line-height:1.7;padding-top:1px}.step p{font-size:11px;line-height:1.75;margin-top:5px}.command{display:flex;justify-content:space-between;align-items:center;gap:15px;min-width:0;padding:12px 14px;border:1px solid #dce1e9;background:#f7f8fa;margin-top:11px;border-radius:2px}.command code{min-width:0;font-size:10px;line-height:1.8;white-space:pre-wrap}.copy{display:none;min-height:26px;align-items:center;background:#fff;border:1px solid #c6cdd8;border-radius:2px;color:#526278;font-size:9px;padding:3px 8px;flex-shrink:0}.js .copy{display:inline-flex}.copy:hover{border-color:var(--blue);color:var(--blue)}.quiet{font-size:10px;line-height:1.8;color:var(--muted)}.setup-note{margin-left:39px}.quick-reference{align-self:start;border:1px solid var(--line);font-size:11px}.quick-reference h3{font:400 19px var(--serif);text-align:center;padding:11px 10px;background:#edf3fc;border-bottom:1px solid #d5dfed}.quick-reference dl{display:grid;grid-template-columns:82px 1fr;gap:0;margin:0;padding:6px 13px}.quick-reference dt,.quick-reference dd{margin:0;padding:9px 0;border-bottom:1px solid #ebedf1;font-size:10px;line-height:1.7}.quick-reference dt{font-weight:600;color:#49566b}.quick-reference dd{color:#657187}.quick-reference p{padding:10px 13px;font-size:10px;line-height:1.9}.quick-reference .reference-command{border-top:1px solid #ebedf1;margin:0 13px;padding:11px 0;color:#455c7c}.command-toolbar{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:14px}.filters{gap:5px;flex-wrap:wrap}.filters button{min-height:28px;background:#fff;border:1px solid var(--line);color:#5e6b7d;border-radius:2px;font-size:10px;padding:5px 11px}.filters button[aria-pressed=true]{border-color:#a5bde8;background:var(--blue-soft);color:var(--blue)}#command-count{font:9px var(--mono);white-space:nowrap;color:#758093}.command-table{width:100%;border-collapse:collapse;table-layout:fixed;border:1px solid var(--line);font-size:11px}.command-table th{font-size:9px;letter-spacing:.05em;text-align:left;background:#edf1f6;color:#4d5b71;font-weight:600;border-bottom:1px solid #c8d0dd;padding:10px 14px}.command-table th:first-child{width:54%}.command-table td{padding:11px 14px;border-bottom:1px solid #e6e9ee;vertical-align:top;line-height:1.8;color:#606b7b}.command-table td:first-child{color:#334562}.command-table tr:nth-child(even){background:#fafbfd}.command-table code{font-size:10px}.command-help{margin-top:14px}.empty-results{padding:17px;background:var(--soft);border:1px solid var(--line);font-size:11px}.evidence-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:35px}.evidence-grid>div>p{font-size:12px;line-height:1.95;margin-bottom:15px}.evidence-grid strong{color:var(--ink);font-weight:600}.flow{border:1px solid var(--line)}.flow-item{display:grid;grid-template-columns:28px 1fr;gap:12px;padding:15px 17px;border-bottom:1px solid var(--line)}.flow-item:last-child{border:0}.flow-number{font:10px var(--mono);color:#6487bd;padding-top:3px}.flow-item h3{font-size:11px;font-weight:600}.flow-item p{font-size:10px;line-height:1.9;margin-top:5px}.faq-list details{border-bottom:1px solid var(--line);padding:15px 0}.faq-list details:first-child{padding-top:0}.faq-list summary{list-style:none;display:flex;justify-content:space-between;gap:20px;cursor:pointer;color:#37465b;font-size:12px}.faq-list summary::-webkit-details-marker{display:none}.faq-list summary:after{content:"+";font-family:var(--mono);color:#7c8ba3}.faq-list details[open] summary:after{content:"−"}.faq-list details p{font-size:11px;line-height:1.95;margin-top:12px;max-width:850px}.release-info{padding:13px 16px;border:1px solid var(--line);background:#fafbfc;font-size:10px;line-height:1.9;color:#657184;display:flex;justify-content:space-between;gap:25px;align-items:center;margin-top:28px}.release-info strong{color:#455770;font-weight:600}.release-info .command{margin:0;min-width:220px;padding:8px 12px}.footer{margin:28px 0 35px;padding-top:17px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:25px;font-size:9px;line-height:1.9;color:var(--muted)}.footer nav{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}.footer p{max-width:610px}#copy-status{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);max-width:calc(100% - 32px);padding:9px 16px;background:#243c63;color:white;font-size:11px;border-radius:3px;box-shadow:0 5px 20px #0002;z-index:10;text-align:center}#copy-status:empty{display:none}
     @media(min-width:1550px){.lead-grid{gap:70px}.hero h2{font-size:68px}.atlas-stage{max-height:400px}.hero-description{font-size:15px}}
     @media(max-width:1150px){.wrap{width:calc(100% - 48px)}.masthead{grid-template-columns:220px minmax(200px,1fr) auto;gap:23px}.header-links{gap:15px}.header-links>a:first-child{display:none}.page-grid{grid-template-columns:130px minmax(0,1fr);gap:28px}.lead-grid{gap:23px}.hero h2{font-size:44px}.hero-description{font-size:12px}.atlas-top h3{font-size:16px}.setup-grid{gap:22px}.evidence-grid{gap:24px}.article-title h1{font-size:36px}.brand-name{font-size:26px}.brand svg{width:42px;height:42px}}
     @media(max-width:850px){.wrap{width:calc(100% - 36px)}.masthead{grid-template-columns:1fr auto;min-height:91px;padding:17px 0;gap:16px}.header-search{grid-row:2;grid-column:1/-1}.header-links>a{display:none}.page-grid{grid-template-columns:1fr;gap:0}.contents{position:static;padding-top:16px;display:flex;flex-wrap:wrap;gap:6px 18px;border-top:1px solid var(--line);padding-bottom:12px;font-size:10px}.contents-title,.sidebar-note{display:none}.contents a{padding:0}.article{padding-top:12px}.lead-grid{grid-template-columns:1.1fr .9fr;padding-top:22px;gap:26px}.hero h2{font-size:43px}.hero-description{font-size:12px}.atlas-stage{aspect-ratio:1;max-height:320px}.setup-grid{grid-template-columns:1.15fr .85fr;gap:25px}.footer{font-size:9px}.header-links{justify-self:end}.hero-actions{gap:17px}.hero-meta{font-size:8px}.article-title>span{font-size:9px}.tab-group{gap:19px;font-size:10px}}
+    @media(max-width:850px){.header-links>.github-stars{display:inline-flex}}
     @media(max-width:620px){.article-title h1{font-size:35px}.article-title>span{max-width:115px;text-align:right;line-height:1.6}.article-tabs{gap:12px}.tab-group{gap:17px;font-size:10px}.tab-group:last-child a:first-child{display:none}.lead-grid{grid-template-columns:1fr;gap:30px;padding-bottom:27px}.hero h2{font-size:clamp(39px,8.7vw,52px);max-width:520px;margin-block:18px}.hero-description{font-size:13px;max-width:none}.hero-actions{font-size:11px}.hero-meta{font-size:9px}.atlas-box{width:100%;max-width:440px;justify-self:center}.atlas-stage{aspect-ratio:1.2;max-height:335px}.atlas-top{padding-top:3px}.atlas-top h3{font-size:18px}.atlas-box figcaption{font-size:9px}.atlas-details>div{padding:10px 16px}.setup-grid,.evidence-grid{grid-template-columns:1fr;gap:25px}.quick-reference{max-width:none}.quick-reference dl{grid-template-columns:110px 1fr}.section-heading h2{font-size:25px}.section-heading a{font-size:8px}.section-heading h2 small{margin-right:9px;font-size:8px}.section-intro{font-size:12px}.step h3{font-size:12px}.step p{font-size:11px}.command code{font-size:10px}.command-toolbar{align-items:flex-start;gap:10px;flex-direction:column}.filters button{font-size:9px;padding:5px 10px}.command-table td,.command-table th{padding:10px;font-size:10px}.command-table th:first-child{width:54%}.command-table code{font-size:9px}.release-info{flex-direction:column;align-items:stretch;gap:12px}.release-info .command{min-width:0}.footer{flex-direction:column;gap:13px}.footer nav{gap:20px}.evidence-grid>div>p{font-size:12px}.flow-item h3{font-size:12px}.flow-item p{font-size:11px}.brand-name{font-size:27px}.lead-note{font-size:10px;padding:12px}.hero-meta{line-height:1.9}.from-line{font-size:9px}}
+    @media(max-width:620px){.masthead{column-gap:10px}.brand{gap:8px}.brand svg{width:34px;height:34px}.brand-name{font-size:23px}.tagline{font-size:8px;letter-spacing:.1em}.header-links{gap:8px}.github-stars{padding:4px 6px;font-size:9px}.release{padding:4px 6px;font-size:8px}}
+    @media(max-width:380px){.masthead{column-gap:8px}.brand-name{font-size:19px}.brand svg{width:28px;height:28px}.tagline{font-size:7px;letter-spacing:.05em}.header-links{gap:6px;max-width:132px;flex-wrap:wrap}.github-stars{padding:4px}.release{font-size:7px;padding:4px}}
     @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+    html:not(.js) .header-search{display:none}.site-page-heading{margin-top:12px}.guide-directory{border-top:1px solid var(--line);padding-top:24px}.guide-directory h2{font:400 26px var(--serif);margin-bottom:8px}.guide-directory dl{margin:18px 0 0;display:grid;grid-template-columns:1fr 1fr;gap:0 32px}.guide-directory dl>div{padding:16px 0;border-bottom:1px solid var(--line)}.guide-directory dt{font:20px var(--serif)}.guide-directory dd{margin:5px 0 0;color:var(--muted);font-size:13px}.contents a[aria-current="page"]{border-left:2px solid var(--blue);padding-left:10px}.tab-group a[aria-current="page"]{color:var(--ink);border-bottom:2px solid var(--ink)}[data-page]{min-height:45vh}[data-page] h3{margin:22px 0 8px;font-size:18px;line-height:1.4}[data-page] .step h3{font-size:14px;margin:0}[data-page] .atlas-top h3{margin:0;font:18px var(--serif)}[data-page] .quick-reference h3{margin:0;font:19px var(--serif)}#roadmap article,#evidence>article{border-top:1px solid var(--line);padding:8px 0 24px}#roadmap article p,#evidence>article p,#about>.section-intro,#guide-deep>p{font-size:15px;line-height:1.85}.planned-label{font:11px var(--mono);color:#6a5a30;border:1px solid #d9cba8;background:#fffaf0;padding:3px 7px}.command-filter-label{display:block;font-size:12px;font-weight:600;margin-bottom:6px}#command-filter{width:100%;min-height:42px;border:1px solid var(--strong-line);padding:8px 12px;background:#fff;margin-bottom:16px}#search-results-heading{overflow-wrap:anywhere}#site-search-status{padding-bottom:18px;border-bottom:1px solid var(--line);font-size:14px}.search-result{padding:22px 0;border-bottom:1px solid var(--line)}.search-result h3{overflow-wrap:anywhere;font:24px/1.3 var(--serif);margin:5px 0 9px}.search-result p{font-size:15px;line-height:1.8}.search-result .search-meta{font:11px/1.6 var(--mono);color:var(--muted)}.search-suggestions{margin-top:22px;display:flex;flex-wrap:wrap;gap:9px;align-items:center}.search-suggestions button{font-size:13px;border:1px solid var(--line);background:var(--soft);color:var(--blue);padding:6px 11px}.search-empty{padding:22px 0}.search-empty h3{margin:0 0 8px}#page-title:focus{outline:none}.article-tabs{flex-wrap:wrap}.tab-group{flex-wrap:wrap}.header-search input{font-size:13px}.section-intro{font-size:14px}.contents{font-size:13px}.command-table{font-size:13px}.command-table code{font-size:12px}.faq-list summary{font-size:15px}.faq-list details p{font-size:14px}@media(max-width:620px){.guide-directory dl{grid-template-columns:1fr}.contents{font-size:12px}.command-table code{font-size:11px}.section-heading{align-items:flex-start;flex-wrap:wrap}.search-result h3{font-size:22px}.search-result p{font-size:14px}.header-search input{font-size:14px}}@media print{[data-page][hidden]{display:block!important}.contents,.header-search,.article-tabs,.copy,.search-suggestions,#site-search-page,#site-not-found{display:none!important}}
   </style>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
   <header class="wrap masthead">
-    <a class="brand" href="#" aria-label="PH0MBER home">
+    <a class="brand" href="#overview" aria-label="PH0MBER home">
       <svg viewBox="0 0 60 60" aria-hidden="true" fill="none"><circle cx="30" cy="30" r="25" stroke="currentColor" stroke-width="1.2"/><ellipse cx="30" cy="30" rx="12" ry="25" stroke="currentColor" opacity=".55"/><path d="M7 20h46M5 32h50M10 44h40M30 5v50" stroke="currentColor" opacity=".45"/><text x="19" y="38" fill="currentColor" font-family="Georgia,serif" font-size="25">P</text><text x="34" y="43" fill="currentColor" font-family="Georgia,serif" font-size="13">W</text></svg>
       <span><span class="brand-name">PH0MBER</span><span class="tagline">OSINT RESEARCHER</span></span>
     </a>
-    <form class="header-search" id="command-search-form" action="#commands" role="search"><label for="command-search" aria-label="Find a command">⌕</label><input type="search" id="command-search" aria-label="Find a command" placeholder="Find a command or topic" autocomplete="off"><button type="submit">Search</button></form>
-    <nav class="header-links" aria-label="Project navigation"><a href="https://github.com/s41r4j/phomber#readme">Documentation</a><a href="https://github.com/s41r4j/phomber">GitHub ↗</a><span class="release">GEN2 · v0.0.1</span></nav>
+    <form class="header-search" id="command-search-form" action="#/search" role="search"><label for="command-search" aria-label="Search this site">⌕</label><input type="search" id="command-search" aria-label="Search this site" placeholder="Search commands, guides, questions…" autocomplete="off" maxlength="160" list="site-search-suggestions"><button type="submit">Search</button></form><datalist id="site-search-suggestions"><option value="install with npx"><option value="serve wiki"><option value="delete report"><option value="DeepSeek API key"><option value="PDF resume"><option value="company research"><option value="email check"></datalist>
+    <nav class="header-links" aria-label="Project navigation"><a href="https://github.com/s41r4j/phomber#readme">Documentation</a><a href="https://github.com/s41r4j/phomber">GitHub ↗</a><a class="github-stars" id="github-stars" href="https://github.com/s41r4j/phomber/stargazers" aria-label="View PH0MBER stars on GitHub" title="View GitHub stars"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.8 5.7 6.3.9-4.6 4.4 1.1 6.3-5.6-3-5.6 3 1.1-6.3L2.9 9.6l6.3-.9Z"/></svg><span class="star-count" id="github-star-count">Stars</span></a><span class="release">GEN2 · v0.0.2</span></nav>
   </header>
   <div class="wrap page-grid">
-    <nav class="contents" aria-label="Contents"><div class="contents-title">Contents</div><a href="#main">Overview</a><a href="#start">Quick start</a><a href="#commands">Command reference</a><a href="#evidence">Evidence &amp; identity</a><a href="#faq">Common questions</a><a href="#release-info">Release information</a><div class="sidebar-note"><span>Source → finding</span>Every useful conclusion starts with something you can inspect.</div></nav>
+    <nav class="contents" aria-label="Site pages"><div class="contents-title">Field guide</div><a data-nav="home" href="#overview">Overview</a><a data-nav="guide" href="#start">Getting started</a><a data-nav="commands" href="#commands">Command reference</a><a data-nav="evidence" href="#evidence">Evidence &amp; identity</a><a data-nav="faq" href="#faq">Common questions</a><a data-nav="roadmap" href="#roadmap">Planned work</a><a data-nav="about" href="#about">About &amp; release</a><div class="sidebar-note"><span>Source → finding</span>Every useful conclusion starts with something you can inspect.</div></nav>
     <main class="article" id="main">
-      <div class="article-title"><h1>PH0MBER</h1><span>Open-source intelligence · Gen2</span></div>
-      <div class="article-tabs"><div class="tab-group"><span class="selected">Overview</span><a href="#start">Quick start</a><a href="#commands">Commands</a></div><div class="tab-group"><a href="https://github.com/s41r4j/phomber">View source ↗</a><a href="#release-info">Page information</a></div></div>
-      <p class="from-line">A field guide to public evidence, from the PH0MBER project.</p>
-      <div class="lead-grid">
+      <div class="article-title"><h1 id="page-title" tabindex="-1">PH0MBER</h1><span>Open-source intelligence · Gen2</span></div>
+      <div class="article-tabs"><div class="tab-group"><a data-nav="home" href="#overview">Overview</a><a data-nav="guide" href="#start">Quick start</a><a data-nav="commands" href="#commands">Commands</a></div><div class="tab-group"><a href="https://github.com/s41r4j/phomber">View source ↗</a><a href="#release-info">Page information</a></div></div>
+      <p class="from-line" id="page-description">A field guide to public evidence, from the PH0MBER project.</p><noscript><p class="lead-note">JavaScript is off. The complete guide is shown below. Use your browser’s Find command to search this file.</p></noscript>
+      <section id="overview" data-page="home" data-title="PH0MBER"><div class="lead-grid">
         <div class="hero">
           <p class="eyebrow">OSINT RESEARCHER / OPEN SOURCE</p>
           <h2>Public clues.<br>Inspectable <em>evidence.</em></h2>
           <p class="hero-description"><strong>PH0MBER</strong> brings public-source collection, analyst review and a local investigation wiki into one terminal workflow. Start with what you know, follow the sources, and keep a record of how your findings change.</p>
           <div class="hero-actions"><a class="button" href="#start">Start an investigation <span aria-hidden="true">→</span></a><a href="#commands">Explore commands</a></div>
-          <p class="hero-meta">Node.js 22+ &nbsp; · &nbsp; npm / npx &nbsp; · &nbsp; GPL-3.0-only</p>
+          <p class="hero-meta">Node.js 22+ &nbsp; · &nbsp; npm / npx &nbsp; · &nbsp; MIT</p>
         </div>
         <figure class="atlas-box" id="atlas-box" aria-labelledby="atlas-caption">
-          <div class="atlas-top"><h3>The evidence atlas</h3><span class="atlas-index">FIG. 01</span></div>
+          <div class="atlas-top"><h3>The evidence atlas</h3><span class="atlas-index">SOURCE ATLAS</span></div>
           <div class="atlas-stage" id="atlas-stage">
             <svg class="atlas-fallback" viewBox="0 0 400 345" aria-hidden="true" fill="none"><g stroke="#8aa9d9" stroke-width="1"><circle cx="200" cy="168" r="105"/><ellipse cx="200" cy="168" rx="44" ry="105"/><ellipse cx="200" cy="168" rx="83" ry="105"/><ellipse cx="200" cy="168" rx="105" ry="40"/><path d="M95 168h210M109 116h182M109 220h182"/><ellipse cx="200" cy="168" rx="153" ry="67" transform="rotate(-25 200 168)" stroke="#c8d7eb"/></g><g fill="#36c"><circle cx="130" cy="131" r="4"/><circle cx="240" cy="208" r="4"/><circle cx="210" cy="69" r="4"/><circle cx="304" cy="163" r="4"/></g><text x="39" y="75" font-size="10" fill="#697e9e" font-family="monospace">SOURCE</text><text x="284" y="263" font-size="10" fill="#697e9e" font-family="monospace">REVIEW</text></svg>
             <canvas id="atlas" width="600" height="530" aria-hidden="true"></canvas>
@@ -64,119 +69,292 @@
         </figure>
       </div>
       <div class="lead-note"><strong aria-hidden="true">ⓘ</strong><p>Matching handles are candidate leads. Source retrieval, identity assessment and claim credibility remain separate throughout the investigation. <a href="#evidence">How evidence is reviewed →</a></p></div>
-      <section id="start" aria-labelledby="start-title">
+      <div class="guide-directory"><h2>Explore the field guide</h2><p>One project, a few clear places to start.</p><dl><div><dt><a href="#start">Getting started</a></dt><dd>Install, use NPX, and open your local wiki.</dd></div><div><dt><a href="#commands">Command reference</a></dt><dd>Research, source checks, saved reports and reviews.</dd></div><div><dt><a href="#evidence">Evidence &amp; identity</a></dt><dd>Understand matching marks, citations and uncertainty.</dd></div><div><dt><a href="#roadmap">Planned work</a></dt><dd>Company workflows and authorized privacy audits.</dd></div></dl></div></section>
+      <section id="start" data-page="guide" data-title="Getting started" aria-labelledby="start-title">
         <div class="section-heading"><h2 id="start-title"><small>01</small>Quick start</h2><a href="https://github.com/s41r4j/phomber#readme">Full installation guide ↗</a></div>
         <p class="section-intro">Three commands take you from a terminal to a readable investigation wiki. Source-only research needs no AI key, Python environment or Docker container.</p>
         <div class="setup-grid">
           <div>
             <div class="switcher js-only" role="group" aria-label="Installation method"><button type="button" data-install="npm" aria-pressed="true">Install with npm</button><button type="button" data-install="npx" aria-pressed="false">Run with npx</button></div>
             <div class="step"><span class="step-number" aria-hidden="true">1</span><h3 id="install-title">Install PH0MBER.</h3><p id="install-description">Install once, then run it from any terminal.</p><div class="command"><code id="cmd-install">npm install -g phomber</code><button class="copy" type="button" data-copy="cmd-install" aria-label="Copy installation command">Copy</button></div></div>
-            <div class="step"><span class="step-number" aria-hidden="true">2</span><h3>Build an investigation.</h3><p>The guided questionnaire collects identifiers and context. This example keeps AI disabled.</p><div class="command"><code id="cmd-wiki">phomber wiki --no-ai</code><button class="copy" type="button" data-copy="cmd-wiki" aria-label="Copy investigation command">Copy</button></div></div>
+            <div class="step"><span class="step-number" aria-hidden="true">2</span><h3>Build an investigation.</h3><p>The questionnaire collects identifiers and context. For direct input, use <code>phomber find &quot;Full Name&quot;</code>. This example keeps AI disabled.</p><div class="command"><code id="cmd-find">phomber find --no-ai</code><button class="copy" type="button" data-copy="cmd-find" aria-label="Copy investigation command">Copy</button></div></div>
             <div class="step"><span class="step-number" aria-hidden="true">3</span><h3>Read your local wiki.</h3><p>Start the server and open the printed localhost URL to browse saved investigations.</p><div class="command"><code id="cmd-serve">phomber serve</code><button class="copy" type="button" data-copy="cmd-serve" aria-label="Copy server command">Copy</button></div></div>
             <p class="quiet setup-note">Node.js 22+ is required for npm and NPX. <a href="https://www.npmjs.com/package/phomber">Check package status ↗</a></p>
           </div>
-          <aside class="quick-reference" aria-label="Project facts"><h3>PH0MBER at a glance</h3><dl><dt>Generation</dt><dd>Gen2</dd><dt>Version</dt><dd>0.0.1</dd><dt>Interface</dt><dd>Interactive terminal &amp; direct commands</dd><dt>Wiki</dt><dd>Localhost, port 4317 by default</dd><dt>Runtime</dt><dd>Node.js 22+</dd><dt>License</dt><dd>GPL-3.0-only</dd></dl><p>Run <code>phomber</code> with no arguments to open the interactive prompt. Inside it, omit the <code>phomber</code> prefix.</p><p class="reference-command">One-off alternative: <code>npx phomber</code></p></aside>
+          <aside class="quick-reference" aria-label="Project facts"><h3>PH0MBER at a glance</h3><dl><dt>Generation</dt><dd>Gen2</dd><dt>Version</dt><dd>0.0.2</dd><dt>Interface</dt><dd>Interactive terminal &amp; direct commands</dd><dt>Wiki</dt><dd>Localhost, port 4317 by default</dd><dt>Runtime</dt><dd>Node.js 22+</dd><dt>License</dt><dd>MIT</dd></dl><p>Run <code>phomber</code> with no arguments to open the interactive prompt. Inside it, omit the <code>phomber</code> prefix.</p><p class="reference-command">One-off alternative: <code>npx phomber</code></p></aside>
         </div>
+      <div id="guide-deep" data-search-item data-search-title="DeepSeek, deep research and no-serve" data-search-keywords="ai key api deep depth combined local tools offline no ai no serve"><h3>Deeper mixed research</h3><p>Combine local tools with billed DeepSeek research when you have a key. Supply context to distinguish similar names.</p><div class="command"><code id="cmd-deep">phomber find "Full Name" --education "Known College" --depth deep --no-serve</code><button class="copy" type="button" data-copy="cmd-deep" aria-label="Copy deep research example">Copy</button></div><p class="quiet">Replace placeholders before live research. <code>--no-serve</code> saves results without keeping a wiki server running. Use <code>--offline</code> for fresh cached evidence with AI disabled. <a href="#faq">Setup and storage questions</a>.</p></div>
       </section>
-      <section id="commands" aria-labelledby="commands-title">
+      <section id="commands" data-page="commands" data-title="Command reference" aria-labelledby="commands-title">
         <div class="section-heading"><h2 id="commands-title"><small>02</small>Command reference</h2><a href="https://github.com/s41r4j/phomber/blob/main/docs/ANALYST_WORKFLOW.md">Analyst guide ↗</a></div>
         <p class="section-intro">Use the filters or the search above to find your next command. For options and examples, run <code>phomber help COMMAND</code>.</p>
-        <div class="command-toolbar"><div class="filters js-only" role="group" aria-label="Filter commands"><button type="button" data-filter="all" aria-pressed="true">All commands</button><button type="button" data-filter="research" aria-pressed="false">Research</button><button type="button" data-filter="scanners" aria-pressed="false">Scanners</button><button type="button" data-filter="evidence" aria-pressed="false">Evidence</button></div><span id="command-count" role="status">18 commands</span></div>
+        <label class="command-filter-label" for="command-filter">Filter this command table</label><input id="command-filter" type="search" placeholder="Try reports, server or email" aria-label="Filter commands" maxlength="160">
+        <div class="command-toolbar"><div class="filters js-only" role="group" aria-label="Filter commands"><button type="button" data-filter="all" aria-pressed="true">All commands</button><button type="button" data-filter="research" aria-pressed="false">Research</button><button type="button" data-filter="scanners" aria-pressed="false">Scanners</button><button type="button" data-filter="evidence" aria-pressed="false">Evidence</button></div><span id="command-count" role="status">20 commands</span></div>
         <table class="command-table"><thead><tr><th scope="col">COMMAND</th><th scope="col">PURPOSE</th></tr></thead><tbody id="command-rows">
-<tr data-kind="research"><td><code>phomber</code></td><td>Open the interactive terminal.</td></tr>
-        <tr data-kind="research"><td><code>phomber wiki --no-ai</code></td><td>Build a guided source-only investigation.</td></tr>
-        <tr data-kind="research"><td><code>phomber serve</code></td><td>Browse saved investigations in your local wiki.</td></tr>
-        <tr data-kind="research"><td><code>phomber wiki --resume REPORT_ID --no-ai --no-serve</code></td><td>Update an existing investigation.</td></tr>
-        <tr data-kind="research"><td><code>phomber help wiki</code></td><td>See research options and examples.</td></tr>
-        <tr data-kind="scanners"><td><code>phomber number +442079460000</code></td><td>Read offline numbering-plan metadata.</td></tr>
-        <tr data-kind="scanners"><td><code>phomber ip 8.8.8.8</code></td><td>Look up public IPv4 registration via RDAP.</td></tr>
-        <tr data-kind="scanners"><td><code>phomber mac 00:1A:2B:00:00:00</code></td><td>Look up a MAC vendor prefix.</td></tr>
-        <tr data-kind="scanners"><td><code>phomber whois example.com</code></td><td>Look up domain registration via RDAP.</td></tr>
-        <tr data-kind="scanners"><td><code>phomber dns example.com</code></td><td>Query public DNS records.</td></tr>
-        <tr data-kind="scanners"><td><code>phomber username octocat</code></td><td>Find candidate handles across four platforms.</td></tr>
-        <tr data-kind="evidence"><td><code>phomber reports</code></td><td>List saved investigations and their IDs.</td></tr>
-        <tr data-kind="evidence"><td><code>phomber review REPORT_ID</code></td><td>Inspect identity and claim assessments.</td></tr>
-        <tr data-kind="evidence"><td><code>phomber history REPORT_ID</code></td><td>List preserved report revisions.</td></tr>
-        <tr data-kind="evidence"><td><code>phomber diff REPORT_ID REVISION_HASH</code></td><td>Compare a revision with the current findings.</td></tr>
-        <tr data-kind="evidence"><td><code>phomber verify REPORT_ID</code></td><td>Check preserved evidence integrity.</td></tr>
-        <tr data-kind="evidence"><td><code>phomber search "project name"</code></td><td>Search local findings and article text.</td></tr>
-        <tr data-kind="evidence"><td><code>phomber reports export REPORT_ID</code></td><td>Export a portable report folder.</td></tr>
+<tr id="command-1" data-kind="research" data-search-item><td><code>phomber</code></td><td>Open the interactive terminal.</td></tr>
+        <tr id="command-2" data-kind="research" data-search-item><td><code>phomber find --no-ai</code></td><td>Build a guided source-only investigation.</td></tr>
+        <tr id="command-3" data-kind="research" data-search-item><td><code>phomber serve</code></td><td>Browse saved investigations in your local wiki.</td></tr>
+        <tr id="command-4" data-kind="research" data-search-item><td><code>phomber find --resume REPORT_ID --no-ai --no-serve</code></td><td>Update an existing investigation.</td></tr>
+        <tr id="command-5" data-kind="research" data-search-item><td><code>phomber help find</code></td><td>See research options and examples.</td></tr>
+        <tr id="command-6" data-kind="scanners" data-search-item><td><code>phomber email me@example.com</code></td><td>Check your own or authorized email syntax and mail-domain DNS; output is masked.</td></tr>
+        <tr id="command-7" data-kind="scanners" data-search-item><td><code>phomber number +442079460000</code></td><td>Read offline numbering-plan metadata.</td></tr>
+        <tr id="command-8" data-kind="scanners" data-search-item><td><code>phomber ip 8.8.8.8</code></td><td>Look up public IPv4 registration via RDAP.</td></tr>
+        <tr id="command-9" data-kind="scanners" data-search-item><td><code>phomber mac 00:1A:2B:00:00:00</code></td><td>Look up a MAC vendor prefix.</td></tr>
+        <tr id="command-10" data-kind="scanners" data-search-item><td><code>phomber whois example.com</code></td><td>Look up domain registration via RDAP.</td></tr>
+        <tr id="command-11" data-kind="scanners" data-search-item><td><code>phomber dns example.com</code></td><td>Query public DNS records.</td></tr>
+        <tr id="command-12" data-kind="scanners" data-search-item><td><code>phomber username octocat</code></td><td>Find candidate handles across four platforms.</td></tr>
+        <tr id="command-13" data-kind="evidence" data-search-item><td><code>phomber reports</code></td><td>List saved investigations and their IDs.</td></tr>
+        <tr id="command-14" data-kind="evidence" data-search-item><td><code>phomber review REPORT_ID</code></td><td>Inspect identity and claim assessments.</td></tr>
+        <tr id="command-15" data-kind="evidence" data-search-item><td><code>phomber history REPORT_ID</code></td><td>List preserved report revisions.</td></tr>
+        <tr id="command-16" data-kind="evidence" data-search-item><td><code>phomber diff REPORT_ID REVISION_HASH</code></td><td>Compare a revision with the current findings.</td></tr>
+        <tr id="command-17" data-kind="evidence" data-search-item><td><code>phomber verify REPORT_ID</code></td><td>Check preserved evidence integrity.</td></tr>
+        <tr id="command-18" data-kind="evidence" data-search-item><td><code>phomber search "project name"</code></td><td>Search local findings and article text.</td></tr>
+        <tr id="command-19" data-kind="evidence" data-search-item><td><code>phomber reports export REPORT_ID</code></td><td>Export a portable report folder.</td></tr>
+        <tr id="command-20" data-kind="evidence" data-search-item><td><code>phomber reports delete REPORT_ID</code></td><td>Delete a report after terminal confirmation; scripts require <code>--yes</code>.</td></tr>
         </tbody></table><p class="empty-results" id="command-empty" hidden>No matching commands. Clear the search or choose another category.</p>
-        <p class="quiet command-help">NPX follows the same pattern: <code>npx phomber serve</code>. See <code>phomber help scanners</code> for all six scanners, examples and limitations.</p>
+        <p class="quiet command-help">NPX follows the same pattern: <code>npx phomber serve</code>. See <code>phomber help scanners</code> for source checks, examples and limitations.</p>
       </section>
-      <section id="evidence" aria-labelledby="evidence-title">
+      <section id="evidence" data-page="evidence" data-title="Evidence &amp; identity" aria-labelledby="evidence-title">
         <div class="section-heading"><h2 id="evidence-title"><small>03</small>Evidence &amp; identity</h2><a href="https://github.com/s41r4j/phomber/blob/main/docs/RESPONSIBLE_USE.md">Responsible use ↗</a></div>
         <div class="evidence-grid"><div><p>An investigation should make its reasoning inspectable. A page can be retrieved successfully while its identity match remains unresolved and its claims still need review.</p><p><strong>Keep the distinctions visible.</strong> Inspect excerpts, record an analyst decision and the reason behind it, then revisit the review if the supporting evidence changes.</p><p>Reports retain source metadata and sanitized snapshots where available. Compare earlier states, check retained-content integrity and export portable HTML and JSON.</p><p class="quiet">Hashes help detect content changes. They do not establish authenticity or factual truth. AI-generated prose still requires human judgment.</p></div><div class="flow"><div class="flow-item"><span class="flow-number">01</span><div><h3>Collect within bounds</h3><p>Public APIs, request budgets, bounded pagination and visible source failures.</p></div></div><div class="flow-item"><span class="flow-number">02</span><div><h3>Preserve supporting evidence</h3><p>Source excerpts, sanitized snapshots, retrieval dates and SHA-256 checks.</p></div></div><div class="flow-item"><span class="flow-number">03</span><div><h3>Review the finding</h3><p>Separate extraction, identity and claim assessments with evidence-bound analyst decisions.</p></div></div><div class="flow-item"><span class="flow-number">04</span><div><h3>Revisit &amp; export</h3><p>Search investigations, compare revisions and keep portable report folders.</p></div></div></div></div>
+      <article id="evidence-matching" data-search-item data-search-title="Matching marks and probable identity associations" data-search-keywords="identity match matching correlation connect dots scores marks probability contradictions sources"><h3>Connecting facts across sources</h3><p>Distinct matching education, employers, projects, publications and qualifications add heuristic marks. Shared-publisher pages and identical retained text do not provide extra confirmation. A probable match needs at least 70 marks, multiple strong clue families and two independently grouped sources. Identity conflicts block automatic expansion. Marks are not a percentage probability or verification of a CV claim.</p></article><article id="evidence-pdf" data-search-item data-search-title="Public PDF, CV and resume extraction" data-search-keywords="pdf cv resume curriculum vitae document extraction text local"><h3>Public documents, in context</h3><p>Mixed online research can extract text from public PDFs locally, including CVs and resumes, and compare professional details with other sources. Parsing is bounded by size, page count and time. Later text chunks are considered; scanned image-only files require OCR, which is planned. DeepSeek-only mode does not use local PDF downloads.</p></article>
       </section>
-      <section id="faq" aria-labelledby="faq-title"><div class="section-heading"><h2 id="faq-title"><small>04</small>Common questions</h2><a href="https://github.com/s41r4j/phomber/issues">Ask a question ↗</a></div><div class="faq-list">
-<details><summary>Do I need an AI subscription or API key?</summary><p>Source-only research works without an AI key: use <code>phomber wiki --no-ai</code>. New wiki investigations use billed DeepSeek AI by default. AI research sends investigation context and selected public evidence to that provider. Use <code>--offline</code> for fresh cached evidence only; offline mode disables AI.</p></details>
-        <details><summary>Does serve work without extra flags?</summary><p>Yes. <code>phomber serve</code> starts the wiki and prints its URL. Open that address in your browser. <code>--open</code> is optional and opens the browser automatically. Press Ctrl+C to stop the server.</p></details>
-        <details><summary>Where do my investigations live?</summary><p>Installed and NPX commands use <code>~/.phomber</code> unless you set <code>PHOMBER_HOME</code>. Checkout commands use the project's <code>.phomber/</code> workspace. Use the same workspace when researching and serving. This public website does not host your investigation wiki.</p></details>
-        <details><summary>Does a match confirm identity or ownership?</summary><p>No. Matching handles are candidate leads. Registration data and MAC prefixes do not identify a person or device owner. Phone tools provide numbering-plan metadata, not subscriber identity or live location. Source credibility and AI prose still need analyst review.</p></details>
-        <details><summary>What is included in Gen2 version 0.0.1?</summary><p>The CLI, six scanner equivalents, public-source collection, optional AI research, local wiki, analyst reviews, preserved evidence, revision history, local search and portable exports. Authenticated team case management, PDF ingestion and broad registry connectors are outside this release.</p></details>
+      <section id="faq" data-page="faq" data-title="Common questions" aria-labelledby="faq-title"><div class="section-heading"><h2 id="faq-title"><small>04</small>Common questions</h2><a href="https://github.com/s41r4j/phomber/issues">Ask a question ↗</a></div><div class="faq-list">
+<details id="faq-1" data-search-item><summary>Do I need an AI subscription or API key?</summary><p>Source-only research works without an AI key: use <code>phomber find --no-ai</code>. New wiki investigations use billed DeepSeek AI by default. AI research sends investigation context and selected public evidence to that provider. Use <code>--offline</code> for fresh cached evidence only; offline mode disables AI.</p></details>
+        <details id="faq-2" data-search-item><summary>How do I use reports and delete an investigation?</summary><p><code>phomber reports</code> prints a readable list. Use <code>phomber reports delete REPORT_ID</code> for a terminal confirmation, or choose Delete report in the local wiki. Scripts require <code>--yes</code>. Add <code>--format json</code> when you need machine-readable output. Separate exports and shared response cache remain after report deletion.</p></details>
+        <details id="faq-3" data-search-item><summary>How are repeated investigations organized?</summary><p>Matching supplied or reviewed profile identifiers, or a supplied name plus shared context, can group research runs into versions automatically. Names alone and ambiguous or conflicting matches stay separate. Profile history explains the grouping and provides split/move controls. Evidence and factual assessments stay separate for each version.</p></details>
+        <details id="faq-4" data-search-item><summary>Does serve work without extra flags?</summary><p>Yes. <code>phomber serve</code> starts the wiki and prints its URL. Open that address in your browser. <code>--open</code> is optional and opens the browser automatically. Press Ctrl+C to stop the server.</p></details>
+        <details id="faq-5" data-search-item><summary>Where do my investigations live?</summary><p>Installed, NPX and checkout commands share reports, settings, cache and saved keys in <code>~/.phomber</code> on macOS/Linux or <code>%USERPROFILE%\.phomber</code> on Windows. Use <code>phomber config</code> or <code>npx phomber config</code> to see the resolved workspace. Set <code>PHOMBER_HOME</code> to the same absolute path in each terminal to choose another folder. Data stays on this device; it is not synced across computers. This public website does not host your investigation wiki.</p></details>
+        <details id="faq-6" data-search-item><summary>Does a match confirm identity or ownership?</summary><p>No. Matching handles are candidate leads. Registration data and MAC prefixes do not identify a person or device owner. Phone tools provide numbering-plan metadata, not subscriber identity or live location. Source credibility and AI prose still need analyst review.</p></details>
+        <details id="faq-7" data-search-item><summary>Does an email check prove ownership or breach exposure?</summary><p>No. Use <code>phomber email ADDRESS</code> only for your own information or an authorized subject. It checks common syntax and public mail-domain DNS, masks the address and makes no mailbox-existence, ownership or breach claim. Privacy cleanup and verified-owner breach services are planned. Public availability does not establish accuracy or permission to contact or republish personal information.</p></details>
+        <details id="faq-8" data-search-item><summary>What is included in Gen2 version 0.0.2?</summary><p>The CLI, six legacy scanner equivalents, an email syntax/DNS check, public-source collection, optional AI research, weighted cross-source matching, text-based public PDF extraction, a local wiki, automatic profile versions, analyst reviews, preserved evidence and portable exports. Dedicated company research, privacy cleanup, address auditing, breach services and OCR are planned work.</p></details>
       </div></section>
-      <div class="release-info" id="release-info"><div><strong>PH0MBER Gen2 · v0.0.1 · OSINT Researcher</strong><br>A single-file project guide. Your investigation wiki runs separately on localhost.<br>Created by <a href="https://github.com/s41r4j">s41r4j</a> · <a href="https://github.com/s41r4j/phomber/blob/main/LICENSE">GPL-3.0-only</a></div><div class="command"><code id="cmd-quickstart">npx phomber</code><button class="copy" type="button" data-copy="cmd-quickstart" aria-label="Copy NPX quickstart command">Copy</button></div></div>
+      <section id="roadmap" data-page="roadmap" data-title="Planned work"><div class="section-heading"><h2>What comes next</h2><span class="planned-label">PLANNED</span></div><p class="section-intro">The items below are a roadmap, not available features. The current local checkout is Gen2 0.0.2; registry packages and the deployed website may lag it.</p><article id="roadmap-company" data-search-item data-search-title="Company and organization research" data-search-keywords="company companies business corporate organisation organization registry brands domains products"><h3>Company &amp; organization research</h3><p>A dedicated workflow for legal entity names, registration identifiers, official domains, brands, products and dated organizational relationships. Current person-focused research does not provide a complete company investigation workflow.</p></article><article id="roadmap-privacy" data-search-item data-search-title="Privacy cleanup, addresses and authorized breach checks" data-search-keywords="privacy cleanup personal address email exposure leak breach removal consent permission"><h3>Authorized privacy cleanup</h3><p>Planned: verified ownership or consent, an inventory of public email/address exposure, masked display, source dates and removal tracking. Official breach-notification services are a future verified-owner integration. No password dumps or breach contents are retrieved. The available email command checks supplied syntax and mail-domain DNS only.</p></article><article id="roadmap-documents" data-search-item data-search-title="Scanned documents, OCR and additional file formats" data-search-keywords="ocr scan scanned image pdf docx word document formats"><h3>Broader document coverage</h3><p>Text-based public PDFs have bounded local extraction today. OCR for image-only scans, additional formats such as DOCX, and live authorized matching benchmarks are planned.</p></article><p><a href="https://github.com/s41r4j/phomber/blob/main/docs/TODO.md">Read the product TODO on GitHub</a></p></section>
+      <section id="site-search-page" data-page="search" data-title="Search results"><div class="section-heading"><h2 id="search-results-heading">Search the field guide</h2></div><p class="section-intro">Search this website’s commands, setup guide, FAQs, evidence explanations and planned work. Related words and common spelling mistakes are matched locally. This does not search investigations or the internet.</p><p id="site-search-status" role="status" aria-live="polite"></p><div id="site-search-results"></div><div id="search-query-suggestions" class="search-suggestions" aria-label="Suggested searches"></div></section>
+      <section id="site-not-found" data-page="not-found" data-title="Page not found"><h2>This guide page does not exist</h2><p>Use the field-guide navigation or search above to find a topic.</p><p><a href="#overview">Return to the overview</a></p></section>
+      <section id="about" data-page="about" data-title="About &amp; release"><div class="section-heading"><h2>About PH0MBER</h2></div><p class="section-intro" data-search-item id="about-project" data-search-title="About PH0MBER, version, MIT license and GitHub Pages" data-search-keywords="license licence mit version release generation github pages source author deploy deployment hosting website publish publishing html domain subdomain">An independent open-source OSINT researcher by s41r4j. This light encyclopedia-style project guide is a single HTML file hosted on GitHub Pages at phomber.s41r4j.in. Your private investigation wiki runs separately on localhost. Gen2 source and documentation use MIT; historical archives retain their original terms.</p><div class="release-info" id="release-info"><div><strong>PH0MBER Gen2 · v0.0.2 · OSINT Researcher</strong><br>A single-file project guide. Your investigation wiki runs separately on localhost.<br>Created by <a href="https://github.com/s41r4j">s41r4j</a> · <a href="https://github.com/s41r4j/phomber/blob/main/LICENSE">MIT</a></div><div class="command"><code id="cmd-quickstart">npx phomber</code><button class="copy" type="button" data-copy="cmd-quickstart" aria-label="Copy NPX quickstart command">Copy</button></div></div>
+      </section>
       <footer class="footer"><p>PH0MBER is independent and is not affiliated with Wikipedia or the Wikimedia Foundation. The encyclopedia-inspired layout supports reading and source review. No analytics, external fonts or tracking assets.</p><nav aria-label="Footer navigation"><a href="https://github.com/s41r4j/phomber">Source</a><a href="https://github.com/s41r4j/phomber#readme">Documentation</a><a href="https://github.com/s41r4j/phomber/issues">Issues</a></nav></footer>
     </main>
   </div>
   <div id="copy-status" role="status" aria-live="polite"></div>
-  <script>
-    (() => {
-      const select = selector => document.querySelector(selector);
-      const all = selector => Array.from(document.querySelectorAll(selector));
-      let category = 'all', statusTimer;
-      const filterCommands = () => {
-        const query = select('#command-search').value.trim().toLocaleLowerCase();
-        let count = 0;
-        all('#command-rows tr').forEach(row => {
-          row.hidden = (category !== 'all' && row.dataset.kind !== category) || !row.textContent.toLocaleLowerCase().includes(query);
-          if (!row.hidden) count++;
+  <script id="github-stars-script">
+    (async () => {
+      const badge = document.getElementById('github-stars');
+      const count = document.getElementById('github-star-count');
+      if (!badge || !count || typeof fetch !== 'function' || typeof AbortController !== 'function') return;
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 6000);
+      try {
+        const response = await fetch('https://api.github.com/repos/s41r4j/phomber', {
+          headers: { Accept: 'application/vnd.github+json' },
+          credentials: 'omit', referrerPolicy: 'no-referrer', cache: 'no-cache', signal: controller.signal
         });
-        select('#command-count').textContent = count + (count === 1 ? ' command' : ' commands');
-        select('#command-empty').hidden = count !== 0;
-      };
-      select('#command-search').addEventListener('input', filterCommands);
-      select('#command-search-form').addEventListener('submit', event => {
-        event.preventDefault();
-        filterCommands();
-        location.hash = 'commands';
-      });
-      document.addEventListener('click', async event => {
-        const button = event.target.closest?.('button');
-        if (!button) return;
-        if (button.dataset.copy) {
-          const code = document.getElementById(button.dataset.copy);
-          let message = 'Command copied';
-          try {
-            if (!navigator.clipboard) throw new Error('Clipboard unavailable');
-            await navigator.clipboard.writeText(code.textContent);
-          } catch {
-            const range = document.createRange();
-            range.selectNodeContents(code);
-            const selection = window.getSelection();
-            if (selection) { selection.removeAllRanges(); selection.addRange(range); }
-            message = 'Command selected. Copy it with your keyboard.';
-          }
-          select('#copy-status').textContent = message;
-          clearTimeout(statusTimer);
-          statusTimer = setTimeout(() => { select('#copy-status').textContent = ''; }, 3500);
-        } else if (button.dataset.install) {
-          const npx = button.dataset.install === 'npx';
-          all('[data-install]').forEach(item => item.setAttribute('aria-pressed', String(item === button)));
-          select('#install-title').textContent = npx ? 'Run on demand.' : 'Install PH0MBER.';
-          select('#install-description').textContent = npx ? 'NPX downloads the package without installing it globally.' : 'Install once, then run it from any terminal.';
-          select('#cmd-install').textContent = npx ? 'npx phomber help' : 'npm install -g phomber';
-          select('#cmd-wiki').textContent = npx ? 'npx phomber wiki --no-ai' : 'phomber wiki --no-ai';
-          select('#cmd-serve').textContent = npx ? 'npx phomber serve' : 'phomber serve';
-        } else if (button.dataset.filter) {
-          category = button.dataset.filter;
-          all('[data-filter]').forEach(item => item.setAttribute('aria-pressed', String(item === button)));
-          filterCommands();
-        }
-      });
-      document.documentElement.classList.add('js');
+        if (!response.ok) throw new Error('Star count unavailable');
+        const data = await response.json();
+        const stars = data.stargazers_count;
+        if (!Number.isSafeInteger(stars) || stars < 0) throw new Error('Invalid star count');
+        count.textContent = new Intl.NumberFormat('en-US').format(stars);
+        const label = stars === 1 ? '1 star on GitHub' : count.textContent + ' stars on GitHub';
+        badge.setAttribute('aria-label', label);
+        badge.title = label;
+      } catch {
+        badge.title = 'View GitHub stars; live count is currently unavailable';
+      } finally {
+        clearTimeout(timeout);
+      }
     })();
   </script>
+  <script id="site-search-engine">
+(() => {
+  'use strict';
+  const normalize = value => String(value || '').normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+  const words = value => normalize(value).split(/\s+/).filter(Boolean);
+  const stop = new Set(['a','an','the','how','do','does','i','my','to','for','and','or','is','it','in','on','of','with','can','where','what','use','using','please']);
+  const groups = [
+    ['install','installation','setup','start','npm','npx'], ['terminal','cli','interactive','console','prompt'],
+    ['find','research','investigate','investigation'], ['serve','serving','server','localhost','browser','wiki'],
+    ['report','reports','saved','history','revision','revisions','versions'], ['delete','remove','erase','deletion'],
+    ['json','structured','machine'], ['offline','cache','cached','disconnected'], ['storage','workspace','folder','directory','files','path'],
+    ['key','keys','auth','authenticate','authentication','deepseek'], ['license','licence','mit'],
+    ['company','companies','business','organization','organisation','corporate'],
+    ['email','mail','mx'], ['privacy','breach','leak','exposure'], ['pdf','resume','cv','document'],
+    ['phone','number','mobile'], ['help','guide','instructions','examples']
+  ];
+  const stem = word => word.length > 4 && word.endsWith('ies') ? word.slice(0,-3) + 'y' : word.length > 4 && word.endsWith('s') && !word.endsWith('ss') ? word.slice(0,-1) : word;
+  const related = word => new Set(groups.filter(group => group.some(term => stem(term) === stem(word))).flat());
+  const distance = (a,b) => {
+    if (Math.abs(a.length-b.length) > 2 || a.length > 48 || b.length > 48) return 3;
+    const d = Array.from({length:a.length+1}, (_,i) => [i]);
+    for (let j=0;j<=b.length;j++) d[0][j]=j;
+    for (let i=1;i<=a.length;i++) for (let j=1;j<=b.length;j++) {
+      d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+Number(a[i-1]!==b[j-1]));
+      if(i>1 && j>1 && a[i-1]===b[j-2] && a[i-2]===b[j-1]) d[i][j]=Math.min(d[i][j],d[i-2][j-2]+1);
+    }
+    return d[a.length][b.length];
+  };
+  const commandAliases={serve:'server hosting localhost wiki browser',find:'research investigate person context deepseek',email:'mail mx syntax authorized address',reports:'saved report listing catalog identifiers',number:'phone mobile numbering',ip:'registration address rdap',mac:'hardware vendor prefix',whois:'domain registration rdap',dns:'domain records network',username:'account handle profile',search:'local reports findings query',review:'analyst identity decisions',verify:'integrity hashes',history:'revisions versions snapshots',diff:'compare revisions differences'};
+  const commandKeywords=title=>{
+    const verb=title.trim().split(/\s+/)[1]||'interactive';
+    return (commandAliases[verb]||'terminal interactive cli prompt')+(/reports delete/.test(title)?' delete remove erase confirmation':/reports export/.test(title)?' export portable backup':'');
+  };
+  const prepare = documents => documents.map((doc,index) => ({...doc,index,fields:[
+    {tokens:words(doc.title),weight:10}, {tokens:words(doc.keywords),weight:7}, {tokens:words(doc.text),weight:2}
+  ]}));
+  const search = (documents,query) => {
+    const raw = words(String(query || '').slice(0,160)).slice(0,12);
+    let terms = [...new Set(raw.filter(word => !stop.has(word)))];
+    if (!terms.length) terms = raw.filter(word => word === 'phomber');
+    if (!terms.length) return [];
+    return documents.flatMap(doc => {
+      let score=doc.kind==='command'?1.5:0, approximate=false;
+      for(const term of terms){
+        let best=0, kind=''; const synonyms=related(term);
+        for(const field of doc.fields) for(const token of field.tokens){
+          let factor=0, match='';
+          if(token===term){factor=1;match='exact';}
+          else if(stem(token)===stem(term)){factor=.9;match='stem';}
+          else if(term.length>=3 && token.startsWith(term)){factor=.8;match='prefix';}
+          else if(synonyms.has(token) || [...synonyms].some(value=>stem(value)===stem(token))){factor=.65;match='related';}
+          else if(term.length>=3 && token.length>=3){const delta=distance(term,token);if(delta<= (term.length>=7?2:1)){factor=delta===1?.5:.35;match='spelling';}}
+          if(factor*field.weight>best){best=factor*field.weight;kind=match;}
+        }
+        if(!best) return [];
+        score+=best; approximate ||= kind==='related'||kind==='spelling';
+      }
+      if(normalize(doc.title).includes(terms.join(' '))) score+=8;
+      return [{...doc,score,approximate}];
+    }).sort((a,b)=>b.score-a.score || a.index-b.index).slice(0,40);
+  };
+  const parseRoute = hash => {
+    const legacy={main:'home',overview:'home',start:'guide',commands:'commands',evidence:'evidence',faq:'faq','release-info':'about',roadmap:'roadmap'};
+    if(!hash || hash==='#') return {page:'home',query:'',anchor:''};
+    if(!hash.startsWith('#/')) {const anchor=decode(hash.slice(1));return {page:legacy[anchor]||'anchor',query:'',anchor};}
+    const raw=hash.slice(2), split=raw.indexOf('#'), anchor=split<0?'':decode(raw.slice(split+1));
+    const path=split<0?raw:raw.slice(0,split), q=path.indexOf('?');
+    return {page:decode(q<0?path:path.slice(0,q))||'home',query:new URLSearchParams(q<0?'':path.slice(q+1)).get('q')?.slice(0,160)||'',anchor};
+  };
+  const decode = value => { try{return decodeURIComponent(value);}catch{return '';} };
+  window.PhomberSiteSearch=Object.freeze({normalize,prepare,search,parseRoute,commandKeywords});
+})();
+  </script>
+<script id="site-router">
+(() => {
+  'use strict';
+  const select=selector=>document.querySelector(selector), all=selector=>Array.from(document.querySelectorAll(selector));
+  const engine=window.PhomberSiteSearch, pages=all('[data-page]'), pageMap=new Map(pages.map(page=>[page.dataset.page,page]));
+  const input=select('#command-search'), commandInput=select('#command-filter');
+  let category='all', statusTimer, searchTimer;
+  const pageNames={home:'Overview',guide:'Getting started',commands:'Command reference',evidence:'Evidence & identity',faq:'Common questions',roadmap:'Planned work',about:'About & release'};
+  const readText=node=>{
+    const walker=document.createTreeWalker(node,NodeFilter.SHOW_TEXT), parts=[];
+    for(let text=walker.nextNode();text;text=walker.nextNode())if(!text.parentElement?.closest('button,script,style'))parts.push(text.textContent);
+    return parts.join(' ').replace(/\s+/g,' ').trim();
+  };
+  const entries=[];
+  const add=(node,title,keywords,kind)=>{
+    const page=node.closest('[data-page]');
+    if(!page || !node.id) return;
+    entries.push({id:node.id,page:page.dataset.page,title,text:readText(node),keywords,kind,
+      label:pageNames[page.dataset.page],planned:page.dataset.page==='roadmap',href:'#/'+page.dataset.page+'#'+encodeURIComponent(node.id)});
+  };
+  for(const page of pages.filter(page=>!['search','not-found'].includes(page.dataset.page))){
+    const copy=page.querySelector('.section-intro')||page.querySelector('.hero-description')||page.querySelector('p');
+    if(copy) entries.push({id:page.id,page:page.dataset.page,title:page.dataset.title,text:copy.textContent,keywords:page.dataset.page==='guide'?'install setup npm npx getting started':page.dataset.page==='home'?'phomber osint overview':'',kind:'guide',label:pageNames[page.dataset.page],planned:page.dataset.page==='roadmap',href:'#/'+page.dataset.page});
+  }
+  for(const node of all('[data-search-item]')){
+    const code=node.querySelector('code'), summary=node.querySelector('summary');
+    const title=node.dataset.searchTitle||summary?.textContent||code?.textContent||node.querySelector('h3')?.textContent||'Guide topic';
+    add(node,title,node.dataset.searchKeywords||(node.tagName==='TR'?engine.commandKeywords(title):''),node.tagName==='TR'?'command':node.tagName==='DETAILS'?'question':'topic');
+  }
+  const index=engine.prepare(entries);
+  const make=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;};
+  const filterCommands=()=>{
+    const documents=index.filter(doc=>doc.kind==='command');
+    const query=commandInput.value.trim(), ids=new Set((query?engine.search(documents,query):documents).map(doc=>doc.id));
+    let count=0;
+    all('#command-rows tr').forEach(row=>{row.hidden=(category!=='all'&&row.dataset.kind!==category)||!ids.has(row.id);if(!row.hidden)count++;});
+    select('#command-count').textContent=count+(count===1?' command':' commands')+(query?' matching “'+query+'”':'');
+    select('#command-empty').hidden=count!==0;
+  };
+  const renderSearch=query=>{
+    input.value=query;
+    const results=engine.search(index,query), host=select('#site-search-results'), suggestions=select('#search-query-suggestions');
+    host.replaceChildren();suggestions.replaceChildren();
+    select('#search-results-heading').textContent=query?'Results for “'+query+'”':'Search the field guide';
+    select('#site-search-status').textContent=query?results.length+' '+(results.length===1?'result':'results')+(!results.length?'. Try fewer words or a suggested topic.':results.some(result=>result.approximate)?'. Related terms and possible spelling corrections included.':'. Exact words, prefixes and word forms matched.'):'Enter a command, a question or a topic above, or try one of these searches.';
+    for(const result of results){
+      const article=make('article',undefined,'search-result'), heading=make('h3'), link=make('a',result.title);
+      link.href=result.href;heading.append(link);
+      article.append(make('p',result.label+' · '+(result.planned?'Planned feature':result.kind==='command'?'Command':result.kind==='question'?'Question':'Guide')+(result.approximate?' · Related match':''),'search-meta'),heading);
+      const queryWords=engine.normalize(query).split(' '), text=result.text;
+      const positions=queryWords.filter(word=>word.length>2).map(word=>engine.normalize(text).indexOf(word)).filter(position=>position>=0);
+      const start=positions.length?Math.max(0,Math.min(...positions)-65):0;
+      const snippet=(start?'…':'')+text.slice(start,start+240)+(text.length>start+240?'…':'');
+      article.append(make('p',snippet));host.append(article);
+    }
+    if(query&&!results.length){const empty=make('div',undefined,'search-empty');empty.append(make('h3','No matching content yet'),make('p','Try fewer words, a command name, or one of the topics below. Search covers this project guide, not your local investigation reports.'));host.append(empty);}
+    if(!results.length){
+      suggestions.append(make('span','Try:'));
+      for(const query of ['install with npx','serve wiki','delete report','DeepSeek API key','PDF resume','company research','email check']){const button=make('button',query);button.type='button';button.dataset.searchQuery=query;suggestions.append(button);}
+    }
+  };
+  const route=()=>{
+    const parsed=engine.parseRoute(location.hash);
+    let page=parsed.page, target=parsed.anchor?document.getElementById(parsed.anchor):null;
+    if(page==='anchor')page=target?.closest('[data-page]')?.dataset.page||'not-found';
+    if(!pageMap.has(page))page='not-found';
+    pages.forEach(node=>{node.hidden=node.dataset.page!==page;});
+    const title=pageMap.get(page).dataset.title;
+    select('#page-title').textContent=title;
+    document.title=(page==='home'?'PH0MBER - OSINT Researcher':title+' - PH0MBER')+' · Gen2';
+    select('#page-description').textContent=page==='search'?'Local search across the public PH0MBER field guide.':page==='roadmap'?'Planned work, clearly separated from the current local feature set.':'A field guide to public evidence, from the PH0MBER project.';
+    all('[data-nav]').forEach(link=>{if(link.dataset.nav===page)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');});
+    if(page==='search')renderSearch(parsed.query);
+    if(target?.closest('[data-page]')?.dataset.page!==page)target=null;
+    if(target?.closest('#command-rows')){category='all';commandInput.value='';all('[data-filter]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.filter==='all')));filterCommands();}
+    const details=target?.closest('details');if(details)details.open=true;
+    select('#page-title').focus({preventScroll:true});
+    if(target)target.scrollIntoView({block:'start'});else window.scrollTo({top:0,behavior:'instant'});
+  };
+  const navigate=hash=>{if(location.hash===hash)route();else location.hash=hash;};
+  const searchHash=query=>'#/search'+(query?'?q='+encodeURIComponent(query):'');
+  input.addEventListener('input',()=>{
+    clearTimeout(searchTimer);
+    if(engine.parseRoute(location.hash).page==='search')searchTimer=setTimeout(()=>{
+      const query=input.value.trim().slice(0,160);history.replaceState(null,'',searchHash(query));renderSearch(query);
+    },160);
+  });
+  select('#command-search-form').addEventListener('submit',event=>{event.preventDefault();clearTimeout(searchTimer);navigate(searchHash(input.value.trim().slice(0,160)));});
+  commandInput.addEventListener('input',filterCommands);
+  document.addEventListener('click',async event=>{
+    if(event.target.closest?.('a.skip')){event.preventDefault();select('#page-title').focus();return;}
+    const button=event.target.closest?.('button');if(!button)return;
+    if(button.dataset.searchQuery){clearTimeout(searchTimer);navigate(searchHash(button.dataset.searchQuery));}
+    else if(button.dataset.copy){
+      const code=document.getElementById(button.dataset.copy);let message='Command copied';
+      try{if(!navigator.clipboard)throw new Error('Clipboard unavailable');await navigator.clipboard.writeText(code.textContent);}
+      catch{const range=document.createRange();range.selectNodeContents(code);const selection=window.getSelection();if(selection){selection.removeAllRanges();selection.addRange(range);}message='Command selected. Copy it with your keyboard.';}
+      select('#copy-status').textContent=message;clearTimeout(statusTimer);statusTimer=setTimeout(()=>{select('#copy-status').textContent='';},3500);
+    }else if(button.dataset.install){
+      const npx=button.dataset.install==='npx';all('[data-install]').forEach(item=>item.setAttribute('aria-pressed',String(item===button)));
+      select('#install-title').textContent=npx?'Run on demand.':'Install PH0MBER.';
+      select('#install-description').textContent=npx?'NPX downloads the package without installing it globally.':'Install once, then run it from any terminal.';
+      select('#cmd-install').textContent=npx?'npx phomber help':'npm install -g phomber';
+      select('#cmd-find').textContent=npx?'npx phomber find --no-ai':'phomber find --no-ai';select('#cmd-serve').textContent=npx?'npx phomber serve':'phomber serve';
+    }else if(button.dataset.filter){category=button.dataset.filter;all('[data-filter]').forEach(item=>item.setAttribute('aria-pressed',String(item===button)));filterCommands();}
+  });
+  // Plain anchors remain useful without JS; enhance them into portable hash routes.
+  all('a[href^="#"]').forEach(link=>{
+    const hash=link.getAttribute('href');if(hash==='#main'&&link.classList.contains('skip'))return;
+    const parsed=engine.parseRoute(hash);let page=parsed.page, anchor=parsed.anchor;
+    if(page==='anchor'){const target=document.getElementById(anchor);page=target?.closest('[data-page]')?.dataset.page;}
+    if(pageMap.has(page))link.setAttribute('href','#/'+page+(anchor&&document.getElementById(anchor)?.dataset.page===undefined?'#'+encodeURIComponent(anchor):''));
+  });
+  window.addEventListener('hashchange',route);
+  document.documentElement.classList.add('js');filterCommands();route();
+})();
+</script>
   <script>
     (() => {
       const canvas = document.getElementById('atlas');

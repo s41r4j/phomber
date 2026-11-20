@@ -1,8 +1,20 @@
 import { assessFinding } from "../core/trust.js";
-import { articleText, ARTICLE_TEMPLATE, type ArticleBlock } from "../core/article.js";
+import { articleText, safeArticleSections, ARTICLE_TEMPLATE, type ArticleBlock } from "../core/article.js";
 import { escape, link, page, appearance, researchMeta } from "./shell.js";
 import { reportTitle } from "../catalog/index.js";
 import type { Investigation, Finding } from "../core/types.js";
+import { identitySupport, researchCoverage } from "../core/research.js";
+import { articleTimeline, publicationAttribution } from "../core/publications.js";
+import { publicContactAllowed } from "../core/contacts.js";
+
+function identityTable(inv: Investigation): string {
+    const support = identitySupport(inv).filter(s => s.evidence_ids.length);
+    if (!support.length) return "";
+    return `<h3>Automatic resource matching</h3><p>These checks explain the retained evidence. Resource links and contextual consistency do not certify account ownership or the truth of a biography. Analyst decisions take priority.</p><div class="table-scroll"><table class="wikitable identity-match-table"><thead><tr><th>Resource</th><th>Match assessment</th><th>Evidence basis</th></tr></thead><tbody>${support.map(s => {
+        const source = inv.sources.find(source => source.id === s.source_id)!;
+        return `<tr data-search><td>${link(source.url, source.url.replace(/^https:\/\//, "").split("/")[0] || source.adapter)}</td><td>${escape(s.state)}<small class="match-marks">${s.score} evidence marks<br>Not a probability<br>${s.independent_sources} source groups<br>${s.expand ? "Expand research" : "Verify first"}</small></td><td>${s.reasons.map(escape).join(" ")} <a href="/reports/${inv.id}/evidence/#finding-${escape(inv.evidence.find(e => e.id === s.evidence_ids[0])?.finding_id || "")}">Inspect evidence</a>${s.signals.length ? `<details><summary>Matching clues</summary><ul>${s.signals.map(signal => `<li>${escape(signal.kind)}: ${escape(signal.value)} (+${signal.marks})<br>${signal.source_ids.map(id => { const item = inv.sources.find(source => source.id === id); return item ? link(item.url, item.url.replace(/^https:\/\//, "").split("/")[0] || item.adapter) : ""; }).join(" · ")}</li>`).join("")}</ul></details>` : ""}</td></tr>`;
+    }).join("")}</tbody></table></div>`;
+}
 export function dateTime(value?: string): string {
     if (!value)
         return "Not recorded";
@@ -55,7 +67,14 @@ function sectionTitle(title: string): string {
     return title;
 }
 const sectionId = (title: string) => title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-export function renderBiography(inv: Investigation, profileURL?: string, version?: number): string {
+export function renderBiography(inv: Investigation, profileURL?: string, version?: number, management = false): string {
+    const automaticSupport = identitySupport(inv);
+    const sectionsForArticle = safeArticleSections(inv);
+    const timelineForArticle = articleTimeline(inv);
+    const biographyFindings = inv.findings.filter(f => {
+        const assessment = assessFinding(inv, f);
+        return assessment.claim !== "rejected" && assessment.identity !== "different" && f.status !== "conflicting" && publicationAttribution(inv,f).article;
+    });
     const name = reportTitle(inv), handle = inv.input.subject.usernames?.[0] ||
         inv.input.subject.socials?.[0]?.username;
     const referenced: string[] = [];
@@ -101,11 +120,11 @@ export function renderBiography(inv: Investigation, profileURL?: string, version
                             .join(" · ") || value;
             }
             catch { }
-            return `${escape(value)}${refs(f.source_ids)}${f.status === "lead" ? " <small>(profile-reported)</small>" : ""}`;
+            return `${escape(value)}${refs(f.source_ids)}${f.status === "user-provided" ? " <small>(supplied)</small>" : f.status === "lead" ? f.source_ids.some(id => automaticSupport.some(s => s.source_id === id && s.state === "supported-link")) ? " <small>(source-reported)</small>" : " <small>(possible match; source-reported)</small>" : ""}`;
         })
             .join("<br>");
     };
-    const findings = (pattern: RegExp) => inv.findings.filter((f) => pattern.test(f.field.replace(/_/g, " ")) &&
+    const findings = (pattern: RegExp) => biographyFindings.filter((f) => pattern.test(f.field.replace(/_/g, " ")) &&
         f.value.length < 240 &&
         f.field !== "type");
     const rows: [
@@ -120,8 +139,8 @@ export function renderBiography(inv: Investigation, profileURL?: string, version
     const occupations = findings(/occupation|job title|professional title|headline|^role$/i);
     if (occupations.length)
         rows.push(["Occupation", compact(occupations)]);
-    const companies = inv.findings.filter((f) => f.category === "professional" &&
-        /company|employer|organization/i.test(f.field) &&
+    const companies = biographyFindings.filter((f) => f.category === "professional" &&
+        /^(?:company|employer|organization|current employer)$/i.test(f.field) &&
         f.value.length < 200);
     if (companies.length)
         rows.push(["Organization", compact(companies)]);
@@ -131,7 +150,7 @@ export function renderBiography(inv: Investigation, profileURL?: string, version
             escape(inv.input.subject.professional.company) +
                 " <small>(supplied)</small>",
         ]);
-    const education = inv.findings.filter((f) => f.category === "education" && f.value.length < 250);
+    const education = biographyFindings.filter((f) => f.category === "education" && f.value.length < 250);
     if (education.length)
         rows.push(["Education", compact(education)]);
     else if (inv.input.subject.education?.length)
@@ -159,7 +178,7 @@ export function renderBiography(inv: Investigation, profileURL?: string, version
             "General location",
             escape(location) + " <small>(supplied)</small>",
         ]);
-    const websites = inv.findings.filter((f) => f.category !== "projects" &&
+    const websites = biographyFindings.filter((f) => f.category !== "projects" &&
         f.category !== "project" &&
         /website/i.test(f.field) &&
         /^https:\/\/\S+$/.test(f.value));
@@ -171,10 +190,10 @@ export function renderBiography(inv: Investigation, profileURL?: string, version
                 .map((f) => link(f.value) + refs(f.source_ids))
                 .join("<br>"),
         ]);
-    const projectSection = inv.ai?.sections.find(s => /project/i.test(s.title));
-    const proseText = articleText(projectSection ? [projectSection] : inv.ai?.sections || []).toLowerCase();
+    const projectSection = sectionsForArticle.find(s => /project/i.test(s.title));
+    const proseText = articleText(projectSection ? [projectSection] : sectionsForArticle).toLowerCase();
     const projectMap = new Map<string, Finding>();
-    for (const original of inv.findings.filter(f => f.category === 'projects' && !/config files for my github profile|profile configuration/i.test(f.value))) {
+    for (const original of biographyFindings.filter(f => f.category === 'projects' && !/config files for my github profile|profile configuration/i.test(f.value))) {
         let label = original.field;
         if (/^(project|repository|repo|name)$/i.test(label)) {
             const repository = original.value.match(/https:\/\/(?:www\.)?(?:github\.com|gitlab\.com)\/[^\s/]+\/([^\s/#?]+)/i)?.[1];
@@ -202,9 +221,9 @@ export function renderBiography(inv: Investigation, profileURL?: string, version
     const projectTarget = projectSection?.blocks ? sectionId(projectSection.title) : "selected-projects";
     if (selected.length)
         rows.push(['Notable projects', selected.slice(0, 4).map(f => `<a href="#${projectTarget}">${escape(f.field)}</a>`).join(', ')]);
-    const photo = inv.findings.find((f) => /profile (image|photo)|portrait/i.test(f.field) &&
+    const photo = biographyFindings.find((f) => /profile (image|photo)|portrait/i.test(f.field) &&
         /^data:image\/(png|jpeg|webp);base64,[a-z\d+/=]+$/i.test(f.value));
-    const infobox = `<aside class="infobox biography-infobox" aria-label="Profile information"><div class="infobox-title">${escape(name)}</div>${handle ? `<div class="infobox-subtitle">${escape(handle)}</div>` : ""}${inv.portrait ? `<div class="infobox-image"><img src="${escape(inv.portrait.data_url)}" alt="Portrait from cited public profile"><div class="image-caption">Portrait from the cited candidate profile.${portraitRefs}<br>Portrait retrieved ${escape(dateTime(inv.portrait.retrieved_at))}</div></div>` : photo ? `<div class="infobox-image"><img src="${escape(photo.value)}" alt="Source-provided portrait of ${escape(name)}"><div class="image-caption">Source-provided portrait${refs(photo.source_ids)}</div></div>` : ""}<table><tbody>${rows.map(([label, value]) => `<tr><th>${label}</th><td>${value}</td></tr>`).join("")}<tr><th>Identity status</th><td>${inv.findings.some((f) => f.source_ids.length && !["matched", "different"].includes(assessFinding(inv, f).identity)) ? "Unresolved account links; human review required" : "See analyst identity decisions in the workbench"}</td></tr><tr><th>Last researched</th><td>${escape(dateTime(inv.research_timing?.finished_at || inv.updated_at))}</td></tr></tbody></table></aside>`;
+    const infobox = `<aside class="infobox biography-infobox" aria-label="Profile information"><div class="infobox-title">${escape(name)}</div>${handle ? `<div class="infobox-subtitle">${escape(handle)}</div>` : ""}${inv.portrait ? `<div class="infobox-image"><img src="${escape(inv.portrait.data_url)}" alt="Portrait from cited public profile"><div class="image-caption">Portrait from the cited candidate profile.${portraitRefs}<br>Portrait retrieved ${escape(dateTime(inv.portrait.retrieved_at))}</div></div>` : photo ? `<div class="infobox-image"><img src="${escape(photo.value)}" alt="Source-provided portrait of ${escape(name)}"><div class="image-caption">Source-provided portrait${refs(photo.source_ids)}</div></div>` : ""}<table><tbody>${rows.map(([label, value]) => `<tr><th>${label}</th><td>${value}</td></tr>`).join("")}<tr><th>Identity status</th><td>${automaticSupport.some(s => s.state === "conflicting") ? "Conflicting identity evidence; inspect matching details" : automaticSupport.some(s => s.state === "probable-match") ? "Probable cross-source match; claims assessed separately" : automaticSupport.some(s => s.state === "supported-link") ? "Supported resource links; claims assessed separately" : inv.findings.some((f) => f.source_ids.length && !["matched", "different"].includes(assessFinding(inv, f).identity)) ? "Unresolved account links; human review required" : "See analyst identity decisions in the workbench"}</td></tr><tr><th>Last researched</th><td>${escape(dateTime(inv.research_timing?.finished_at || inv.updated_at))}</td></tr></tbody></table></aside>`;
     const renderBlock = (b: ArticleBlock): string => {
         if (b.type === 'paragraph')
             return `<p data-search>${escape(b.text)}${evidenceRefs(b.evidence_ids)}</p>`;
@@ -218,12 +237,19 @@ export function renderBiography(inv: Investigation, profileURL?: string, version
         }
         return `<div class="table-scroll"><table class="wikitable">${b.caption ? `<caption>${escape(b.caption)}</caption>` : ''}<thead><tr>${b.columns.map(c => `<th scope="col">${escape(c)}</th>`).join('')}</tr></thead><tbody>${b.rows.map(r => `<tr data-search>${r.cells.map((c, i) => `<td>${escape(c)}${i === r.cells.length - 1 ? evidenceRefs(r.evidence_ids) : ''}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
     };
-    const dynamic = inv.ai?.sections.some(s => s.blocks?.length);
+    const dynamic = sectionsForArticle.some(s => s.blocks?.length);
     const sections = new Map<string, string[]>();
-    for (const s of inv.ai?.sections || []) {
+    for (const s of sectionsForArticle) {
         const title = dynamic ? (/^(overview|introduction|biography)$/i.test(s.title) ? 'Overview' : s.title) : sectionTitle(s.title);
         sections.set(title, [...(sections.get(title) || []), ...(s.blocks ? s.blocks.map(renderBlock) : s.paragraphs.map(p => `<p data-search>${escape(p.text)}${evidenceRefs(p.evidence_ids)}</p>`))]);
     }
+    const contacts = biographyFindings.filter(f=>f.category === "public-contact" && inv.evidence.some(e=>e.finding_id===f.id && publicContactAllowed(inv,e.source_id,f.category,f.field,f.value,e.excerpt)));
+    if (contacts.length) sections.set("Published contact and general location", [
+        "<p>Published by a subject-linked resource and retained as source-reported information. It may be outdated. Public availability does not authorize unsolicited contact.</p>",
+        `<table class="wikitable"><thead><tr><th>Field</th><th>Published value</th></tr></thead><tbody>${[...new Map(contacts.map(f=>[f.field+":"+f.value,f])).values()].map(f=>`<tr data-search><th>${escape(f.field)}</th><td>${escape(f.value)}${refs(f.source_ids)}</td></tr>`).join("")}</tbody></table>`,
+    ]);
+    if (articleText(sectionsForArticle) !== articleText(inv.ai?.sections || []))
+        sections.set("Research limitations", ["<p>Some older article blocks were excluded because their cited records do not establish subject attribution. Candidate records remain available in the evidence ledger and preserved revisions.</p>"]);
     const overview = sections.get("Overview")?.join("") ||
         `<p><strong>${escape(name)}</strong>${handle ? " (" + escape(handle) + ")" : ""} is the subject of this public-source research article. Collected statements remain attributed to their sources; missing biographical details are not inferred.</p>`;
     sections.delete("Overview");
@@ -231,7 +257,7 @@ export function renderBiography(inv: Investigation, profileURL?: string, version
         const list = `<table class="wikitable project-table"><thead><tr><th>Project</th><th>Source description</th></tr></thead><tbody>${selected
             .map((f) => {
             const url = f.value.match(/https:\/\/[^\s]+$/)?.[0];
-            return `<tr data-search><th>${url ? link(url, f.field) : escape(f.field)}</th><td>${escape(f.value.replace(/\s*[—–-]?\s*https:\/\/\S+$/, "").trim() || "Public repository")}${refs(f.source_ids)}</td></tr>`;
+            return `<tr data-search><th>${url ? link(url, f.field) : escape(f.field)}</th><td>${escape(f.value.replace(/\s*[\u2014\u2013-]?\s*https:\/\/\S+$/, "").trim() || "Public repository")}${refs(f.source_ids)}</td></tr>`;
         })
             .join("")}</tbody></table>`;
         sections.set("Selected projects", [
@@ -239,7 +265,7 @@ export function renderBiography(inv: Investigation, profileURL?: string, version
             list,
         ]);
     }
-    const profiles = inv.findings.filter((f) => f.category !== "projects" &&
+    const profiles = biographyFindings.filter((f) => f.category !== "projects" &&
         f.category !== "project" &&
         /profile|website/i.test(f.field) &&
         /^https:\/\/\S+$/.test(f.value));
@@ -252,9 +278,11 @@ export function renderBiography(inv: Investigation, profileURL?: string, version
         sections.set("Identity and verification", [
             `<p>The initial identifiers are research starting points. Matching names and usernames do not by themselves establish common ownership. ${inv.findings.filter((f) => f.status === "conflicting").length ? "Conflicting findings are retained in the evidence view." : ""} <a href="/reports/${inv.id}/evidence/">Review the identity evidence and uncertainty →</a></p>`,
         ]);
-    if (inv.timeline.length && !sections.has("Timeline"))
+    if (automaticSupport.some(s => s.evidence_ids.length))
+        sections.set("Identity and verification", [...(sections.get("Identity and verification") || []), identityTable(inv)]);
+    if (timelineForArticle.length && !sections.has("Timeline"))
         sections.set("Timeline", [
-            `<ul>${inv.timeline.map((t) => `<li data-search><strong>${escape(t.date.start || "Date unknown")}</strong> — ${escape(t.title)}${refs(t.source_ids)} <small>(${escape(t.status)})</small></li>`).join("")}</ul>`,
+            `<ul>${timelineForArticle.map((t) => `<li data-search><strong>${escape(t.date.start || "Date unknown")}</strong> - ${escape(t.title)}${refs(t.source_ids)} <small>(${escape(t.status)})</small></li>`).join("")}</ul>`,
         ]);
     if (inv.ai?.limitations.length)
         sections.set("Research limitations", [
@@ -298,7 +326,7 @@ export function renderBiography(inv: Investigation, profileURL?: string, version
         .filter((s) => s.status === "ok")
         .map((s) => s.retrieved_at)
         .sort()
-        .at(-1)))}${version ? " · Version " + version : ""}</p><p class="hatnote">An evidence-cited research draft. Profile-reported claims and candidate account links require review. ${profileURL ? `Part of <a href="${escape(profileURL)}">this profile’s version history</a>.` : ""}</p><div class="report-tools"><input id="report-search" type="search" aria-label="Search within this article" placeholder="Find in this article"><button id="print">Print</button></div>${infobox}<div class="lead biography-lead">${overview}</div>${body}<section id="references"><h2>References</h2><ol class="references">${references || "<li>No external evidence has been collected.</li>"}</ol></section><section id="external-links"><h2>External links</h2>${externals.length ? `<ul class="external-links">${externals.map((u) => `<li>${link(u)}</li>`).join("")}</ul>` : "<p>No independently sourced external profile links were collected.</p>"}</section><div class="categories">Categories: ${escape(inv.input.subject.type || "Person")} profiles · Public-source research · ${escape(inv.status)} coverage</div>${articleMetadata(inv)}<footer class="page-meta" id="page-information">Research started ${escape(dateTime(inv.research_timing?.started_at || inv.created_at))}. Results completed ${escape(dateTime(inv.research_timing?.finished_at))}.<br>Report ${escape(inv.id)}. ${inv.sources.filter((s) => s.status !== "ok").length} unavailable or unsupported sources. <a href="/reports/${inv.id}/info/">Full page information and cost record</a>.</footer></main>${appearance()}</div>`);
+        .at(-1)))}${version ? " · Version " + version : ""}</p><p class="hatnote">An evidence-cited research draft. Profile-reported claims and candidate account links require review. ${profileURL ? `Part of <a href="${escape(profileURL)}">this profile’s version history</a>.` : ""}</p><div class="report-tools"><input id="report-search" type="search" aria-label="Search within this article" placeholder="Find in this article"><button id="report-search-next" type="button" hidden>Next match</button><span id="report-search-status" role="status" aria-live="polite"></span><button id="print">Print</button>${management ? `<a class="button" href="/reports/${inv.id}/delete/">Delete report</a>` : ""}</div>${infobox}<div class="lead biography-lead">${overview}</div>${body}<section id="references"><h2>References</h2><ol class="references">${references || "<li>No external evidence has been collected.</li>"}</ol></section><section id="external-links"><h2>External links</h2>${externals.length ? `<ul class="external-links">${externals.map((u) => `<li>${link(u)}</li>`).join("")}</ul>` : "<p>No independently sourced external profile links were collected.</p>"}</section><div class="categories">Categories: ${escape(inv.input.subject.type || "Person")} profiles · Public-source research · ${escape(inv.status)} coverage</div>${articleMetadata(inv)}<footer class="page-meta" id="page-information">Research started ${escape(dateTime(inv.research_timing?.started_at || inv.created_at))}. Results completed ${escape(dateTime(inv.research_timing?.finished_at))}.<br>Report ${escape(inv.id)}. ${inv.sources.filter((s) => s.status !== "ok").length} unavailable or unsupported sources. <a href="/reports/${inv.id}/info/">Full page information and cost record</a>.</footer></main>${appearance()}</div>`);
 }
 export function renderEvidence(inv: Investigation): string {
     const refs = (f: Finding) => f.source_ids
@@ -307,19 +335,19 @@ export function renderEvidence(inv: Investigation): string {
         return s ? link(s.url, s.adapter) : "";
     })
         .join(", ");
-    const content = `<h2>Evidence and identity ledger</h2><p>Candidate matches are leads, not confirmed identity links. No local version grouping changes these evidence statuses.</p><input id="report-search" type="search" aria-label="Search within this article" placeholder="Search evidence"><table class="wikitable"><thead><tr><th>Category / field</th><th>Finding</th><th>Assessment</th></tr></thead><tbody>${inv.findings
+    const content = `<h2>Evidence and identity ledger</h2>${identityTable(inv)}<p>Candidate matches are leads, not confirmed identity links. No local version grouping changes these evidence statuses.</p><input id="report-search" type="search" aria-label="Search within this article" placeholder="Search evidence"><button id="report-search-next" type="button" hidden>Next match</button><span id="report-search-status" role="status" aria-live="polite"></span><table class="wikitable"><thead><tr><th>Category / field</th><th>Finding</th><th>Assessment</th></tr></thead><tbody>${inv.findings
         .map((f) => `<tr class="finding" id="finding-${escape(f.id)}" data-search><th>${escape(f.category)}<br>${escape(f.field)}</th><td>${escape(f.value)}<br>${refs(f)}${inv.evidence
         .filter((e) => e.finding_id === f.id)
         .map((e) => `<details><summary>Source excerpt · ${escape(dateTime(e.retrieved_at))}</summary><blockquote>${escape(e.excerpt)}</blockquote></details>`)
-        .join("")}</td><td><span class="badge ${f.status}">${escape(assessFinding(inv,f).extraction)}</span><p>Identity: ${escape(assessFinding(inv,f).identity)}<br>Claim: ${escape(assessFinding(inv,f).claim)}<br>Review: ${escape(assessFinding(inv,f).review)}</p><p>${escape(f.confidence.explanation)}</p></td></tr>`)
-        .join("")}</tbody></table><h2>Source availability</h2><ul>${inv.sources.map((s) => `<li>${s.url ? link(s.url) : escape(s.adapter)} — ${escape(s.status)}. ${escape(s.detail || "")}</li>`).join("")}</ul><details id="raw-data"><summary>Structured data</summary><pre id="profile-data">${escape(JSON.stringify(inv, null, 2))}</pre></details>`;
+        .join("")}</td><td><span class="badge ${f.status}">${escape(assessFinding(inv,f).extraction)}</span><p>Identity: ${escape(assessFinding(inv,f).identity)}<br>Claim: ${escape(assessFinding(inv,f).claim)}<br>Review: ${escape(assessFinding(inv,f).review)}</p><p>${escape(f.confidence.explanation)}</p>${publicationAttribution(inv,f).state !== "not-applicable" ? `<p>Publication attribution: <strong>${escape(publicationAttribution(inv,f).state)}</strong><br>${escape(publicationAttribution(inv,f).reason)}</p>` : ""}</td></tr>`)
+        .join("")}</tbody></table><h2>Source availability</h2><ul>${inv.sources.map((s) => `<li>${s.url ? link(s.url) : escape(s.adapter)} - ${escape(s.status)}. ${escape(s.detail || "")}</li>`).join("")}</ul><details id="raw-data"><summary>Structured data</summary><pre id="profile-data">${escape(JSON.stringify(inv, null, 2))}</pre></details>`;
     return utility(inv, "Evidence", content);
 }
 function utility(inv: Investigation, active: string, content: string): string {
-    return page(active + " — " + reportTitle(inv), `<div class="page-grid"><nav class="contents"><div class="side-title">Navigation</div><a href="/">Main page</a><a href="/articles/">All articles</a><a href="/reports/${inv.id}/">Read biography</a><a href="/about/">About this wiki</a></nav><main class="article" id="content"><div class="title-row"><h1>${escape(reportTitle(inv))}: ${escape(active)}</h1></div>${articleTabs(inv.id, active)}${content}</main>${appearance()}</div>`);
+    return page(active + " - " + reportTitle(inv), `<div class="page-grid"><nav class="contents"><div class="side-title">Navigation</div><a href="/">Main page</a><a href="/articles/">All articles</a><a href="/reports/${inv.id}/">Read biography</a><a href="/about/">About this wiki</a></nav><main class="article" id="content"><div class="title-row"><h1>${escape(reportTitle(inv))}: ${escape(active)}</h1></div>${articleTabs(inv.id, active)}${content}</main>${appearance()}</div>`);
 }
 export function renderReportInfo(inv: Investigation): string {
-    return utility(inv, "Page information", `${researchMeta(inv)}<h2>Retrieval dates</h2><p>Last successful source retrieval: <strong>${escape(dateTime(inv.sources
+    return utility(inv, "Page information", `${researchMeta(inv)}<h2>Research coverage</h2><p>Counts describe retained excerpts by topic, not independent verification or exhaustive coverage.</p><ul>${researchCoverage(inv).map(c => `<li>${escape(c.topic)}: ${c.excerpts} excerpts in the bounded research context</li>`).join("")}</ul><h2>Retrieval dates</h2><p>Last successful source retrieval: <strong>${escape(dateTime(inv.sources
         .filter((s) => s.status === "ok")
         .map((s) => s.retrieved_at)
         .sort()
