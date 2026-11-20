@@ -118,6 +118,7 @@ export function validateInvestigation(value: unknown): Investigation {
   if (value.reviews?.some(r => !r.reason.trim() || !r.analyst.trim() || !Number.isFinite(Date.parse(r.created_at)) ||
     (r.decision === "accepted" && r.identity === "different")))
     throw new Error("Invalid analyst review.");
-  if(value.ai) validateArticleSections({sections:value.ai.sections},value);
+  // Historical reports must stay loadable so the renderer can quarantine stale attributions.
+  if(value.ai) validateArticleSections({sections:value.ai.sections},value,{strictAttribution:false});
   return value;
 }

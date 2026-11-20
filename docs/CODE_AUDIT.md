@@ -1,10 +1,54 @@
-# Gen2 code audit — 14 November 2026
+# Gen2 code audit - 14 November 2026
+
+## Handle-led identity, relevance and concurrency, 19 November 2026
+
+Separated a handle search label from a seed-linked full name, preserving original investigator input. Added evidence-bound name discovery, literal first-party links, same-account self-profile CV attribution, deterministic name/context follow-up queries and reserved name-adapter task allowances. Different names on seed-linked roots block discovery; genuine supplied full names retain surname-conflict protection. Relevance prioritizes research actions without altering claim assessments. Bounded search/page concurrency and independent model/profile overlap retain cancellation, budgets and serialized checkpoints.
+
+Public professional email/phone and general location can now be retained on subject-linked first-party resources and rendered in a deterministic cited table. Private identifiers and residential details remain excluded. Explicit contact/location omissions take precedence. Previously redacted snapshots are preserved; missing values are not reconstructed by inference.
+
+Validation: 146 full-suite fixture/offline tests passed, including 12 new discovery/relevance/concurrency/contact regressions. Fresh-package install, NPX/shared-home storage and dashboard checks passed. The cited user-owned report was corrected locally, and its already-linked public CV was refreshed through PH0MBER's PDF reader to restore previously redacted published contact text. Original evidence and the previous revision were verified intact. No new paid model/search calls or public release were made. These tests do not measure population-wide identity accuracy, provider latency under load or real-world relevance quality.
+
+
+## Publication attribution correction, 19 November 2026
+
+Traced an incorrect surname-association statement to an unfiltered multi-author Crossref return. Fixed per-author matching without cross-co-author name assembly, malformed/incomplete author handling, subject-specific ORCID/DOI linkage, discovery-response score isolation, model-selected citation limits and safe legacy article/timeline rendering. Numeric matching displays now say evidence marks rather than implying a probability.
+
+Validation: 134 full-suite tests passed, including nine new author-attribution regressions. A targeted local report was corrected from existing evidence; its prior revision and original source/evidence values were retained. No new billed model/search calls or public release were performed. This prevents the tested structured-author failure mode; it does not establish general AI claim-entailment accuracy.
+
+
+## Cross-source marks, public PDFs and email checks, 19 November 2026
+
+Added weighted professional-evidence associations across source types, with distinct clue families, publisher/retained-text grouping, explicit negative-identity vetoes and inspectable source/evidence IDs. Probable matches are working hypotheses that guide bounded follow-ups. Matching marks do not populate a calibrated probability or automatically accept claims or merge saved reports. Generic project-field labels and names accidentally matching handle text are covered by regressions.
+
+Public text-based PDFs have bounded local download/extraction in an isolated worker; later text chunks are processed, common contact labels/emails are sanitized and raw PDF binaries are not retained. A worker-scoped Promise.try compatibility shim was required for Node.js 22. The standalone email command validates common syntax and public DNS with masked output and an own/authorized-details notice, without mailbox probes or breach lookup. Company-specific research, privacy cleanup/address auditing and verified-owner breach services are tracked in Product TODO.
+
+Validation: 119 full-suite tests on the current Node runtime, plus 14 targeted PDF/email/matching tests on Node.js 22.23.5. The npm production dependency audit reported zero known advisories at check time. Fresh-package/shared-workspace checks and website validation passed. No new billed DeepSeek accuracy benchmark, public release or cross-platform CI run was performed.
+
+
+## Evidence-driven research update, 19 November 2026
+
+Compared the structure and source diversity of 12 imported AI-written articles locally, without treating their claims as verified ground truth or uploading the library. Updated planning to combine current API/web evidence; supplied resource reads; bounded local profile follow-ups; all-page extraction; structured gap/disconfirmation reviews; source-balanced context; deterministic matching explanations; and safer discovered-name/infobox handling. Public qualifications are distinct from login credentials. Distinct quotes are preserved without inflating corroboration.
+
+Research regression fixtures cover supported versus contextual links, unrelated names/handles, imported evidence, reviewed exclusions, 30-page deep rounds, fabricated follow-up URLs, provider failures, collection cancellation, API task budgets, conflicting display names, supplied-profile name disagreements, qualifications and quote preservation. No new live-person accuracy benchmark or billed DeepSeek comparison was performed for this update.
+
 
 This audit covers the active TypeScript runtime, source adapters, HTTP transport, evidence pipeline, AI orchestration, CLI, local server, report storage/rendering, and npm distribution. It is a point-in-time verification, not a guarantee of exhaustive research or future third-party availability.
 
 The sections below record the original 14 November audit. The 18 November follow-up supersedes its collection/retry limitations and records validation of the analyst-workflow upgrade.
 
-## Follow-up implementation — 18 November 2026
+## Current local release - Gen2 0.0.2, 19 November 2026
+
+The older dated sections below are historical audit records. Current source behavior supersedes earlier descriptions of separate profiles, JSON-only CLI output, checkout-specific storage and CLI-only report deletion.
+
+- `phomber find` is the primary command, with positional name input and a hidden compatibility alias.
+- Installed, NPX and checkout commands share per-user storage and saved keys; output defaults to readable text with explicit JSON for scripts.
+- Matching research runs group into versions with reasons, manual overrides, migration backups and preserved profile-link aliases. Grouping does not approve identity or rewrite evidence.
+- Search covers supplied context and partial terms; wiki search also works through server-rendered results. Article search includes infobox text.
+- Confirmed deletion works in the CLI, interactive terminal and wiki, with CSRF/origin/revision checks and stale-collector protection.
+- Gen2 uses MIT; historical Python license terms and the original ZIP remain preserved.
+- Verification at this implementation point: 89 tests passed, along with type/site checks and a fresh 0.0.2 package installation. Browser and terminal flows used fictional offline fixtures. This records local verification, not a new cross-platform CI run or a public 0.0.2 release.
+
+## Follow-up implementation - 18 November 2026
 
 - Added separate extraction, identity, claim and analyst-review assessments; equal names and candidate values no longer automatically merge identities or imply corroboration.
 - Added evidence-bound review decisions, stale-review detection, review forms, task coverage, report comparisons and provenance JSON.
@@ -64,7 +108,7 @@ Eleven regression tests were added for these behaviors, including HTTP private-a
 - Live public endpoint smoke test: all 12 endpoint variants returned usable JSON and parsed successfully: GitHub profile/repositories/organizations/name search, GitLab, DEV, Hugging Face, Wikidata, Crossref, RDAP (including redirects), Google DNS, and Internet Archive CDX. Organization/name searches can validly return zero records. The smoke check used public example identifiers, temporary storage, and no API credentials; its temporary cache was removed.
 - The DeepSeek [Search contract](https://api-docs.deepseek.com/api/search/) and [pricing documentation](https://api-docs.deepseek.com/quick_start/pricing/) were checked against the integration. Paid authenticated AI behavior was verified through fixture transports and mocked HTTP responses during this audit; no live billed AI calls were made.
 
-## Original audit boundaries — 14 November
+## Original audit boundaries - 14 November
 
 - Third-party failures yield unavailable sources and partial reports. Retries and cache are the shipped fallbacks; most individual sources have no interchangeable provider. Unsupported platforms still require manual review or AI web research.
 - Collection is bounded and IPv4-only, does not paginate beyond documented per-endpoint limits, and does not schedule retries using `Retry-After`. HTTP retry/backoff is bounded. Model availability is discovered rather than guessed.

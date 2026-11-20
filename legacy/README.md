@@ -1,5 +1,7 @@
 # PH0MBER Python legacy
 
+The current Gen2 runtime, documentation and website use MIT. This historical Python archive retains its original licenses, including GPLv3. The ZIP is unchanged; its original license is also preserved at [legacy/LICENSE](https://github.com/s41r4j/phomber/blob/main/legacy/LICENSE). These historical terms do not change the license of the separate Gen2 runtime.
+
 This archive preserves the pre-Gen2 working tree, including the active v3.1.1 script, dependency metadata, original README, Dockerfile, license, images, and older archived implementations. Files included are byte-for-byte originals, including the pre-existing local README edit. Git history is unchanged.
 
 The npm package contains this guide only. Download [the legacy ZIP](https://github.com/s41r4j/phomber/blob/main/legacy/phomber-python-legacy.zip) and [SHA256SUMS](https://github.com/s41r4j/phomber/blob/main/legacy/SHA256SUMS) from the repository into the same directory before following these steps. The Node.js CLI does not need the Python archive.
@@ -16,4 +18,4 @@ python phomber.py
 
 Historical commands: help, exit/quit, dork, exp, check, clear, flush, save, shell, info, change, number, ip, mac, whois, dns, username. The original README's `pip install -r pyproject.toml` and Dockerfile's missing requirements file were already broken; the explicit dependency command above avoids both. External legacy sources may no longer work. Gen2 does not execute Python.
 
-Preservation exceptions: `.archive/unreleasedv3/phomber/modules/config.ini` contained hardcoded API credentials and is intentionally omitted; recreate it locally using the configuration sections referenced by historical adapters if needed. Generated `.egg-info` metadata is omitted. No credentials were copied from that configuration. Source, notices, license and other files were not rewritten. The historical Git files remain in place.
+Preservation exceptions: `.archive/unreleasedv3/phomber/modules/config.ini` contained hardcoded API credentials and is intentionally omitted; recreate it locally using the configuration sections referenced by historical adapters if needed. Generated `.egg-info` metadata is omitted. No credentials were copied from that configuration. ZIP members retain their original source, notices and licenses. Historical Git files remain in place; checked-out text has received punctuation corrections, separately from the unchanged ZIP.

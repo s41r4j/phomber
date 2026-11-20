@@ -15,14 +15,14 @@ test('provider-neutral blocks preserve narrative order, references, metadata, es
  v.sources=[{id:'s1',adapter:'fixture',url:'https://example.org',status:'ok',retrieved_at:'2026-11-11T12:00:00Z'}];
  v.findings=[{id:'f1',category:'career',field:'role',value:'Researcher',source_ids:['s1'],status:'lead',identity:'candidate',confidence:{score:null,explanation:'Candidate'}}];
  v.evidence=[{id:'e1',source_id:'s1',finding_id:'f1',excerpt:'A source says research work.',retrieved_at:'2026-11-11T12:00:00Z'}];
- const data={sections:[{title:'Unusual research activities',blocks:[{type:'paragraph',text:'Before the table — <script>unsafe</script>',evidence_ids:['E1']},{type:'table',caption:'Evidence table',columns:['Work','Year'],rows:[{cells:['Example','2026'],evidence_ids:['E1']}]},{type:'paragraph',text:'After the table',evidence_ids:['E1']},{type:'subheading',title:'Additional work'},{type:'list',ordered:true,items:[{text:'Public work',evidence_ids:['E1']}]},{type:'quote',text:'research work.',evidence_ids:['E1']}]}]};
+ const data={sections:[{title:'Unusual research activities',blocks:[{type:'paragraph',text:'Before the table \u2014 <script>unsafe</script>',evidence_ids:['E1']},{type:'table',caption:'Evidence table',columns:['Work','Year'],rows:[{cells:['Example','2026'],evidence_ids:['E1']}]},{type:'paragraph',text:'After the table',evidence_ids:['E1']},{type:'subheading',title:'Additional work'},{type:'list',ordered:true,items:[{text:'Public work',evidence_ids:['E1']}]},{type:'quote',text:'research work.',evidence_ids:['E1']}]}]};
  mapArticleCitations(data,v);v.ai={provider:'Future provider',model:'future-test-model',status:'complete',limitations:[],sections:validateArticleSections(data,v)};
  v.research_timing={started_at:'2026-11-11T12:00:00Z',finished_at:'2026-11-11T12:01:00Z',duration_ms:60000};
  v.usage={calls:[],totals:{model_calls:1,search_calls:2,fetch_calls:3,prompt_tokens:1234,completion_tokens:567},estimated_usd_min:.01,estimated_usd_max:.02,pricing_source:'https://example.org',pricing_note:'Fixture estimate, not an invoice.'};
  validateInvestigation(v);await w.save(v);assert.equal((await w.load(v.id)).ai.sections[0].blocks[1].type,'table');
  const html=renderBiography(v);assert.ok(html.indexOf('Before the table')<html.indexOf('<caption>Evidence table'));
  assert.ok(html.indexOf('<caption>Evidence table')<html.indexOf('After the table'));
- assert.match(html,/&lt;script&gt;unsafe&lt;\/script&gt;/);assert.ok(!html.includes('—'));
+ assert.match(html,/&lt;script&gt;unsafe&lt;\/script&gt;/);assert.ok(!html.includes('\u2014'));
  assert.match(html,/Future provider/);assert.match(html,/future-test-model/);assert.match(html,/1,234 \/ 567/);assert.match(html,/\$0.010000 to \$0.020000/);assert.match(html,/60.0 seconds/);
  assert.ok(html.includes(brandMark));assert.ok(html.includes(favicon.replaceAll("'",'&#39;')));assert.ok(decodeURIComponent(favicon.split(',')[1])===brandMark);
  assert.match(html,/href="#source-s1">\[1\]/);assert.ok(html.indexOf('<h2>Article metadata')>html.indexOf('<h2>References'));

@@ -1,11 +1,14 @@
 import { assessFinding, compareReports, contentHash } from "../core/trust.js";
+import { MATCHING_POLICY, identitySupport, researchLeads, researchRelevance, matchingQueries } from "../core/research.js";
+import { discoveredIdentity } from "../core/identity.js";
+import { publicationAttribution } from "../core/publications.js";
 import type { Investigation } from "../core/types.js";
 import { escape, page, appearance, link } from "./shell.js";
 import { articleTabs, dateTime } from "./article.js";
 import { reportTitle } from "../catalog/index.js";
 
 function shell(inv: Investigation, title: string, body: string): string {
-  return page(title + " — " + reportTitle(inv), `<div class="page-grid"><nav class="contents"><div class="side-title">Research tools</div><a href="/reports/${inv.id}/">Article</a><a href="/reports/${inv.id}/review/">Analyst workbench</a><a href="/reports/${inv.id}/revisions/">Preserved revisions</a><a href="/reports/${inv.id}/evidence/">Evidence ledger</a></nav><main class="article" id="content"><h1>${escape(reportTitle(inv))}: ${escape(title)}</h1>${articleTabs(inv.id, title)}${body}</main>${appearance()}</div>`);
+  return page(title + " - " + reportTitle(inv), `<div class="page-grid"><nav class="contents"><div class="side-title">Research tools</div><a href="/reports/${inv.id}/">Article</a><a href="/reports/${inv.id}/review/">Analyst workbench</a><a href="/reports/${inv.id}/revisions/">Preserved revisions</a><a href="/reports/${inv.id}/evidence/">Evidence ledger</a></nav><main class="article" id="content"><h1>${escape(reportTitle(inv))}: ${escape(title)}</h1>${articleTabs(inv.id, title)}${body}</main>${appearance()}</div>`);
 }
 export function renderWorkbench(inv: Investigation, csrf: string): string {
   const version = contentHash(inv);
@@ -33,8 +36,14 @@ export function renderRevisions(inv: Investigation, revisions: {hash: string; up
 export function provenanceGraph(inv: Investigation) {
   return {
     schema_version: "1.0", investigation: inv.id,
+    name_discovery: discoveredIdentity(inv),
+    priority_queries: matchingQueries(inv),
+    research_priorities: inv.sources.map(s=>({source_id:s.id,...researchRelevance(inv,s.url)})),
+    identity_matches: identitySupport(inv),
+    matching_policy: MATCHING_POLICY,
+    research_leads: researchLeads(inv),
     nodes: [...inv.sources.map(s => ({id: 'source:'+s.id, type: 'source', url: s.url, snapshot_hash: s.snapshot_hash})),
-      ...inv.findings.map(f => ({id:'finding:'+f.id, type:'finding', field:f.field, value:f.value, assessment:assessFinding(inv,f)}))],
+      ...inv.findings.map(f => ({id:'finding:'+f.id, type:'finding', field:f.field, value:f.value, assessment:assessFinding(inv,f),publication_attribution:publicationAttribution(inv,f)}))],
     edges: inv.evidence.map(e => ({from:'source:'+e.source_id,to:'finding:'+e.finding_id,relationship:'reports',evidence_id:e.id,retrieved_at:e.retrieved_at})),
   };
 }

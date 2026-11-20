@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { mkdtemp, readdir, rm, writeFile, symlink } from "node:fs/promises";
+import { mkdtemp, mkdir, readdir, rm, writeFile, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import http from "node:http";
@@ -56,7 +56,7 @@ test("CLI works in scripts with clean JSON, actionable errors, and saved reports
   const inv = JSON.parse(stdout);
   assert.equal(stderr, "");
   assert.equal(inv.status, "partial");
-  assert.equal(JSON.parse((await run("reports")).stdout)[0].id, inv.id);
+  assert.equal(JSON.parse((await run("reports", "--format", "json")).stdout)[0].id, inv.id);
   await assert.rejects(
     () => run("wiki", "--depth", "invalid"),
     (e) => e.code === 1,
@@ -70,7 +70,7 @@ test("CLI works in scripts with clean JSON, actionable errors, and saved reports
     (e) => e.code === 1 && /--yes/.test(e.stderr),
   );
   await run("reports", "delete", inv.id, "--yes");
-  assert.equal(JSON.parse((await run("reports")).stdout).length, 0);
+  assert.equal(JSON.parse((await run("reports", "--format", "json")).stdout).length, 0);
 });
 test("CLI JSON file and repeat flags share the engine", async (t) => {
   const root = await setup(t),
@@ -99,11 +99,64 @@ test("CLI JSON file and repeat flags share the engine", async (t) => {
   );
   assert.equal(JSON.parse(r.stdout).input.subject.education.length, 2);
 });
+test("installed, NPX and checkout entry points share reports regardless of working directory", async (t) => {
+  const home = await setup(t), expected = join(home, ".phomber");
+  const first = join(home, "first"), second = join(home, "second");
+  await Promise.all([mkdir(first), mkdir(second)]);
+  const env = { ...process.env, HOME: home, USERPROFILE: home, PHOMBER_HOME: "", DEEPSEEK_API_KEY: "", npm_command: "" };
+  const run = async (entry, cwd, npmCommand, ...args) => {
+    const result = await exec(process.execPath, [entry, ...args, ...(args.includes("--format") ? [] : ["--format", "json"])], { cwd, env: { ...env, npm_command: npmCommand } });
+    return JSON.parse(result.stdout);
+  };
+  const local = resolve("scripts/local.mjs");
+  const report = await run(cli, first, "", "wiki", "--name", "Shared workspace fixture", "--offline", "--no-serve", "--format", "json");
+  for (const [entry, cwd, command] of [[cli, first, ""], [cli, second, "exec"], [local, second, "run-script"]]) {
+    assert.equal((await run(entry, cwd, command, "config")).workspace, expected);
+    assert.equal((await run(entry, cwd, command, "reports"))[0].id, report.id);
+  }
+  const fromCheckout = await run(local, second, "run-script", "wiki", "--name", "Checkout workspace fixture", "--offline", "--no-serve", "--format", "json");
+  assert.deepEqual(new Set((await run(cli, first, "exec", "reports")).map(r => r.id)), new Set([report.id, fromCheckout.id]));
+  const isolated = join(home, "isolated");
+  const override = await exec(process.execPath, [local, "reports", "--format", "json"], { cwd: second, env: { ...env, PHOMBER_HOME: isolated } });
+  assert.deepEqual(JSON.parse(override.stdout), []);
+  assert.equal((await run(cli, first, "", "reports")).length, 2);
+  assert.ok(!(await readdir(first)).includes(".phomber"));
+  assert.ok(!(await readdir(second)).includes(".phomber"));
+});
 test("CLI rejects conflicting DeepSeek-only flags before accessing credentials",async t=>{
   const root=await setup(t);
   const run=(...args)=>exec(process.execPath,[cli,'wiki','--name','Example','--ai-only',...args],{env:{...process.env,PHOMBER_HOME:root,DEEPSEEK_API_KEY:''}});
   for(const flag of ['--offline','--no-ai'])
     await assert.rejects(()=>run(flag),e=>e.code===1 && /requires online AI/.test(e.stderr) && !/key required/.test(e.stderr));
+});
+test("find is the primary command, accepts a short name, and keeps wiki as a hidden alias", async t => {
+  const root = await setup(t);
+  const run = (...args) => exec(process.execPath, [cli, ...args], { env: { ...process.env, PHOMBER_HOME: root, DEEPSEEK_API_KEY: "" } });
+  const overview = (await run("help")).stdout;
+  assert.match(overview, /^\s+find \["FULL NAME"\]/m);
+  assert.ok(!/^\s+wiki\b/m.test(overview));
+  assert.ok(!/phomber wiki\b/.test(overview));
+  const detailed = (await run("help", "find")).stdout;
+  assert.match(detailed, /Usage: phomber find/);
+  assert.equal((await run("help", "wiki")).stdout, detailed);
+  assert.equal((await run("wiki", "--help")).stdout, detailed);
+  assert.equal((await run("find", "--help")).stdout, detailed);
+  const { interactiveCommands } = await import("../dist/cli/help.js");
+  assert.ok(interactiveCommands.includes("find"));
+  assert.ok(!interactiveCommands.includes("wiki"));
+  await assert.rejects(() => run("find", "First", "--name", "Second"), e => /positional name or --name/.test(e.stderr));
+  await assert.rejects(() => run("find", ""), e => /nonempty subject name/.test(e.stderr));
+  assert.deepEqual(await readdir(root), []);
+  const research = async (...args) => JSON.parse((await run(...args, "--offline", "--no-serve", "--format", "json")).stdout);
+  const primary = await research("find", "Example Researcher");
+  const legacy = await research("wiki", "--name", "Example Researcher");
+  assert.deepEqual(primary.input, legacy.input);
+  assert.equal(primary.input.subject.name, "Example Researcher");
+  assert.equal((await research("find", "Example", "Researcher")).input.subject.name, "Example Researcher");
+  assert.equal((await research("find", "--resume", primary.id)).id, primary.id);
+  const html = (await run("find", "HTML Fixture", "--offline", "--no-serve", "--format", "html")).stdout.trim();
+  assert.match(html, /index\.html$/);
+  assert.ok((await readdir(join(root, "reports"))).length >= 4);
 });
 test("command help is specific and has no collection, shell or workspace side effects", async (t) => {
   const root = await setup(t);
@@ -111,7 +164,7 @@ test("command help is specific and has no collection, shell or workspace side ef
     env: { ...process.env, PHOMBER_HOME: root }, timeout: 5000,
   });
   const overview = (await run("help")).stdout;
-  assert.match(overview, /Start here[\s\S]*Saved investigations[\s\S]*Legacy scanners[\s\S]*Utilities[\s\S]*Examples/);
+  assert.match(overview, /Start here[\s\S]*Saved investigations[\s\S]*Source checks[\s\S]*Utilities[\s\S]*Examples/);
   const { scanners } = await import("../dist/legacy-commands/index.js");
   for (const name of scanners) {
     const detailed = (await run("help", name)).stdout;

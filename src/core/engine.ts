@@ -1,8 +1,9 @@
+import { seedIsHandle } from "./identity.js";
 import { contentHash } from "./trust.js";
 import type { Json } from "../adapters/http.js";
 import { randomUUID, createHash } from "node:crypto";
 import { join } from "node:path";
-import { buildPlan, collect } from "../adapters/index.js";
+import { accountTasks, buildPlan, collect, normalizeSocial } from "../adapters/index.js";
 import { HttpClient, SourceError } from "../adapters/http.js";
 import { validateInput, publicURL, validPartialDate } from "./schema.js";
 import { Workspace } from "../workspace/index.js";
@@ -52,20 +53,19 @@ export function addFinding(
     };
     inv.findings.push(finding);
   }
-  if (source && !finding.source_ids.includes(source.id)) {
-    finding.source_ids.push(source.id);
+  if (source) {
+    if (!finding.source_ids.includes(source.id)) finding.source_ids.push(source.id);
+    const excerpt = (record.excerpt || `${record.field}: ${record.value}`).slice(0, 2000);
+    const retained = inv.evidence.filter(e => e.finding_id === id && e.source_id === source.id);
+    if (!retained.some(e => e.excerpt === excerpt))
     inv.evidence.push({
-      id: key(id + source.id),
+      id: key(id + source.id + (retained.length ? excerpt : "")),
       finding_id: id,
       source_id: source.id,
-      excerpt: (record.excerpt || `${record.field}: ${record.value}`).slice(
-        0,
-        2000,
-      ),
+      excerpt,
       retrieved_at: source.retrieved_at,
     });
-    // Repeated reporting is retained as evidence, never automatic independent corroboration.
-
+    // Distinct excerpts on one resource do not become independent corroboration.
   }
   if (
     record.date?.start &&
@@ -152,6 +152,7 @@ export function correlate(inv: Investigation): void {
     (f) =>
       f.status === "user-provided" && ["name", "company"].includes(f.field),
   )) {
+    if (provided.field === "name" && seedIsHandle(inv)) continue;
     const candidates = inv.findings.filter(
       (f) => f.identity === "anchored" && f.field === provided.field,
     );
@@ -180,9 +181,49 @@ export function correlate(inv: Investigation): void {
   for (const f of inv.findings.filter(
     (f) => f.identity === "anchored" && f.field === "website",
   ))
-    if (supplied.includes(f.value.replace(/\/$/, "").toLowerCase()))
+    if (supplied.includes(f.value.replace(/\/$/, "").toLowerCase()) &&
+        !f.confidence.explanation.includes("The account explicitly links to another investigator-supplied profile."))
       f.confidence.explanation +=
         " The account explicitly links to another investigator-supplied profile.";
+}
+/** Follow public profile URLs already present in this investigation, within a separate bounded API budget. */
+export function profileEnricher(inv: Investigation, workspace: Workspace, options: {
+  signal?: AbortSignal; progress?: (s: string) => void;
+}) {
+  const maxTasks = inv.depth === "quick" ? 2 : inv.depth === "standard" ? 6 : 12;
+  const http = new HttpClient(join(workspace.root, "cache"), options.signal, false, 3600000, { maxRequests: maxTasks * 2 });
+  let used = 0, usedNames = 0;
+  const maxNameTasks = inv.depth === "quick" ? 2 : 3;
+  return async (urls: string[], name?: string) => {
+    if (inv.input.research?.ai_only || inv.input.research?.offline) return;
+    const pending = urls.flatMap(url => {try {return accountTasks(normalizeSocial(url), inv.depth, "candidate");} catch {return [];}});
+    if (name && name !== inv.input.subject.name) pending.unshift(...buildPlan({schema_version:"1.0",subject:{...inv.input.subject,name,socials:[],usernames:[],domains:[],websites:[]},research:{depth:inv.depth}}).tasks.filter(t=>["crossref","github-search","wikidata-search"].includes(t.adapter)));
+    for (const task of pending) {
+      const isNameTask = ["crossref","github-search","wikidata-search"].includes(task.adapter);
+      if (isNameTask ? usedNames >= maxNameTasks : used >= maxTasks) continue;
+      options.signal?.throwIfAborted();
+        if (inv.sources.some(s => s.url === task.url)) continue;
+        if (isNameTask) usedNames++; else used++;
+        const id = key(task.url), now = new Date().toISOString();
+        const checkpoint = { id, adapter: task.adapter, url: task.url, status: "running" as import("./types.js").CollectionTask["status"], started_at: now, finished_at: undefined as string | undefined, detail: undefined as string | undefined };
+        (inv.tasks ||= []).push(checkpoint);
+        inv.plan.push("Follow discovered profile with " + task.adapter + ": " + task.url);
+        options.progress?.("Following public profile: " + task.adapter);
+        try {
+          const result = await collect(task, http, inv.depth === "deep" ? 2 : 1);
+          const source: Source = { id, adapter: task.adapter, url: task.url, status: "ok", retrieved_at: result.retrieved_at,
+            snapshot_hash: await workspace.preserveSource(inv.id, result.payload), adapter_version: "gen2-json-v1", cached: result.cached, final_url: result.final_url, pages: result.pages,
+            detail: result.limitation || "Followed an evidence-linked candidate profile; identity is assessed separately." };
+          inv.sources.push(source);
+          for (const record of result.records) addFinding(inv, record, source);
+          checkpoint.status = result.limitation ? "partial" : "succeeded"; checkpoint.detail = result.limitation;
+        } catch (error) {
+          checkpoint.status = options.signal?.aborted ? "cancelled" : "failed"; checkpoint.detail = (error as Error).message;
+          inv.sources.push({ id, adapter: task.adapter, url: task.url, status: "unavailable", retrieved_at: now, detail: checkpoint.detail });
+          options.signal?.throwIfAborted();
+        } finally { checkpoint.finished_at = new Date().toISOString(); }
+    }
+  };
 }
 export async function investigate(
   input: Input,
@@ -252,7 +293,7 @@ export async function investigate(
       "Name-only research is ambiguous. Search results are leads, never automatically merged into the subject.",
     );
   inv.warnings.push(
-    "Verification describes evidence retrieved from a resource; it does not prove account ownership or the truth of self-reported claims. Precise locations and contact details are not collected.",
+    "Verification describes evidence retrieved from a resource; it does not prove account ownership or the truth of self-reported claims. Public professional contacts and general location may be retained with source attribution; private contacts and residential details are excluded.",
   );
   const plan: ReturnType<typeof buildPlan> = input.research?.ai_only
     ? { tasks: [], skipped: [], unsupported: [], queries: ["Research through DeepSeek Search/Fetch only; source adapters are disabled."] }

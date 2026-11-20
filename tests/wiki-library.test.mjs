@@ -128,7 +128,7 @@ test("library imports persist independently of project references and archived r
   assert.match(result.stdout, /Imported 1/);
   const listed = await exec(
     process.execPath,
-    [resolve("dist/cli/index.js"), "library"],
+    [resolve("dist/cli/index.js"), "library", "--format", "json"],
     { env: { ...process.env, PHOMBER_HOME: root } },
   );
   assert.equal(JSON.parse(listed.stdout).length, 1);

@@ -5,12 +5,13 @@ import { validateInvestigation } from "../core/schema.js";
 import { enrichPortrait } from "../reports/portrait.js";
 import { balanceChange, summarizeUsage } from "../ai/usage.js";
 import { DeepSeek, researchWithAI } from "../ai/deepseek.js";
+import { documentReader } from "../adapters/documents.js";
 import {
   getKey,
   password,
   saveCredential,
   forgetCredential,
-  isNpx,
+  isEphemeralKey,
 } from "../ai/credentials.js";
 import { readFile, rm, lstat } from "node:fs/promises";
 import { createInterface } from "node:readline/promises";
@@ -18,7 +19,7 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { spawn } from "node:child_process";
 import { Workspace, atomicJSON, atomicFile } from "../workspace/index.js";
-import { investigate } from "../core/engine.js";
+import { investigate, profileEnricher } from "../core/engine.js";
 import { writeReport } from "../reports/html.js";
 import { startServer } from "../server/index.js";
 import { readLibrary, loadLibrary } from "../reports/library.js";
@@ -27,11 +28,12 @@ import { parse, inputFromArgs, tokenize } from "./input.js";
 import { questionnaire } from "./interactive.js";
 import { project } from "../core/project.js";
 import { helpText, interactiveCommands } from "./help.js";
+import { formatOutput } from "./output.js";
 import type { Input, Investigation } from "../core/types.js";
 let previous = "",
   color = 36;
-function print(value: unknown, json = false): void {
-  previous = typeof value === "string" ? value : JSON.stringify(value, null, 2);
+function print(value: unknown, json = false, command = ""): void {
+  previous = json ? JSON.stringify(value, null, 2) : formatOutput(value, command);
   process.stdout.write(previous + "\n");
 }
 function open(target: string): void {
@@ -82,7 +84,8 @@ async function host(
   });
 }
 async function execute(argv: string[], workspace: Workspace): Promise<void> {
-  const command = argv[0] || "help";
+  const requested = argv[0] || "help";
+  const command = requested === "wiki" ? "find" : requested;
   if (command === "shell" && !["--help", "-h"].includes(argv[1] || "")) {
     const script = argv.slice(1).join(" ");
     if (!script) throw new Error("Usage: phomber shell <native command>");
@@ -98,20 +101,27 @@ async function execute(argv: string[], workspace: Workspace): Promise<void> {
   }
   const args = parse(argv.slice(1));
   const v = args.values;
+  const output = (value: unknown, json = false) => print(value, json || v.format === "json", command);
   if (
     command === "help" ||
     command === "--help" ||
     command === "-h" ||
     v.help
   ) {
-    print(helpText(command === "help" ? args.positionals[0] : ["--help", "-h"].includes(command) ? undefined : command));
+    output(helpText(command === "help" ? args.positionals[0] : ["--help", "-h"].includes(command) ? undefined : command));
     return;
   }
   if (command === "--version") {
-    print(project.version);
+    output(project.version);
     return;
   }
   if (command === "exit" || command === "quit") return;
+  if (command === "find" && args.positionals.length) {
+    if (v.name !== undefined) throw new Error("Use a positional name or --name, not both.");
+    const name = args.positionals.join(" ").trim();
+    if (!name) throw new Error("Supply a nonempty subject name, or run phomber find for the guided questionnaire.");
+    v.name = name;
+  }
   await workspace.init();
   const savedConfig = JSON.parse(
     await readFile(join(workspace.root, "config.json"), "utf8"),
@@ -124,37 +134,39 @@ async function execute(argv: string[], workspace: Workspace): Promise<void> {
     throw new Error("--depth must be quick, standard or deep.");
   if (v.format && !["text", "json", "html"].includes(String(v.format)))
     throw new Error("--format must be text, json or html.");
+  if (v.format === "html" && command !== "find")
+    throw new Error("--format html is available for find investigations. Use text or json for this command.");
   if (["review", "history", "diff", "verify"].includes(command)) {
     const [id, argument] = args.positionals;
     if (!id) throw new Error("An investigation ID is required.");
     const inv = await workspace.load(id);
-    if (command === "history") print(await workspace.history(id));
+    if (command === "history") output(await workspace.history(id));
     else if (command === "diff") {
       if (!argument) throw new Error("Usage: phomber diff REPORT_ID REVISION_HASH");
-      print(compareReports(validateInvestigation(await workspace.readObject(id, "revisions", argument)), inv));
+      output(compareReports(validateInvestigation(await workspace.readObject(id, "revisions", argument)), inv));
     } else if (command === "verify") {
       const revisions = await workspace.history(id), hashes = new Set<string>();
       for (const version of [inv, ...await Promise.all(revisions.map(async r => validateInvestigation(await workspace.readObject(id, "revisions", r.hash))))])
         for (const source of version.sources) if (source.snapshot_hash) hashes.add(source.snapshot_hash);
       for (const hash of hashes) await workspace.readObject(id, "snapshots", hash);
-      print({ report: id, revisions: revisions.length, snapshots: hashes.size, integrity: "passed", unpreserved_sources: inv.sources.filter(s => s.status === "ok" && !s.snapshot_hash).length });
+      output({ report: id, revisions: revisions.length, snapshots: hashes.size, integrity: "passed", unpreserved_sources: inv.sources.filter(s => s.status === "ok" && !s.snapshot_hash).length });
     } else if (argument) {
       await workspace.review(id, argument, contentHash(inv), { decision: String(v.decision || ""), identity: String(v.identity || "unresolved"), reason: String(v.reason || ""), analyst: String(v.analyst || "") });
       await writeReport(await workspace.load(id), workspace);
-      print({ report: id, finding: argument, review: "saved" });
-    } else print(inv.findings.map(f => ({ id: f.id, field: f.field, value: f.value, ...assessFinding(inv, f) })));
+      output({ report: id, finding: argument, review: "saved" });
+    } else output(inv.findings.map(f => ({ id: f.id, field: f.field, value: f.value, ...assessFinding(inv, f) })));
     return;
   }
   if (command === "search") {
     const query = args.positionals.join(" ").trim().toLocaleLowerCase();
     if (!query) throw new Error("Usage: phomber search QUERY");
-    print(await searchWorkspace(workspace, query));
+    output(await searchWorkspace(workspace, query));
     return;
   }
   if (command === "admin") {
     if(port===0) throw new Error("Use the running server’s actual port.");
     const target=`http://127.0.0.1:${port}/admin/`;
-    print(target);
+    output(target);
     if(v.open) open(target);
     return;
   }
@@ -165,24 +177,25 @@ async function execute(argv: string[], workspace: Workspace): Promise<void> {
   if (command === "auth") {
     if (args.positionals[0] === "logout") {
       await forgetCredential(workspace);
-      print("Saved DeepSeek key removed.");
+      output("Saved DeepSeek key removed.");
       return;
     }
     if (args.positionals[0] !== "deepseek")
       throw new Error("Usage: phomber auth deepseek | auth logout");
     const key = await password();
-    if (!isNpx() || v["save-key"]) {
+    if (!isEphemeralKey() || v["save-key"]) {
       await saveCredential(workspace, key);
-      print("DeepSeek key saved locally with restricted permissions.");
+      output("DeepSeek key saved locally with restricted permissions.");
     } else
-      print(
-        "NPX keys are session-only. Run wiki to enter a key for that investigation; use --save-key to persist explicitly.",
+      output(
+        "PHOMBER_EPHEMERAL_KEY is set, so this key was not saved. Use find for a session key or --save-key to persist explicitly.",
       );
     return;
   }
   if (command === "config") {
-    print({
+    output({
       ...savedConfig,
+      workspace: workspace.root,
       ai: {
         provider: "deepseek",
         model: savedConfig.ai?.model || "deepseek-flash",
@@ -199,12 +212,12 @@ async function execute(argv: string[], workspace: Workspace): Promise<void> {
     for (const file of await readdir(join(workspace.root, "cache")))
       if (/^[a-f0-9]{64}\.json$/.test(file))
         await rm(join(workspace.root, "cache", file));
-    print("Cache cleared.");
+    output("Cache cleared.");
     return;
   }
   if (command === "library") {
     if (!args.positionals.length) {
-      print(
+      output(
         (await loadLibrary(workspace)).articles.map((a) => ({
           id: a.id,
           title: a.title,
@@ -217,41 +230,44 @@ async function execute(argv: string[], workspace: Workspace): Promise<void> {
       throw new Error("Usage: phomber library import references/library.json");
     const library = await readLibrary(args.positionals[1]);
     await atomicJSON(join(workspace.root, "library.json"), library);
-    print(`Imported ${library.articles.length} archived wiki articles.`);
+    output(`Imported ${library.articles.length} archived wiki articles.`);
     return;
   }
   if (command === "reports") {
     const [action, id] = args.positionals;
     if (!action) {
-      print(await workspace.list());
+      output(await workspace.list());
       return;
     }
     if (!id) throw new Error("A report ID is required.");
     if (action === "open") {
       const p = await workspace.safeReport(id);
       open(pathToFileURL(join(p, "index.html")).href);
-      print(p);
+      output(p);
     } else if (action === "export")
-      print(
+      output(
         await workspace.export(
           id,
           typeof v.output === "string" ? v.output : undefined,
         ),
       );
     else if (action === "delete") {
-      if (!v.yes)
-        throw new Error(
-          "Deletion requires --yes. Export first if you need a copy.",
-        );
-      const path = await workspace.safeReport(id);
-      await rm(path, { recursive: true });
-      await rm(join(workspace.root, "search.sqlite"), { force: true });
-      await workspace.updateIndex();
-      print("Deleted " + id);
+      await workspace.safeReport(id);
+      if (!v.yes) {
+        if (!process.stdin.isTTY || v.format === "json")
+          throw new Error("Deletion requires --yes in scripts. Export first if you need a copy.");
+        const rl = createInterface({ input: process.stdin, output: process.stderr });
+        let answer: string;
+        try { answer = await rl.question(`Delete report ${id}, including its snapshots and revisions? [y/N] `); }
+        finally { rl.close(); }
+        if (!/^y(?:es)?$/i.test(answer.trim())) { output("Deletion cancelled."); return; }
+      }
+      await workspace.deleteReport(id);
+      output(v.format === "json" ? { id, status: "deleted" } : "Deleted " + id);
     } else throw new Error("Use reports open, export or delete.");
     return;
   }
-  if (command === "wiki") {
+  if (command === "find") {
     const old =
       typeof v.resume === "string" ? await workspace.load(v.resume) : undefined;
     const hasSubject =
@@ -318,6 +334,9 @@ async function execute(argv: string[], workspace: Workspace): Promise<void> {
             (path, body) => provider.request(path, body),
             {
               synthesisOnly: !!v["synthesize-only"],
+              enrichProfiles: profileEnricher(inv, workspace, { signal: controller.signal,
+                progress: process.stderr.isTTY ? text => process.stderr.write("  · " + text + "\n") : undefined }),
+              readDocument: documentReader(inv.depth, controller.signal),
               preserveSource: payload => workspace.preserveSource(inv.id, payload),
               model:
                 typeof v.model === "string" ? v.model : savedConfig.ai?.model,
@@ -374,10 +393,10 @@ async function execute(argv: string[], workspace: Workspace): Promise<void> {
     }
     const path = await writeReport(inv, workspace);
     if (v.output) await workspace.export(inv.id, String(v.output));
-    if (v.format === "json") print(inv, true);
-    else if (v.format === "html") print(join(path, "index.html"));
+    if (v.format === "json") output(inv, true);
+    else if (v.format === "html") output(join(path, "index.html"));
     else
-      print(
+      output(
         `${inv.summary}\nReport: ${join(path, "index.html")}\nInvestigation: ${inv.id}\nWorkspace: ${workspace.root}`,
       );
     if (inv.status === "interrupted") {
@@ -394,7 +413,7 @@ async function execute(argv: string[], workspace: Workspace): Promise<void> {
       cancel = () => controller.abort();
     process.once("SIGINT", cancel);
     try {
-      print(
+      output(
         await scanner(
           command,
           args.positionals.join(" "),

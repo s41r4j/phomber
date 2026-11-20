@@ -8,7 +8,7 @@ name = "phomber"
 version = "3.1.1"
 description = "`PH0MBER` a simple yet powerful osint framework for reconnaissance and information gathering"
 readme = "README.md"
-license = {file = "LICENSE"}
+license = {file = "legacy/LICENSE"}
 requires-python = ">=3.7"
 authors = [
   {name = "s41r4j"}

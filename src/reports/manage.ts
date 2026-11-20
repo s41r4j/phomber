@@ -1,0 +1,12 @@
+import { contentHash } from "../core/trust.js";
+import type { IndexEntry, Investigation } from "../core/types.js";
+import { catalogShell } from "./catalog-pages.js";
+import { escape } from "./shell.js";
+import { reportTitle } from "../catalog/index.js";
+
+export function renderManageReports(entries: IndexEntry[]): string {
+  return catalogShell("Manage investigations", `<p><a href="/admin/">Admin home</a> · <a href="/articles/">Browse articles</a></p><p>Review the selected investigation before confirming deletion. Deleting one version leaves other investigations and imported archives intact.</p><table class="wikitable"><thead><tr><th>Investigation</th><th>Coverage</th><th>Actions</th></tr></thead><tbody>${entries.map(entry => `<tr><td><a href="/reports/${entry.id}/">${escape(entry.name)}</a><br><code>${escape(entry.id)}</code></td><td>${escape(entry.status)}<br>${entry.source_count} sources retrieved</td><td><a href="/reports/${entry.id}/">Read report</a> · <a href="/reports/${entry.id}/delete/">Delete report</a></td></tr>`).join("") || '<tr><td colspan="3">No investigations saved.</td></tr>'}</tbody></table>`);
+}
+export function renderDeleteReport(inv: Investigation, csrf: string): string {
+  return catalogShell("Delete investigation", `<p><a href="/reports/${inv.id}/">Back to report</a> · <a href="/admin/reports/">All investigations</a></p><h2>${escape(reportTitle(inv))}</h2><p>Report ID: <code>${escape(inv.id)}</code><br>Coverage: ${escape(inv.status)} · ${inv.sources.filter(source => source.status === "ok").length} sources retrieved</p><div class="notice warning">This permanently deletes this investigation, its local HTML/JSON files, preserved source snapshots and revision history. This cannot be undone. Other investigations, imported archives, separate exports and shared response cache remain. Stop any ongoing research for this report first.</div><form class="admin-form" action="/manage/reports" method="post"><input type="hidden" name="csrf" value="${escape(csrf)}"><input type="hidden" name="action" value="delete"><input type="hidden" name="report" value="${escape(inv.id)}"><input type="hidden" name="revision" value="${contentHash(inv)}"><label><input type="checkbox" name="confirm" value="yes" required> I understand this investigation and its preserved evidence will be deleted.</label><button class="danger" type="submit">Permanently delete report</button> <a href="/reports/${inv.id}/">Cancel</a></form>`);
+}

@@ -1,5 +1,7 @@
 # PH0MBER article contract 1.0
 
+[Documentation index](README.md) · [Project guide](../README.md)
+
 All research providers use the same article contract. Current integration: DeepSeek. No second provider is enabled by this change.
 
 The application supplies the page title, a dynamic source-attributed infobox, numbered References, external links and article metadata. Those sections cannot be overridden by AI output. Infobox fields such as education, career, certifications and profile image appear when supported by the collected data. Missing fields are omitted.

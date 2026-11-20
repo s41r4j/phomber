@@ -1,4 +1,6 @@
-import { articleText } from "../core/article.js";
+import {publicationAttribution} from "../core/publications.js";
+import { articleText, safeArticleSections } from "../core/article.js";
+import { subjectSearchText } from "../core/search.js";
 import { canonicalJSON, contentHash, makeReview, type ReviewDecision } from "../core/trust.js";
 import { setTimeout as sleep } from "node:timers/promises";
 import { homedir } from "node:os";
@@ -40,7 +42,7 @@ export class Workspace {
   async init(): Promise<void> {
     for (const p of [
       this.root,
-      ...["reports", "cache", "logs", "exports"].map((x) => join(this.root, x)),
+      ...["reports", "cache", "logs", "exports", "deleted"].map((x) => join(this.root, x)),
     ]) {
       await mkdir(p, { recursive: true, mode: 0o700 });
       if ((await lstat(p)).isSymbolicLink())
@@ -97,6 +99,7 @@ export class Workspace {
   private locked<T>(id: string, operation: () => Promise<T>): Promise<T> {
     const path = this.reportPath(id);
     const guarded = async () => {
+      await this.assertNotDeleted(id);
       await mkdir(path, { recursive: true, mode: 0o700 });
       await this.safeReport(id);
       const lock = join(path, ".write-lock");
@@ -110,7 +113,10 @@ export class Workspace {
           await sleep(25);
         }
       }
-      try { return await operation(); } finally { await rm(lock, { recursive: true }); }
+      try {
+        await this.assertNotDeleted(id);
+        return await operation();
+      } finally { await rm(lock, { recursive: true, force: true }); }
     };
     const task = (writes.get(path) || Promise.resolve()).then(guarded, guarded);
     const pending = task.catch(() => {});
@@ -150,7 +156,29 @@ export class Workspace {
     return value;
   }
   async preserveSource(id: string, data: unknown): Promise<string> {
-    return this.preserve(id, "snapshots", data);
+    return this.locked(id, () => this.preserve(id, "snapshots", data));
+  }
+  private async assertNotDeleted(id: string): Promise<void> {
+    this.reportPath(id);
+    try { await lstat(join(this.root, "deleted", id + ".json")); }
+    catch (e) {
+      if ((e as NodeJS.ErrnoException).code === "ENOENT") return;
+      throw e;
+    }
+    throw new Error("Report was deleted. Start a new investigation instead of resuming this ID.");
+  }
+  async deleteReport(id: string, expectedHash?: string): Promise<void> {
+    await this.safeReport(id);
+    await this.locked(id, async () => {
+      if (expectedHash !== undefined && contentHash(await this.load(id)) !== expectedHash)
+        throw new Error("Report changed. Refresh before deleting the current version.");
+      const path = await this.safeReport(id);
+      const marker = join(this.root, "deleted", id + ".json");
+      await atomicJSON(marker, { id, deleted_at: new Date().toISOString() });
+      try { await rm(path, { recursive: true }); }
+      catch (e) { await rm(marker, { force: true }); throw e; }
+    });
+    await this.updateIndex();
   }
   async history(id: string): Promise<{ hash: string; updated_at: string; status: string; findings: number }[]> {
     const dir = join(await this.safeReport(id), "revisions");
@@ -217,9 +245,10 @@ export class Workspace {
         out.push({
           ...(includeSearch
             ? {
-                search_text: v.findings
+                search_text: id + " " + subjectSearchText(v.input.subject) + " " + v.findings
+                  .filter(f=>publicationAttribution(v,f).research)
                   .map((f) => f.field + " " + f.value)
-                  .join(" ") + " " + articleText(v.ai?.sections || []),
+                  .join(" ") + " " + articleText(safeArticleSections(v)),
               }
             : {}),
           id,

@@ -2,10 +2,8 @@ import { emitKeypressEvents } from "node:readline";
 import { readFile, lstat, chmod, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { atomicJSON, type Workspace } from "../workspace/index.js";
-export function isNpx(): boolean {
-  return (
-    process.env.npm_command === "exec" || !!process.env.PHOMBER_EPHEMERAL_KEY
-  );
+export function isEphemeralKey(): boolean {
+  return !!process.env.PHOMBER_EPHEMERAL_KEY;
 }
 export async function password(): Promise<string> {
   if (!process.stdin.isTTY)
@@ -82,7 +80,7 @@ export async function getKey(
 ): Promise<string> {
   if (process.env.DEEPSEEK_API_KEY?.trim())
     return process.env.DEEPSEEK_API_KEY.trim();
-  const ephemeral = isNpx();
+  const ephemeral = isEphemeralKey();
   if (!ephemeral) {
     const saved = await readCredential(workspace);
     if (saved) return saved;

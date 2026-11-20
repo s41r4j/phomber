@@ -7,7 +7,7 @@ import type { Input, Depth } from "../core/types.js";
 export async function questionnaire(base?: Input): Promise<Input> {
   if (!stdin.isTTY)
     throw new Error(
-      "Interactive wiki requires a terminal. Use --name, --social or --input in scripts.",
+      "Interactive research requires a terminal. Use phomber find NAME, --social or --input in scripts.",
     );
   const rl = createInterface({ input: stdin, output: stderr });
   const data: Input = base

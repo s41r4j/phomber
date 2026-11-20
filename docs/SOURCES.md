@@ -1,5 +1,7 @@
 # Sources and evidence rules
 
+[Documentation index](README.md) · [Project guide](../README.md)
+
 Collection is deliberately bounded. There is no scraping of login pages, CAPTCHAs or private profiles. The source-adapter-only mode needs no key. AI wiki mode uses a DeepSeek key for live web Search/Fetch and synthesis (see AI.md). Every adapter can fail independently without fabricating a finding. HTTP 404, empty results, blocked access and timeouts are never translated into “account does not exist.”
 
 | Integration | Collected data | Constraints / documentation |
@@ -43,4 +45,25 @@ Resume reuses the ID and creation date. Every save preserves revisions; interrup
 
 ## Extending adapters
 
-Add a Task producer in `src/adapters/index.ts` with an adapter ID, permitted public API URL, identity policy and a pure JSON-to-Candidate parser. Parsers must select necessary fields, avoid contacts and private data, and never manufacture URLs or relationship assertions. `HttpClient` supplies cache, timeout, cancellation, bounded transport and retries. Add fixtures and failure tests. Keep pure matching logic in `src/core`, not UI templates. The CLI, questionnaire and JSON import all call `investigate`.
+Add a Task producer in `src/adapters/index.ts` with an adapter ID, permitted public API URL, identity policy and a pure JSON-to-Candidate parser. Parsers must select necessary fields, avoid RDAP registrant contacts and private data, and never manufacture URLs or relationship assertions. `HttpClient` supplies cache, timeout, cancellation, bounded transport and retries. Add fixtures and failure tests. Keep pure matching logic in `src/core`, not UI templates. The CLI, questionnaire and JSON import all call `investigate`.
+
+## Evidence-driven profile follow-up
+
+Online AI-assisted research can follow supported public profile URLs already found in this investigation through local API adapters. Follow-up requests retain candidate identity status, task history and source snapshots, with separate depth-based budgets. DeepSeek-only and synthesis-only modes disable these API follow-ups. See [research orchestration and matching](AI.md) for budgets, automatic match states and evidence limits.
+
+## Public PDF text and email checks
+
+Online mixed AI research can locally extract text and public link annotations from a bounded number of public HTTPS PDFs. The source adapter is `local-pdf`; snapshots contain sanitized parsed text, not raw PDF binaries. Scanned PDFs need OCR, which is not included. Source text is chunked so later professional details can be considered. See [PDF limits](AI.md#public-pdf-documents).
+
+`phomber email ADDRESS` is a standalone syntax/mail-domain DNS check. It accepts a user-supplied address, masks output, sends only domain queries to DNS and does not search for personal emails, probe mailboxes or query breaches. Use it only for your own details or authorized subjects. See [planned privacy/company work](TODO.md).
+
+## Author identity boundaries
+
+A full author-name match must occur inside one work's individual author record. Cross-author name assembly is rejected. Same-name results remain in the evidence ledger until subject-specific ORCID/DOI linkage or a valid analyst identity decision supports attribution. Missing or malformed author fields are unresolved, not silently repaired into a name. Mixed search-response metadata receives no identity marks. See [publication attribution](AI.md#per-work-publication-attribution) and [Crossref metadata documentation](https://www.crossref.org/documentation/retrieve-metadata/rest-api/).
+
+
+## Discovered-name and contact provenance
+
+A seed handle and a discovered full name are separate values. The original input is retained, while exact API account identifiers or explicit first-party links establish bounded resource associations for further checks. Broad directory/search responses cannot supply the subject's name or identity marks. Same-account self-profile release PDFs can be associated when their individual name agrees; they remain self-reported sources. Name-based follow-up adapters retain task history and do not certify author/profile identity. See [research prioritization and concurrency](AI.md#discovered-names-relevance-and-concurrent-research).
+
+Public professional contacts and general city/region/country are extracted only from supported subject-linked resources and rendered with source citations. HTTP API caches still sanitize RDAP contacts and credentials. The mixed public document reader can retain professional contact text for attribution, while residential/private identifiers remain excluded. Previously redacted source snapshots are preserved, not rewritten to invent missing values.
